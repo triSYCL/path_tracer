@@ -18,6 +18,6 @@ Build the project with::
 
 This creates the executable . Now you can run the SYCL version of Ray Tracer with::
   
-  ./RT_SYCL/main >! result.ppn
+  ./RT_SYCL/main >! result.ppm
 
 This results in the image ``result.ppm`` produced by the Ray Tracer.
