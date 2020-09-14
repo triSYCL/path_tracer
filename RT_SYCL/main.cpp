@@ -144,7 +144,7 @@ class render_init_kernel {
   write_accessor_t<xorwow_state_t> m_rand_states_ptr;
 };
 
-template <int width, int height, int samples,int num_spheres>
+template <int width, int height, int samples,int depth,int num_spheres>
 class render_kernel {
     //template <typename data_t>
     //using read_accessor_t = sycl::accessor<data_t, 1, sycl::access::mode::read,
@@ -180,7 +180,7 @@ public:
             const auto u = (x_coord + randf()) / static_cast<real_t>(width);
             const auto v = (y_coord + randf()) / static_cast<real_t>(height);
             ray r = get_ray(u, v);
-            final_color += color(r, m_spheres_ptr.get_pointer());
+            final_color += color(r, m_spheres_ptr.get_pointer(),depth);
         }
         final_color /= static_cast<real_t>(samples);
 
@@ -209,16 +209,25 @@ private:
         return hit_anything;
     }
 
-    vec3 color(const ray& r, sphere* spheres)
+    vec3 color(const ray& r, sphere* spheres,int max_depth)
     {
-        hit_record rec;
-        if (hit_world(r, real_t { 0.001 }, infinity, rec, spheres)) {
-            return 0.5 * (rec.normal + vec3(1,1,1));
-            std::cout<<"1"<<std::endl;
+        static const auto max_real = std::numeric_limits<real_t>::max();
+        ray cur_ray = r;
+        vec3 cur_attenuation(1.0, 1.0, 1.0);
+        for(auto i = 0; i<max_depth; i++){
+            hit_record rec;
+            if (hit_world(cur_ray, real_t { 0.001 }, max_real, rec, spheres)) {
+                vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+                cur_attenuation *= 0.5;
+                cur_ray = ray(rec.p, target-rec.p);;
+            }
+            else{
+                vec3 unit_direction = unit_vector(cur_ray.direction());
+                auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
+                vec3 c = (1.0 - hit_pt) * vec3(1.0, 1.0, 1.0) + hit_pt * vec3(0.5, 0.7, 1.0);
+            }
         }
-        vec3 unit_direction = unit_vector(r.direction());
-        auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
-        return (1.0 - hit_pt) * vec3(1.0, 1.0, 1.0) + hit_pt * vec3(0.5, 0.7, 1.0);
+        return vec3(0.0,0.0,0.0);
     }
 
     ray get_ray(real_t u, real_t v)
@@ -268,6 +277,7 @@ template <int width, int height,int samples, int num_spheres>
 void render(sycl::queue queue, vec3* fb_data, const sphere* spheres,xorwow_state_t* rand_states)
 {
     constexpr auto num_pixels = width * height;
+    auto const depth = 50;
     auto frame_buf = sycl::buffer<vec3, 1>(fb_data, sycl::range<1>(num_pixels));
     auto sphere_buf = sycl::buffer<sphere, 1>(spheres, sycl::range<1>(num_spheres));
     auto rand_states_buf = sycl::buffer<xorwow_state_t, 1>(rand_states, sycl::range<1>(num_pixels));
@@ -282,7 +292,7 @@ void render(sycl::queue queue, vec3* fb_data, const sphere* spheres,xorwow_state
         const auto local = sycl::range<2>(constants::TileX, constants::TileY);
         const auto index_space = sycl::nd_range<2>(global, local);
         // construct kernel functor
-        auto render_func = render_kernel<width, height, samples, num_spheres>(frame_ptr, spheres_ptr,rand_states_ptr);
+        auto render_func = render_kernel<width, height, samples, depth, num_spheres>(frame_ptr, spheres_ptr,rand_states_ptr);
         // execute kernel
         cgh.parallel_for(index_space, render_func);
     });
