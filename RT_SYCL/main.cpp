@@ -78,12 +78,28 @@ inline data_t rand_uniform(rng_t rng, state_t* state) {
   return res - data_t{1.0};
 }
 
-class sphere {
-public:
-    sphere() : center(vec3{0,0,-1}), radius(0.5) {
-        //center = vec3{0,0,-1};
-        //radius = 0.5;
+template<class derived>
+struct crtp{
+    derived& underlying(){
+        return static_cast<derived&>(*this);
     }
+    const derived& underlying() const {
+        return static_cast<const derived&>(*this);
+    }
+};
+
+
+template <class geometry>
+class hitable : crtp<geometry>{
+    public:
+    bool hit(const ray& r, real_t min, real_t max, hit_record& rec) const{
+        return this->underlying().hit(r, min, max, rec);
+    }
+};
+
+class sphere : public hitable<sphere> {
+public:
+    sphere() = default;
     sphere(const vec3& cen, real_t r) : center(cen), radius(r) {
     }
 
@@ -143,17 +159,17 @@ class render_init_kernel {
   write_accessor_t<xorwow_state_t> m_rand_states_ptr;
 };
 
-template <int width, int height, int samples,int depth,int num_spheres>
+template <int width, int height, int samples,int depth,int num_spheres, class hitable>
 class render_kernel {
     //template <typename data_t>
     //using read_accessor_t = sycl::accessor<data_t, 1, sycl::access::mode::read,
     //                                      sycl::access::target::global_buffer>;
 public:
     render_kernel(sycl::accessor<vec3, 1, sycl::access::mode::write, sycl::access::target::global_buffer> frame_ptr,
-        sycl::accessor<sphere, 1, sycl::access::mode::read, sycl::access::target::global_buffer> spheres_ptr,
+        sycl::accessor<hitable, 1, sycl::access::mode::read, sycl::access::target::global_buffer> hitable_ptr,
         sycl::accessor<xorwow_state_t,1,sycl::access::mode::read, sycl::access::target::global_buffer>rand_states_ptr)
         : m_frame_ptr { frame_ptr }
-        , m_spheres_ptr { spheres_ptr }
+        , m_hitable_ptr { hitable_ptr }
         , m_rand_states_ptr {rand_states_ptr}
     {
     }
@@ -179,7 +195,7 @@ public:
             const auto u = (x_coord + random_double()) / static_cast<real_t>(width);
             const auto v = (y_coord + random_double()) / static_cast<real_t>(height);
             ray r = get_ray(u, v);
-            final_color += color(r, m_spheres_ptr.get_pointer(),depth);
+            final_color += color(r, m_hitable_ptr.get_pointer(),depth);
         }
         final_color /= static_cast<real_t>(samples);
 
@@ -247,7 +263,7 @@ private:
 
     /* accessor objects */
     sycl::accessor<vec3, 1, sycl::access::mode::write, sycl::access::target::global_buffer> m_frame_ptr;
-    sycl::accessor<sphere, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_spheres_ptr;
+    sycl::accessor<hitable, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
     sycl::accessor<xorwow_state_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_rand_states_ptr;
 };
 
@@ -272,7 +288,7 @@ void render_init(sycl::queue& queue, xorwow_state_t* rand_states)
   });
 }
 
-template <int width, int height,int samples, int num_spheres>
+template <int width, int height,int samples, int num_spheres,class hitable>
 void render(sycl::queue queue, vec3* fb_data, const sphere* spheres,xorwow_state_t* rand_states)
 {
     constexpr auto num_pixels = width * height;
@@ -291,7 +307,7 @@ void render(sycl::queue queue, vec3* fb_data, const sphere* spheres,xorwow_state
         const auto local = sycl::range<2>(constants::TileX, constants::TileY);
         const auto index_space = sycl::nd_range<2>(global, local);
         // construct kernel functor
-        auto render_func = render_kernel<width, height, samples, depth, num_spheres>(frame_ptr, spheres_ptr,rand_states_ptr);
+        auto render_func = render_kernel<width, height, samples, depth, num_spheres,hitable>(frame_ptr, spheres_ptr,rand_states_ptr);
         // execute kernel
         cgh.parallel_for(index_space, render_func);
     });
@@ -305,9 +321,9 @@ void save_image(vec3* fb_data)
     for (int y = height - 1; y >= 0; y--) {
         for (int x = 0; x < width; x++) {
             auto pixel_index = y * width + x;
-            int r = static_cast<int>(256 * clamp(fb_data[pixel_index].x(),0.0,0.999));
-            int g = static_cast<int>(256 * clamp(fb_data[pixel_index].y(),0.0,0.999));
-            int b = static_cast<int>(256 * clamp(fb_data[pixel_index].z(),0.0,0.999));
+            int r = static_cast<int>(256 * clamp(sycl::sqrt(fb_data[pixel_index].x()),0.0,0.999));
+            int g = static_cast<int>(256 * clamp(sycl::sqrt(fb_data[pixel_index].y()),0.0,0.999));
+            int b = static_cast<int>(256 * clamp(sycl::sqrt(fb_data[pixel_index].z()),0.0,0.999));
             std::cout << r << " " << g << " " << b << "\n";
         }
     }
@@ -316,15 +332,16 @@ void save_image(vec3* fb_data)
 int main()
 {
     //frame buffer dimensions
-    constexpr auto width = 400;
-    constexpr auto height = 240;
+    constexpr auto width = 800;
+    constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
     constexpr auto num_spheres = 3;
     constexpr auto samples = 100;
+    hitable Hitable;
     std::vector<sphere> spheres;
-    spheres.push_back(sphere(vec3(0.0, 0.0, -1.0), 0.5)); // (small) center sphere
-    spheres.push_back(sphere(vec3(0.0, -100.5, -1.0), 100)); // (large) ground sphere
-    spheres.push_back(sphere(vec3(0, 0.0, -0.4), 0.1));
+    spheres.push_back(sphere(vec3(0.0, 0.0, -2.0), 0.5)); // (small) center sphere
+    spheres.push_back(sphere(vec3(0.0, -100.5, -2.0), 100)); // (large) ground sphere
+    spheres.push_back(sphere(vec3(0.75, 0.25, -3.5), 0.75));
 
     auto vectors = std::vector<sphere>();
 
@@ -340,7 +357,7 @@ int main()
     camera cam;
 
     //sycl render kernel
-    render<width, height,samples, num_spheres>(myQueue, fb.data(), spheres.data(),rand_states.data());
+    render<width, height,samples, num_spheres,Hitable>(myQueue, fb.data(), spheres.data(),rand_states.data());
 
     //save image to file
     save_image<width, height>(fb.data());
