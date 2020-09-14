@@ -85,7 +85,6 @@ public:
         //radius = 0.5;
     }
     sphere(const vec3& cen, real_t r) : center(cen), radius(r) {
-        std::cerr<<"constructor"<<std::endl;
     }
 
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec) const
@@ -177,8 +176,8 @@ public:
         //color sampling
         vec3 final_color(0.0,0.0,0.0);
         for (auto i = 0; i < samples; i++) {
-            const auto u = (x_coord + randf()) / static_cast<real_t>(width);
-            const auto v = (y_coord + randf()) / static_cast<real_t>(height);
+            const auto u = (x_coord + random_double()) / static_cast<real_t>(width);
+            const auto v = (y_coord + random_double()) / static_cast<real_t>(height);
             ray r = get_ray(u, v);
             final_color += color(r, m_spheres_ptr.get_pointer(),depth);
         }
@@ -211,12 +210,11 @@ private:
 
     vec3 color(const ray& r, sphere* spheres,int max_depth)
     {
-        static const auto max_real = std::numeric_limits<real_t>::max();
         ray cur_ray = r;
         vec3 cur_attenuation(1.0, 1.0, 1.0);
         for(auto i = 0; i<max_depth; i++){
             hit_record rec;
-            if (hit_world(cur_ray, real_t { 0.001 }, max_real, rec, spheres)) {
+            if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, spheres)) {
                 vec3 target = rec.p + rec.normal + random_in_unit_sphere();
                 cur_attenuation *= 0.5;
                 cur_ray = ray(rec.p, target-rec.p);;
@@ -225,6 +223,7 @@ private:
                 vec3 unit_direction = unit_vector(cur_ray.direction());
                 auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
                 vec3 c = (1.0 - hit_pt) * vec3(1.0, 1.0, 1.0) + hit_pt * vec3(0.5, 0.7, 1.0);
+                return cur_attenuation*c;
             }
         }
         return vec3(0.0,0.0,0.0);
@@ -306,9 +305,9 @@ void save_image(vec3* fb_data)
     for (int y = height - 1; y >= 0; y--) {
         for (int x = 0; x < width; x++) {
             auto pixel_index = y * width + x;
-            int r = static_cast<int>(255.999 * fb_data[pixel_index].x());
-            int g = static_cast<int>(255.999 * fb_data[pixel_index].y());
-            int b = static_cast<int>(255.999 * fb_data[pixel_index].z());
+            int r = static_cast<int>(256 * clamp(fb_data[pixel_index].x(),0.0,0.999));
+            int g = static_cast<int>(256 * clamp(fb_data[pixel_index].y(),0.0,0.999));
+            int b = static_cast<int>(256 * clamp(fb_data[pixel_index].z(),0.0,0.999));
             std::cout << r << " " << g << " " << b << "\n";
         }
     }
