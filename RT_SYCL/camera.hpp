@@ -1,7 +1,7 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef RT_SYCL_CAMERA_H
+#define RT_SYCL_CAMERA_H
 
-#include "rtweekend.h"
+#include "rtweekend.hpp"
 
 class camera {
 

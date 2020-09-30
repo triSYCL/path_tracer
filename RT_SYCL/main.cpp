@@ -10,10 +10,10 @@
 
 #include <SYCL/sycl.hpp>
 
-#include "camera.h"
-#include "ray.h"
-#include "rtweekend.h"
-#include "vec3.h"
+#include "camera.hpp"
+#include "ray.hpp"
+#include "rtweekend.hpp"
+#include "vec3.hpp"
 
 using int_type = std::uint32_t;
 
