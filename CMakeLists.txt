@@ -6,7 +6,11 @@ project(SYCL-ray-tracer LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(CMAKE_BUILD_TYPE Debug)
+
+# To run fast...
+set(CMAKE_BUILD_TYPE Release)
+# ... or to debug
+#set(CMAKE_BUILD_TYPE Debug)
 
 # Use triSYCL
 include(FindtriSYCL)
