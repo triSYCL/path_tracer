@@ -1,10 +1,6 @@
-#include "camera.h"
-#include "ray.h"
-#include "rtweekend.h"
-#include "vec3.h"
-#include <SYCL/sycl.hpp>
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <iterator>
 #include <math.h>
@@ -12,7 +8,15 @@
 #include <thread>
 #include <vector>
 
-using int_type = uint32_t;
+#include <SYCL/sycl.hpp>
+
+#include "camera.h"
+#include "ray.h"
+#include "rtweekend.h"
+#include "vec3.h"
+
+using int_type = std::uint32_t;
+
 namespace constants {
 static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
