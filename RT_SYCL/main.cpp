@@ -461,20 +461,20 @@ int main()
                     // diffuse
                     auto albedo = color::random() * color::random();
                     spheres.push_back(sphere(center, 0.2, material_t::Lambertian, albedo));
-                    count++;
+//Undefined                    count++;
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = color::random(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
                     spheres.push_back(sphere(center, 0.2, material_t::Metal, albedo, fuzz));
-                    count++;
+//Undefined                    count++;
                 }
             }
         }
     }
     spheres.push_back(sphere(point3(4, 1, 0), 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0));
     spheres.push_back(sphere(point3(-4, 1, 0), 1, material_t::Lambertian, color(0.4, 0.2, 0.1)));
-    std::cerr << check * 10000 << std::endl;
+//Undefined    std::cerr << check * 10000 << std::endl;
 
     // spheres.push_back(sphere(vec3(0.0, 0.0, -1.0), 0.5,material_t::Lambertian,color(0.1,0.2,0.5))); // (small) center sphere
     // spheres.push_back(sphere(vec3(0.0, -100.5, -1.0), 100,material_t::Lambertian,color(0.2,0.2,0.2))); // (large) ground sphere
