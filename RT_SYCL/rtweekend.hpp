@@ -1,5 +1,5 @@
-#ifndef RTWEEKEND_H
-#define RTWEEKEND_H
+#ifndef RT_SYCL_RTWEEKEND_HPP
+#define RT_SYCL_RTWEEKEND_HPP
 
 #include <cmath>
 #include <cstdlib>
@@ -49,7 +49,7 @@ inline double clamp(double x, double min, double max)
 
 // Common Headers
 
-#include "ray.h"
-#include "vec3.h"
+#include "ray.hpp"
+#include "vec3.hpp"
 
 #endif

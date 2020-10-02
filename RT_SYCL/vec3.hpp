@@ -1,9 +1,10 @@
-#ifndef VEC_H
-#define VEC_H
+#ifndef RT_SYCL_VEC_HPP
+#define RT_SYCL_VEC_HPP
 
-#include <SYCL/sycl.hpp>
 #include <cmath>
 #include <iostream>
+
+#include <SYCL/sycl.hpp>
 
 class vec3 {
 public:
