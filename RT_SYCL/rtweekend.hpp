@@ -7,11 +7,11 @@
 #include <memory>
 #include <random>
 
-// Usings
-
-using std::make_shared;
-using std::shared_ptr;
-using std::sqrt;
+namespace
+{
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    std::mt19937 generator;
+}
 
 // Constants
 
@@ -27,8 +27,6 @@ inline double degrees_to_radians(double degrees)
 
 inline double random_double()
 {
-    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    static std::mt19937 generator;
     return distribution(generator);
 }
 
