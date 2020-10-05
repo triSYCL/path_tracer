@@ -166,9 +166,9 @@ void save_image(vec3* fb_data)
     for (int y = height - 1; y >= 0; y--) {
         for (int x = 0; x < width; x++) {
             auto pixel_index = y * width + x;
-            int r = static_cast<int>(256 * clamp(sycl::sqrt(fb_data[pixel_index].x()), 0.0, 0.999));
-            int g = static_cast<int>(256 * clamp(sycl::sqrt(fb_data[pixel_index].y()), 0.0, 0.999));
-            int b = static_cast<int>(256 * clamp(sycl::sqrt(fb_data[pixel_index].z()), 0.0, 0.999));
+            int r = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].x()), 0.0, 0.999));
+            int g = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].y()), 0.0, 0.999));
+            int b = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].z()), 0.0, 0.999));
             std::cout << r << " " << g << " " << b << "\n";
         }
     }

@@ -92,7 +92,7 @@ public:
         , radius(r)
         , material_type(mat_type)
         , albedo(mat_color)
-        , fuzz(clamp(f, 0.0, 1.0))
+        , fuzz(std::clamp(f, 0.0, 1.0))
     {
     }
 
