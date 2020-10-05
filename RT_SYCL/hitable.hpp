@@ -1,8 +1,8 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
-#include "rtweekend.hpp"
 #include "ray.hpp"
+#include "rtweekend.hpp"
 #include "vec3.hpp"
 
 enum class material_t { Lambertian,
@@ -11,24 +11,21 @@ enum class material_t { Lambertian,
 
 class hit_record {
 public:
-
     bool scatter_material(const ray& r_in, vec3& attenuation, ray& scattered)
     {
         switch (material_type) {
-        case material_t::Lambertian: {
-            vec3 scatter_direction = normal + random_unit_vector();
-            scattered = ray(p, scatter_direction);
+        case material_t::Lambertian:
+            scattered = ray(p, normal + random_unit_vector());
             attenuation = albedo;
             return true;
-        }
         case material_t::Metal: {
             vec3 reflected = reflect(unit_vector(r_in.direction()), normal);
             scattered = ray(p, reflected + fuzz * random_in_unit_sphere());
             attenuation = albedo;
             return sycl::dot(scattered.direction(), normal) > 0;
         }
-        case material_t::Dielectric: {
-        }
+        case material_t::Dielectric:
+            return false;
         default:
             return false;
         }
