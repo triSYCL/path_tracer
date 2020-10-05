@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include <SYCL/sycl.hpp>
-
+using real_t = double;
 class vec3 {
 public:
     vec3()
