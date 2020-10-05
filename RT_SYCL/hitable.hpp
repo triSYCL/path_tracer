@@ -1,8 +1,8 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
-#include "rtweekend.hpp"
 #include "ray.hpp"
+#include "rtweekend.hpp"
 #include "vec3.hpp"
 
 enum class material_t { Lambertian,
@@ -11,25 +11,21 @@ enum class material_t { Lambertian,
 
 class hit_record {
 public:
-    hit_record() = default;
-
     bool scatter_material(const ray& r_in, vec3& attenuation, ray& scattered)
     {
         switch (material_type) {
-        case material_t::Lambertian: {
-            vec3 scatter_direction = normal + random_unit_vector();
-            scattered = ray(p, scatter_direction);
+        case material_t::Lambertian:
+            scattered = ray(p, normal + random_unit_vector());
             attenuation = albedo;
             return true;
-        }
         case material_t::Metal: {
             vec3 reflected = reflect(unit_vector(r_in.direction()), normal);
             scattered = ray(p, reflected + fuzz * random_in_unit_sphere());
             attenuation = albedo;
-            return (dot(scattered.direction(), normal) > 0);
+            return sycl::dot(scattered.direction(), normal) > 0;
         }
-        case material_t::Dielectric: {
-        }
+        case material_t::Dielectric:
+            return false;
         default:
             return false;
         }
@@ -92,7 +88,7 @@ public:
         , radius(r)
         , material_type(mat_type)
         , albedo(mat_color)
-        , fuzz(clamp(f, 0.0, 1.0))
+        , fuzz(std::clamp(f, 0.0, 1.0))
     {
     }
 
@@ -121,9 +117,9 @@ public:
             rec.refraction_index = refraction_index;
         }
         vec3 oc = r.origin() - center;
-        auto a = dot(r.direction(), r.direction());
-        auto b = dot(oc, r.direction());
-        auto c = dot(oc, oc) - radius * radius;
+        auto a = sycl::dot(r.direction(), r.direction());
+        auto b = sycl::dot(oc, r.direction());
+        auto c = sycl::dot(oc, oc) - radius * radius;
         auto discriminant = b * b - a * c;
         //std::cout<<"center "<<center<<std::endl;
         if (discriminant > 0) {
