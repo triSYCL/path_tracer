@@ -6,11 +6,11 @@
 struct solid_texture {
     solid_texture() = default;
     solid_texture(color c)
-        : color_value(c)
+        : color_value{c}
     {
     }
     solid_texture(double red, double green, double blue)
-        : solid_texture(color(red, green, blue))
+        : solid_texture{color(red, green, blue)}
     {
     }
 
@@ -26,13 +26,13 @@ private:
 struct checker_texture {
     //checker_texture(int x, int y) : color_value(x), color_type(y){}
     checker_texture(solid_texture x, solid_texture y)
-        : odd(x)
-        , even(y)
+        : odd{x}
+        , even{y}
     {
     }
     checker_texture(color c1, color c2)
         : even { solid_texture { c1 }  }
-        , odd(solid_texture { c2 })
+        , odd { solid_texture { c2 } }
     {
     }
     color value(double u, double v, const point3& p) const
@@ -49,12 +49,12 @@ struct checker_texture {
 
 struct call_value {
     call_value(double u, double v, const vec3& p)
-        : u(u)
-        , v(v)
-        , p(p)
+        : u{u}
+        , v{v}
+        , p{p}
     {}
-    int u;
-    int v;
+    double u;
+    double v;
     vec3 p;
     color operator()(const checker_texture& n) { return n.value(u, v, p); }
     //int operator()(const image_texture& i) { return i.value(u,v); }
