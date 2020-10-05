@@ -43,9 +43,9 @@ public:
         // map the 2D indices to a single linear, 1D index
         const auto pixel_index = y_coord * width + x_coord;
 
-        //color sampling
+        //color sampling for antialiasing 
         vec3 final_color(0.0, 0.0, 0.0);
-        for (auto i = 0; i < samples; i++) {
+        for (auto i = 0; i < samples; i++) { 
             const auto u = (x_coord + random_double()) / static_cast<real_t>(width);
             const auto v = (y_coord + random_double()) / static_cast<real_t>(height);
             ray r = get_ray(u, v);
@@ -115,8 +115,8 @@ private:
         auto focus_dist = 10;
 
         vec3 w = unit_vector(look_from - vec3(0, 0, 0));
-        vec3 u = unit_vector(cross(vec3(0, 1, 0), w));
-        vec3 v = cross(w, u);
+        vec3 u = unit_vector(sycl::cross(vec3(0, 1, 0), w));
+        vec3 v = sycl::cross(w, u);
 
         origin = look_from;
         horizontal = focus_dist * viewport_width * u;
@@ -135,6 +135,7 @@ private:
     sycl::accessor<hitable, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
 };
 
+//render function to call the render kernel
 template <int width, int height, int samples, int num_spheres, class hitable>
 void render(sycl::queue queue, vec3* fb_data, const hitable* spheres)
 {
@@ -158,6 +159,7 @@ void render(sycl::queue queue, vec3* fb_data, const hitable* spheres)
     });
 }
 
+// Function to save image data in ppm format
 template <int width, int height>
 void save_image(vec3* fb_data)
 {
@@ -189,16 +191,16 @@ int main()
         for (int b = -11; b < 11; b++) {
             auto choose_mat = random_double();
             point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
-            if ((center - point3(4, 0.2, 0)).length() > 0.9) {
+            if (sycl::length((center - point3(4, 0.2, 0))) > 0.9) {
 
                 if (choose_mat < 0.8) {
                     // diffuse
-                    auto albedo = color::random() * color::random();
+                    auto albedo = randomvec3() * randomvec3();
                     spheres.push_back(sphere(center, 0.2, material_t::Lambertian, albedo));
                     //Undefined                    count++;
                 } else if (choose_mat < 0.95) {
                     // metal
-                    auto albedo = color::random(0.5, 1);
+                    auto albedo = randomvec3(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
                     spheres.push_back(sphere(center, 0.2, material_t::Metal, albedo, fuzz));
                     //Undefined                    count++;
@@ -216,7 +218,7 @@ int main()
 
     //sycl queue
     sycl::queue myQueue;
-    
+
     //allocate frame buffer on host
     std::vector<vec3> fb(num_pixels);
 

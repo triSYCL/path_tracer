@@ -26,7 +26,7 @@ public:
             vec3 reflected = reflect(unit_vector(r_in.direction()), normal);
             scattered = ray(p, reflected + fuzz * random_in_unit_sphere());
             attenuation = albedo;
-            return (dot(scattered.direction(), normal) > 0);
+            return (sycl::dot(scattered.direction(), normal) > 0);
         }
         case material_t::Dielectric: {
         }
@@ -121,9 +121,9 @@ public:
             rec.refraction_index = refraction_index;
         }
         vec3 oc = r.origin() - center;
-        auto a = dot(r.direction(), r.direction());
-        auto b = dot(oc, r.direction());
-        auto c = dot(oc, oc) - radius * radius;
+        auto a = sycl::dot(r.direction(), r.direction());
+        auto b = sycl::dot(oc, r.direction());
+        auto c = sycl::dot(oc, oc) - radius * radius;
         auto discriminant = b * b - a * c;
         //std::cout<<"center "<<center<<std::endl;
         if (discriminant > 0) {
