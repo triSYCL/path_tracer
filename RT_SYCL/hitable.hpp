@@ -26,7 +26,7 @@ public:
             vec3 reflected = reflect(unit_vector(r_in.direction()), normal);
             scattered = ray(p, reflected + fuzz * random_in_unit_sphere());
             attenuation = albedo;
-            return (sycl::dot(scattered.direction(), normal) > 0);
+            return sycl::dot(scattered.direction(), normal) > 0;
         }
         case material_t::Dielectric: {
         }
