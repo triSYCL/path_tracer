@@ -31,7 +31,7 @@ struct checker_texture {
     {
     }
     checker_texture(color c1, color c2)
-        : even(solid_texture { c1 })
+        : even { solid_texture { c1 }  }
         , odd(solid_texture { c2 })
     {
     }
