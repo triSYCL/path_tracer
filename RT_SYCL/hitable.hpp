@@ -11,7 +11,6 @@ enum class material_t { Lambertian,
 
 class hit_record {
 public:
-    hit_record() = default;
 
     bool scatter_material(const ray& r_in, vec3& attenuation, ray& scattered)
     {
