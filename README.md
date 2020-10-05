@@ -22,3 +22,14 @@ time RT_SYCL/sycl-rt >! result.ppm
 This results in the image ``result.ppm`` produced by the Ray Tracer.
 
 ![img](https://media.gitenterprise.xilinx.com/user/1485/files/1ee6df00-fcd2-11ea-9ba0-d7675c81372d)
+
+The following are the references that were tremendously useful in writing this project:
+
+1. [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html
+)
+2. [Ray-tracing in a Weekend with SYCL - Part 1](https://www.codeplay.com/portal/blogs/2020/05/19/ray-tracing-in-a-weekend-with-sycl-basic-sphere-tracing.html)
+
+    [Ray-tracing in a Weekend with SYCL - Part 2](https://www.codeplay.com/portal/blogs/2020/06/19/ray-tracing-in-a-weekend-with-sycl-part-2-pixel-sampling-and-material-tracing.html)
+
+3. [CppCon 2018: Mateusz Pusz “Effective replacement of dynamic polymorphism with std::variant”](https://www.youtube.com/watch?v=gKbORJtnVu8)
+3. [Runtime Polymorphism with std::variant and std::visit - Bartek](https://www.bfilipek.com/2020/04/variant-virtual-polymorphism.html)
