@@ -11,14 +11,13 @@
 #include <SYCL/sycl.hpp>
 
 #include "camera.hpp"
+#include "hitable.hpp"
 #include "ray.hpp"
 #include "rtweekend.hpp"
 #include "texture.hpp"
 #include "vec3.hpp"
-#include "hitable.hpp"
 
 using int_type = std::uint32_t;
-using Texture = std::variant<checker_texture, solid_texture>;
 
 namespace constants {
 static constexpr auto TileX = 8;
@@ -43,9 +42,9 @@ public:
         // map the 2D indices to a single linear, 1D index
         const auto pixel_index = y_coord * width + x_coord;
 
-        //color sampling for antialiasing 
+        //color sampling for antialiasing
         vec3 final_color(0.0, 0.0, 0.0);
-        for (auto i = 0; i < samples; i++) { 
+        for (auto i = 0; i < samples; i++) {
             const auto u = (x_coord + random_double()) / static_cast<real_t>(width);
             const auto v = (y_coord + random_double()) / static_cast<real_t>(height);
             ray r = get_ray(u, v);
@@ -65,7 +64,7 @@ private:
 
     bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres)
     {
-        auto temp_rec = hit_record {};
+        hit_record temp_rec;
         auto hit_anything = false;
         auto closest_so_far = max;
         for (auto i = 0; i < num_spheres; i++) {
@@ -118,6 +117,7 @@ private:
         vec3 u = unit_vector(sycl::cross(vec3(0, 1, 0), w));
         vec3 v = sycl::cross(w, u);
 
+        //Camera arguments
         origin = look_from;
         horizontal = focus_dist * viewport_width * u;
         vertical = focus_dist * viewport_height * v;
@@ -186,7 +186,11 @@ int main()
     constexpr auto samples = 100;
     std::vector<sphere> spheres;
 
-    spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
+    //Generating a checkered ground and some random spheres
+    Texture t = checker_texture(color(0.2, 0.3, 0.1), color(0.9, 0.9, 0.9));
+    spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, t));
+
+    //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             auto choose_mat = random_double();
@@ -208,6 +212,7 @@ int main()
             }
         }
     }
+
     spheres.push_back(sphere(point3(4, 1, 0), 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0));
     spheres.push_back(sphere(point3(-4, 1, 0), 1, material_t::Lambertian, color(0.4, 0.2, 0.1)));
 

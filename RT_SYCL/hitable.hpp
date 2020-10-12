@@ -3,6 +3,7 @@
 
 #include "ray.hpp"
 #include "rtweekend.hpp"
+#include "texture.hpp"
 #include "vec3.hpp"
 
 enum class material_t { Lambertian,
@@ -16,7 +17,7 @@ public:
         switch (material_type) {
         case material_t::Lambertian:
             scattered = ray(p, normal + random_unit_vector());
-            attenuation = albedo;
+            attenuation = std::visit(call_value(u, v, p), LambertianAlbedo);
             return true;
         case material_t::Metal: {
             vec3 reflected = reflect(unit_vector(r_in.direction()), normal);
@@ -42,9 +43,18 @@ public:
     // material properties
     material_t material_type;
     vec3 albedo;
+    Texture LambertianAlbedo;
     real_t fuzz;
     real_t refraction_index;
 };
+
+void get_sphere_uv(const vec3& p, double& u, double& v)
+{
+    auto phi = atan2(p.z(), p.x());
+    auto theta = asin(p.y());
+    u = 1 - (phi + pi) / (2 * pi);
+    v = (theta + pi / 2) / pi;
+}
 
 template <class derived>
 struct crtp {
@@ -70,19 +80,25 @@ public:
 class sphere : public hitable<sphere> {
 public:
     sphere() = default;
-    sphere(const vec3& cen, real_t r)
-        : center(cen)
-        , radius(r)
-    {
-        material_type = material_t::Lambertian;
-    }
+    //constructor for lambertian sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, const vec3& color)
         : center(cen)
         , radius(r)
         , material_type(mat_type)
-        , albedo(color)
+        , LambertianAlbedo(solid_texture(color))
     {
     }
+
+    //constructor for lambertian sphere with texture
+    sphere(const vec3& cen, real_t r, material_t mat_type, Texture& texture)
+        : center(cen)
+        , radius(r)
+        , material_type(mat_type)
+        , LambertianAlbedo(texture)
+    {
+    }
+
+    //constructor for metal sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, const vec3& mat_color, real_t f)
         : center(cen)
         , radius(r)
@@ -92,6 +108,7 @@ public:
     {
     }
 
+    //constructor for dielectric sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, real_t ref_idx)
         : center(cen)
         , radius(r)
@@ -107,7 +124,7 @@ public:
         rec.center = center;
         rec.radius = radius;
         if (material_type == material_t::Lambertian) {
-            rec.albedo = albedo;
+            rec.LambertianAlbedo = LambertianAlbedo;
         }
         if (material_type == material_t::Metal) {
             rec.albedo = albedo;
@@ -128,6 +145,7 @@ public:
                 rec.t = temp;
                 rec.p = r.at(rec.t);
                 rec.normal = (rec.p - center) / radius;
+                get_sphere_uv((rec.p - center) / radius, rec.u, rec.v);
                 return true;
             }
             temp = (-b + sycl::sqrt(discriminant)) / a;
@@ -135,6 +153,7 @@ public:
                 rec.t = temp;
                 rec.p = r.at(rec.t);
                 rec.normal = (rec.p - center) / radius;
+                get_sphere_uv((rec.p - center) / radius, rec.u, rec.v);
                 return true;
             }
         }
@@ -147,6 +166,7 @@ public:
 
     //material properties
     material_t material_type;
+    Texture LambertianAlbedo;
     vec3 albedo;
     real_t fuzz;
     real_t refraction_index;
