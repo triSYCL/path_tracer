@@ -21,7 +21,7 @@ time RT_SYCL/sycl-rt >! result.ppm
 ```
 This results in the image ``result.ppm`` produced by the Ray Tracer.
 
-![img](https://media.gitenterprise.xilinx.com/user/1485/files/1b6fc380-0c92-11eb-9306-7ae725b5e31b)
+![img](doc/checker.jpg)
 
 The following are the references that were tremendously useful in writing this project:
 
