@@ -17,6 +17,7 @@ public:
     vec3 direction() const { return dir; }
 
     //returns point along the ray at distance t from ray's origin
+    //the ray P(t) = Origin + t*direction
     point3 at(double t) const
     {
         return orig + t * dir;

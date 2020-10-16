@@ -16,11 +16,14 @@ public:
     {
         switch (material_type) {
         case material_t::Lambertian:
+            //scattered ray is from point p in the direction of normal + random unit vector
             scattered = ray(p, normal + random_unit_vector());
             attenuation = std::visit([&](auto&& arg) { return arg.value(u, v, p); }, lambertian_albedo);
             return true;
         case material_t::Metal: {
+            //reflected is the reflected ray of r_in about the normal
             vec3 reflected = reflect(unit_vector(r_in.direction()), normal);
+            //scattered ray depends on the value of fuzz
             scattered = ray(p, reflected + fuzz * random_in_unit_sphere());
             attenuation = albedo;
             return sycl::dot(scattered.direction(), normal) > 0;
@@ -48,11 +51,17 @@ public:
     real_t refraction_index;
 };
 
+//returns normalised values of theta and phi
 void get_sphere_uv(const vec3& p, double& u, double& v)
 {
+    //phi is the angle around the axis
     auto phi = atan2(p.z(), p.x());
+    //theta is the angle down from the pole
     auto theta = asin(p.y());
+    //theta and phi together constitute the spherical coordinates
+    //phi is between -pi and pi , u is between 0 and 1
     u = 1 - (phi + pi) / (2 * pi);
+    //theta is between -pi/2 and pi/2 , v is between 0 and 1
     v = (theta + pi / 2) / pi;
 }
 
@@ -119,7 +128,7 @@ public:
 
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec) const
     {
-        //$#rec.material_type = material_t::Lambertian;
+        //storing data in hit_record
         rec.material_type = material_type;
         rec.center = center;
         rec.radius = radius;
@@ -133,30 +142,42 @@ public:
         if (material_type == material_t::Dielectric) {
             rec.refraction_index = refraction_index;
         }
-        vec3 oc = r.origin() - center;
+        //(P(t)-C).(P(t)-C)=r^2
+        //in the above sphere equation P(t) is the point on sphere hit by the ray
+        //(A+tb−C)⋅(A+tb−C)=r^2
+        //(t^2)b⋅b + 2tb⋅(A−C) + (A−C)⋅(A−C)−r^2 = 0
+        //There can 0 or 1 or 2 real roots
+        vec3 oc = r.origin() - center; // oc = A-C
         auto a = sycl::dot(r.direction(), r.direction());
         auto b = sycl::dot(oc, r.direction());
         auto c = sycl::dot(oc, oc) - radius * radius;
         auto discriminant = b * b - a * c;
-        //std::cout<<"center "<<center<<std::endl;
+        //Real roots if discriminant is positive
         if (discriminant > 0) {
+            //first root
             auto temp = (-b - sycl::sqrt(discriminant)) / a;
             if (temp < max && temp > min) {
                 rec.t = temp;
+                // point ray hits the sphere
                 rec.p = r.at(rec.t);
                 rec.normal = (rec.p - center) / radius;
+                //update u and v values in the hit record
                 get_sphere_uv((rec.p - center) / radius, rec.u, rec.v);
                 return true;
             }
+            //second root
             temp = (-b + sycl::sqrt(discriminant)) / a;
             if (temp < max && temp > min) {
                 rec.t = temp;
+                // point ray hits the sphere
                 rec.p = r.at(rec.t);
                 rec.normal = (rec.p - center) / radius;
+                //update u and v values in the hit record
                 get_sphere_uv((rec.p - center) / radius, rec.u, rec.v);
                 return true;
             }
         }
+        //no real roots
         return false;
     }
 
