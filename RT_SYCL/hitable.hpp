@@ -142,11 +142,12 @@ public:
         if (material_type == material_t::Dielectric) {
             rec.refraction_index = refraction_index;
         }
-        //(P(t)-C).(P(t)-C)=r^2
-        //in the above sphere equation P(t) is the point on sphere hit by the ray
-        //(A+tb−C)⋅(A+tb−C)=r^2
-        //(t^2)b⋅b + 2tb⋅(A−C) + (A−C)⋅(A−C)−r^2 = 0
-        //There can 0 or 1 or 2 real roots
+
+        /*(P(t)-C).(P(t)-C)=r^2
+        in the above sphere equation P(t) is the point on sphere hit by the ray
+        (A+tb−C)⋅(A+tb−C)=r^2
+        (t^2)b⋅b + 2tb⋅(A−C) + (A−C)⋅(A−C)−r^2 = 0
+        There can 0 or 1 or 2 real roots*/
         vec3 oc = r.origin() - center; // oc = A-C
         auto a = sycl::dot(r.direction(), r.direction());
         auto b = sycl::dot(oc, r.direction());
