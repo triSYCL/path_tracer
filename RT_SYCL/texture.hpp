@@ -81,7 +81,7 @@ struct image_texture {
     {
         //if texture data is unavailble return solid cyan
         if (data == nullptr)
-            return color(0, 1, 1);
+            return { 0, 1, 1 };
 
         /*u = clamp(u, 0.0, 1.0);
         v = 1.0 - clamp(v, 0.0, 1.0);
