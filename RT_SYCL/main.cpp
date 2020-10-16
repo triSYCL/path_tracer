@@ -45,8 +45,9 @@ public:
         //color sampling for antialiasing
         vec3 final_color(0.0, 0.0, 0.0);
         for (auto i = 0; i < samples; i++) {
-            const auto u = (x_coord + random_double()) / static_cast<real_t>(width);
-            const auto v = (y_coord + random_double()) / static_cast<real_t>(height);
+            const auto u = (x_coord + random_double()) / width;
+            const auto v = (y_coord + random_double()) / height;
+            //u and v are points on the viewport
             ray r = get_ray(u, v);
             final_color += color(r, m_hitable_ptr.get_pointer(), depth);
         }
@@ -62,11 +63,13 @@ private:
     vec3 horizontal;
     vec3 vertical;
 
+    //return true if ray hits anything in the world
     bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres)
     {
         hit_record temp_rec;
         auto hit_anything = false;
         auto closest_so_far = max;
+        //checking if the ray hits any of the spheres
         for (auto i = 0; i < num_spheres; i++) {
             if (spheres[i].hit(r, min, closest_so_far, temp_rec)) {
                 hit_anything = true;
@@ -92,15 +95,19 @@ private:
                     return vec3(0.0, 0.0, 0.0);
                 }
             } else {
+                //if ray doesn't hit anything during iteration
                 vec3 unit_direction = unit_vector(cur_ray.direction());
-                auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
+                auto hit_pt = 0.5 * (unit_direction.y() + 1.0); // hit_pt is betweeen 0 and 1
+                //blue if hit_pt is 1 and white if 0 and a blended value for values in between
                 vec3 c = (1.0 - hit_pt) * vec3(1.0, 1.0, 1.0) + hit_pt * vec3(0.5, 0.7, 1.0);
                 return cur_attenuation * c;
             }
         }
+        //if not returned within max_depth return
         return vec3(0.0, 0.0, 0.0);
     }
 
+    //s and t are local coordinates on the viewport
     ray get_ray(real_t s, real_t t)
     {
 
@@ -127,6 +134,8 @@ private:
         vec3 rd = lens_radius * random_in_unit_disk();
         vec3 offset = u * rd.x() + v * rd.y();
 
+        /*returns ray from camera passing through viewport local coordinates (s,t) based on viewport 
+        width, height and focus distance*/
         return ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset);
     }
 
@@ -188,33 +197,33 @@ int main()
 
     //Generating a checkered ground and some random spheres
     Texture t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
-    spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, t));
+    spheres.emplace_back(vec3{0, -1000, 0}, 1000, material_t::Lambertian, t);
 
     //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
+            //based on a random variable , the material type is chosen
             auto choose_mat = random_double();
+            //the spheres are placed at a point randomly displaced from a,b 
             point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
             if (sycl::length((center - point3(4, 0.2, 0))) > 0.9) {
-
                 if (choose_mat < 0.8) {
-                    // diffuse
+                    // lambertian
                     auto albedo = randomvec3() * randomvec3();
-                    spheres.push_back(sphere(center, 0.2, material_t::Lambertian, albedo));
-                    //Undefined                    count++;
+                    spheres.emplace_back(center, 0.2, material_t::Lambertian, albedo);
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = randomvec3(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
-                    spheres.push_back(sphere(center, 0.2, material_t::Metal, albedo, fuzz));
-                    //Undefined                    count++;
+                    spheres.emplace_back(center, 0.2, material_t::Metal, albedo, fuzz);
                 }
             }
         }
     }
 
-    spheres.push_back(sphere(point3(4, 1, 0), 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0));
-    spheres.push_back(sphere(point3(-4, 1, 0), 1, material_t::Lambertian, color(0.4, 0.2, 0.1)));
+    //two large spheres of metal and lambertian material types
+    spheres.emplace_back(point3{4, 1, 0}, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
+    spheres.emplace_back(point3{-4, 1, 0}, 1, material_t::Lambertian, color(0.4, 0.2, 0.1));
 
     // spheres.push_back(sphere(vec3(0.0, 0.0, -1.0), 0.5,material_t::Lambertian,color(0.1,0.2,0.5))); // (small) center sphere
     // spheres.push_back(sphere(vec3(0.0, -100.5, -1.0), 100,material_t::Lambertian,color(0.2,0.2,0.2))); // (large) ground sphere

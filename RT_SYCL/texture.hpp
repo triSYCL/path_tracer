@@ -13,10 +13,10 @@ struct solid_texture {
     {
     }
     solid_texture(double red, double green, double blue)
-        : solid_texture { color(red, green, blue) }
+        : solid_texture { color { red, green, blue } }
     {
     }
-
+    //for solid texture, the color is same throughout the sphere
     color value(double u, double v, const vec3& p) const
     {
         return color_value;
@@ -29,6 +29,7 @@ private:
 //takes two solid_textures to create checker pattern
 struct checker_texture {
     checker_texture() = default;
+
     checker_texture(solid_texture x, solid_texture y)
         : odd { x }
         , even { y }
@@ -39,6 +40,7 @@ struct checker_texture {
         , odd { solid_texture { c2 } }
     {
     }
+    //color value is different based on normalised spherical coordinates
     color value(double u, double v, const point3& p) const
     {
         auto sines = sin(10 * p.x()) * sin(10 * p.y()) * sin(10 * p.z());
@@ -55,8 +57,8 @@ struct checker_texture {
 struct image_texture {
     image_texture()
         : data { nullptr }
-        , width(0)
-        , bytes_per_scanline(0)
+        , width { 0 }
+        , bytes_per_scanline { 0 }
     {
     }
     image_texture(const char* filename)
@@ -98,7 +100,7 @@ struct image_texture {
         const auto color_scale = 1.0 / 255.0;
         auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
 
-        return color(color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]);
+        return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
         */
     }
     unsigned char* data;
