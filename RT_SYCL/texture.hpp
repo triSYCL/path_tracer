@@ -107,22 +107,6 @@ struct image_texture {
     int bytes_per_scanline;
 };
 
-//to visit value() based on the texture
-struct call_value {
-    call_value(double u, double v, const vec3& p)
-        : u { u }
-        , v { v }
-        , p { p }
-    {
-    }
-    double u;
-    double v;
-    vec3 p;
-    color operator()(const checker_texture& n) { return n.value(u, v, p); }
-    color operator()(const image_texture& i) { return i.value(u, v, p); }
-    color operator()(const solid_texture& s) { return s.value(u, v, p); }
-};
-
 using Texture = std::variant<checker_texture, solid_texture>;
 
 #endif

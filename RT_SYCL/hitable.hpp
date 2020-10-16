@@ -17,7 +17,7 @@ public:
         switch (material_type) {
         case material_t::Lambertian:
             scattered = ray(p, normal + random_unit_vector());
-            attenuation = std::visit(call_value(u, v, p), LambertianAlbedo);
+            attenuation = std::visit([&](auto&& arg) { return arg.value(u, v, p); }, lambertian_albedo);
             return true;
         case material_t::Metal: {
             vec3 reflected = reflect(unit_vector(r_in.direction()), normal);
@@ -85,7 +85,7 @@ public:
         : center(cen)
         , radius(r)
         , material_type(mat_type)
-        , LambertianAlbedo(solid_texture(color))
+        , lambertian_albedo(solid_texture(color))
     {
     }
 
@@ -94,7 +94,7 @@ public:
         : center(cen)
         , radius(r)
         , material_type(mat_type)
-        , LambertianAlbedo(texture)
+        , lambertian_albedo(texture)
     {
     }
 
@@ -124,7 +124,7 @@ public:
         rec.center = center;
         rec.radius = radius;
         if (material_type == material_t::Lambertian) {
-            rec.LambertianAlbedo = LambertianAlbedo;
+            rec.lambertian_albedo = lambertian_albedo;
         }
         if (material_type == material_t::Metal) {
             rec.albedo = albedo;
@@ -166,7 +166,7 @@ public:
 
     //material properties
     material_t material_type;
-    Texture LambertianAlbedo;
+    Texture lambertian_albedo;
     vec3 albedo;
     real_t fuzz;
     real_t refraction_index;
