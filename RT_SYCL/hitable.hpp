@@ -43,7 +43,7 @@ public:
     // material properties
     material_t material_type;
     vec3 albedo;
-    Texture LambertianAlbedo;
+    Texture lambertian_albedo;
     real_t fuzz;
     real_t refraction_index;
 };
