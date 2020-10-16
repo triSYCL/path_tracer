@@ -187,7 +187,7 @@ int main()
     std::vector<sphere> spheres;
 
     //Generating a checkered ground and some random spheres
-    Texture t = checker_texture(color(0.2, 0.3, 0.1), color(0.9, 0.9, 0.9));
+    Texture t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
     spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, t));
 
     //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
