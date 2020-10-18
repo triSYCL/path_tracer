@@ -222,8 +222,8 @@ int main()
     }
 
     //Three large spheres of metal and lambertian material types
-    spheres.emplace_back(point3{-0, 1, 0}, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
-    t = image_texture("/home/kranipet/Ray Tracer/RT_SYCL/XInv.jpg");
+    spheres.emplace_back(point3{4, 1, 2.25}, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
+    t = image_texture("/home/kranipet/Ray Tracer/RT_SYCL/Xilinx.jpg");
     spheres.emplace_back(point3{4, 1, 0}, 1, material_t::Lambertian, t);
     t = image_texture("/home/kranipet/Ray Tracer/RT_SYCL/Xilinx.jpg");
     spheres.emplace_back(point3{-4, 1, 0}, 1, material_t::Lambertian, t);
