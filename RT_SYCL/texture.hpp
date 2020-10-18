@@ -5,6 +5,9 @@
 #include <variant>
 #include <vector>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
 //Solid texture consists of a single color
 struct solid_texture {
     solid_texture() = default;
@@ -58,26 +61,24 @@ struct image_texture {
     image_texture()
         : data { nullptr }
         , width { 0 }
+        , height { 0 }
         , bytes_per_scanline { 0 }
     {
     }
     image_texture(const char* filename)
     {
-        /*auto components_per_pixel = bytes_per_pixel;
+        auto components_per_pixel = bytes_per_pixel;
         data = stbi_load(
             filename, &width, &height, &components_per_pixel, components_per_pixel);
 
         if (!data) {
             std::cerr << "ERROR: Could not load texture image file '" << filename << "'.\n";
+            std::cerr<<stbi_failure_reason()<<std::endl;
             width = height = 0;
         }
 
         bytes_per_scanline = bytes_per_pixel * width;
-        */
-    }
-    ~image_texture()
-    {
-        delete data;
+        
     }
     color value(double u, double v, const point3& p) const
     {
@@ -85,8 +86,8 @@ struct image_texture {
         if (data == nullptr)
             return { 0, 1, 1 };
 
-        /*u = clamp(u, 0.0, 1.0);
-        v = 1.0 - clamp(v, 0.0, 1.0);
+        u = std::clamp(u, 0.0, 1.0);
+        v = 1.0 - std::clamp(v, 0.0, 1.0);
 
         auto i = static_cast<int>(u * width);
         auto j = static_cast<int>(v * height);
@@ -101,14 +102,15 @@ struct image_texture {
         auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
 
         return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
-        */
+        
     }
     unsigned char* data;
     int bytes_per_pixel = 3;
     int width;
+    int height;
     int bytes_per_scanline;
 };
 
-using Texture = std::variant<checker_texture, solid_texture>;
+using Texture = std::variant<checker_texture,solid_texture,image_texture>;
 
 #endif

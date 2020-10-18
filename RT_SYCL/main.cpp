@@ -191,7 +191,7 @@ int main()
     constexpr auto width = 800;
     constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
-    constexpr auto num_spheres = 459;
+    constexpr auto num_spheres = 460;
     constexpr auto samples = 100;
     std::vector<sphere> spheres;
 
@@ -221,9 +221,12 @@ int main()
         }
     }
 
-    //two large spheres of metal and lambertian material types
-    spheres.emplace_back(point3{4, 1, 0}, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
-    spheres.emplace_back(point3{-4, 1, 0}, 1, material_t::Lambertian, color(0.4, 0.2, 0.1));
+    //Three large spheres of metal and lambertian material types
+    spheres.emplace_back(point3{-0, 1, 0}, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
+    t = image_texture("/home/kranipet/Ray Tracer/RT_SYCL/XInv.jpg");
+    spheres.emplace_back(point3{4, 1, 0}, 1, material_t::Lambertian, t);
+    t = image_texture("/home/kranipet/Ray Tracer/RT_SYCL/Xilinx.jpg");
+    spheres.emplace_back(point3{-4, 1, 0}, 1, material_t::Lambertian, t);
 
     // spheres.push_back(sphere(vec3(0.0, 0.0, -1.0), 0.5,material_t::Lambertian,color(0.1,0.2,0.5))); // (small) center sphere
     // spheres.push_back(sphere(vec3(0.0, -100.5, -1.0), 100,material_t::Lambertian,color(0.2,0.2,0.2))); // (large) ground sphere
