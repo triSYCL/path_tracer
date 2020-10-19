@@ -199,15 +199,15 @@ int main()
     std::vector<sphere> spheres;
 
     // Generating a checkered ground and some random spheres
-    Texture t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
-    spheres.emplace_back(vec3{0, -1000, 0}, 1000, material_t::Lambertian, t);
+    texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
+    spheres.emplace_back(vec3 { 0, -1000, 0 }, 1000, material_t::Lambertian, t);
 
     //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             // Based on a random variable , the material type is chosen
             auto choose_mat = random_double();
-            // Spheres are placed at a point randomly displaced from a,b 
+            // Spheres are placed at a point randomly displaced from a,b
             point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
             if (sycl::length((center - point3(4, 0.2, 0))) > 0.9) {
                 if (choose_mat < 0.8) {
@@ -225,11 +225,11 @@ int main()
     }
 
     // Three large spheres of metal and lambertian material types
-    spheres.emplace_back(point3{4, 1, 2.25}, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
+    spheres.emplace_back(point3 { 4, 1, 2.25 }, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
     t = image_texture("../RT_SYCL/Xilinx.jpg");
-    spheres.emplace_back(point3{4, 1, 0}, 1, material_t::Lambertian, t);
+    spheres.emplace_back(point3 { 4, 1, 0 }, 1, material_t::Lambertian, t);
     t = image_texture("../RT_SYCL/Xilinx.jpg");
-    spheres.emplace_back(point3{-4, 1, 0}, 1, material_t::Lambertian, t);
+    spheres.emplace_back(point3 { -4, 1, 0 }, 1, material_t::Lambertian, t);
 
     // spheres.push_back(sphere(vec3(0.0, 0.0, -1.0), 0.5,material_t::Lambertian,color(0.1,0.2,0.5))); // (small) center sphere
     // spheres.push_back(sphere(vec3(0.0, -100.5, -1.0), 100,material_t::Lambertian,color(0.2,0.2,0.2))); // (large) ground sphere

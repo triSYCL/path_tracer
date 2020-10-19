@@ -16,14 +16,14 @@ public:
     {
         switch (material_type) {
         case material_t::Lambertian:
-            //scattered ray is from point p in the direction of normal + random unit vector
+            // Scattered ray is from point p in the direction of normal + random unit vector
             scattered = ray(p, normal + random_unit_vector());
             attenuation = std::visit([&](auto&& arg) { return arg.value(u, v, p); }, lambertian_albedo);
             return true;
         case material_t::Metal: {
-            //reflected is the reflected ray of r_in about the normal
+            // Reflected is the reflected ray of r_in about the normal
             vec3 reflected = reflect(unit_vector(r_in.direction()), normal);
-            //scattered ray depends on the value of fuzz
+            // Scattered ray depends on the value of fuzz
             scattered = ray(p, reflected + fuzz * random_in_unit_sphere());
             attenuation = albedo;
             return sycl::dot(scattered.direction(), normal) > 0;
@@ -46,22 +46,22 @@ public:
     // material properties
     material_t material_type;
     vec3 albedo;
-    Texture lambertian_albedo;
+    texture_t lambertian_albedo;
     real_t fuzz;
     real_t refraction_index;
 };
 
-//returns normalised values of theta and phi
+// Computes normalised values of theta and phi
 void get_sphere_uv(const vec3& p, double& u, double& v)
 {
-    //phi is the angle around the axis
+    // phi is the angle around the axis
     auto phi = atan2(p.z(), p.x());
-    //theta is the angle down from the pole
+    // theta is the angle down from the pole
     auto theta = asin(p.y());
-    //theta and phi together constitute the spherical coordinates
-    //phi is between -pi and pi , u is between 0 and 1
+    // theta and phi together constitute the spherical coordinates
+    // phi is between -pi and pi , u is between 0 and 1
     u = 1 - (phi + pi) / (2 * pi);
-    //theta is between -pi/2 and pi/2 , v is between 0 and 1
+    // theta is between -pi/2 and pi/2 , v is between 0 and 1
     v = (theta + pi / 2) / pi;
 }
 
@@ -89,7 +89,7 @@ public:
 class sphere : public hitable<sphere> {
 public:
     sphere() = default;
-    //constructor for lambertian sphere with color
+    // Constructor for lambertian sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, const vec3& color)
         : center(cen)
         , radius(r)
@@ -98,8 +98,8 @@ public:
     {
     }
 
-    //constructor for lambertian sphere with texture
-    sphere(const vec3& cen, real_t r, material_t mat_type, Texture& texture)
+    // Constructor for lambertian sphere with texture
+    sphere(const vec3& cen, real_t r, material_t mat_type, texture_t& texture)
         : center(cen)
         , radius(r)
         , material_type(mat_type)
@@ -107,7 +107,7 @@ public:
     {
     }
 
-    //constructor for metal sphere with color
+    // Constructor for metal sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, const vec3& mat_color, real_t f)
         : center(cen)
         , radius(r)
@@ -117,7 +117,7 @@ public:
     {
     }
 
-    //constructor for dielectric sphere with color
+    // Constructor for dielectric sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, real_t ref_idx)
         : center(cen)
         , radius(r)
@@ -128,7 +128,7 @@ public:
 
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec) const
     {
-        //storing data in hit_record
+        // Storing data in hit_record
         rec.material_type = material_type;
         rec.center = center;
         rec.radius = radius;
@@ -153,42 +153,42 @@ public:
         auto b = sycl::dot(oc, r.direction());
         auto c = sycl::dot(oc, oc) - radius * radius;
         auto discriminant = b * b - a * c;
-        //Real roots if discriminant is positive
+        // Real roots if discriminant is positive
         if (discriminant > 0) {
-            //first root
+            // First root
             auto temp = (-b - sycl::sqrt(discriminant)) / a;
             if (temp < max && temp > min) {
                 rec.t = temp;
-                // point ray hits the sphere
+                // Ray hits the sphere at p
                 rec.p = r.at(rec.t);
                 rec.normal = (rec.p - center) / radius;
-                //update u and v values in the hit record
+                // Update u and v values in the hit record
                 get_sphere_uv((rec.p - center) / radius, rec.u, rec.v);
                 return true;
             }
-            //second root
+            // Second root
             temp = (-b + sycl::sqrt(discriminant)) / a;
             if (temp < max && temp > min) {
                 rec.t = temp;
-                // point ray hits the sphere
+                // Ray hits the sphere at p
                 rec.p = r.at(rec.t);
                 rec.normal = (rec.p - center) / radius;
-                //update u and v values in the hit record
+                // Update u and v values in the hit record
                 get_sphere_uv((rec.p - center) / radius, rec.u, rec.v);
                 return true;
             }
         }
-        //no real roots
+        // No real roots
         return false;
     }
 
-    // geometry properties
+    // Geometry properties
     vec3 center;
     real_t radius;
 
-    //material properties
+    // Material properties
     material_t material_type;
-    Texture lambertian_albedo;
+    texture_t lambertian_albedo;
     vec3 albedo;
     real_t fuzz;
     real_t refraction_index;
