@@ -1,17 +1,16 @@
 #ifndef RT_SYCL_RTWEEKEND_HPP
 #define RT_SYCL_RTWEEKEND_HPP
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <memory>
 #include <random>
 
-namespace
-{
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    std::mt19937 generator;
+namespace {
+std::uniform_real_distribution<double> distribution(0.0, 1.0);
+std::mt19937 generator;
 }
 
 // Constants

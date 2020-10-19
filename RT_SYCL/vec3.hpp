@@ -33,20 +33,16 @@ inline std::ostream& operator<<(std::ostream& out, const vec3& v)
     return out << v.x() << ' ' << v.y() << ' ' << v.z();
 }
 
+// Missing operator from the SYCL specification for now
 vec3 operator-(const vec3& u) { return vec3(-u.x(), -u.y(), -u.z()); }
 
-/*
-inline vec3 operator-(const vec3& u, const vec3& v)
-{
-    return vec3(u.e[0] - v.e[0], u.e[1] - v.e[1], u.e[2] - v.e[2]);
-}
-*/
-
+// Compute a unit vector from a non-null vector
 inline vec3 unit_vector(vec3 v)
 {
     return v / sycl::length(v);
 }
 
+// Make a random unit vector
 vec3 random_unit_vector()
 {
     auto a = random_double(0, 2 * pi);
@@ -55,6 +51,7 @@ vec3 random_unit_vector()
     return vec3(r * sycl::cos(a), r * sycl::sin(a), z);
 }
 
+// Compute a random point inside a unit sphere at origin
 vec3 random_in_unit_sphere()
 {
     while (true) {
@@ -65,11 +62,13 @@ vec3 random_in_unit_sphere()
     }
 }
 
+// Compute reflected ray's direction
 vec3 reflect(const vec3& v, const vec3& n)
 {
     return v - 2 * sycl::dot(v, n) * n;
 }
 
+// Compute random point in a unit disk
 vec3 random_in_unit_disk()
 {
     while (true) {
@@ -80,6 +79,7 @@ vec3 random_in_unit_disk()
     }
 }
 
+// Computes refracted ray's direction based on refractive index
 vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat)
 {
     auto cos_theta = sycl::fmin(sycl::dot(-uv, n), 1.0);

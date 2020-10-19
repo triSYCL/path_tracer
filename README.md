@@ -21,11 +21,14 @@ time RT_SYCL/sycl-rt >! result.ppm
 ```
 This results in the image ``result.ppm`` produced by the Ray Tracer.
 
-![img](doc/materials.jpg)
+![img](doc/XilinxRT.jpg)
 
 The following are the references that were tremendously useful in writing this project:
 
 1. [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html
+)
+
+    [Ray Tracing: The Next Week - Peter Shirley](https://raytracing.github.io/books/RayTracingTheNextWeek.html
 )
 2. [Ray-tracing in a Weekend with SYCL - Part 1](https://www.codeplay.com/portal/blogs/2020/05/19/ray-tracing-in-a-weekend-with-sycl-basic-sphere-tracing.html)
 
