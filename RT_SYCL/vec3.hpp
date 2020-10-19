@@ -41,7 +41,7 @@ inline vec3 unit_vector(vec3 v)
     return v / sycl::length(v);
 }
 
-//returns random unit vector
+// Make a random unit vector
 vec3 random_unit_vector()
 {
     auto a = random_double(0, 2 * pi);
