@@ -33,6 +33,7 @@ inline std::ostream& operator<<(std::ostream& out, const vec3& v)
     return out << v.x() << ' ' << v.y() << ' ' << v.z();
 }
 
+// Missing operator from the SYCL specification for now
 vec3 operator-(const vec3& u) { return vec3(-u.x(), -u.y(), -u.z()); }
 
 //returns unit vector or input vector

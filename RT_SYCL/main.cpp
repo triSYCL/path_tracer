@@ -107,7 +107,9 @@ private:
         return vec3(0.0, 0.0, 0.0);
     }
 
-    //s and t are local coordinates on the viewport
+    /* Computes ray from camera passing through 
+    viewport local coordinates (s,t) based on viewport 
+    width, height and focus distance */
     ray get_ray(real_t s, real_t t)
     {
 
@@ -134,8 +136,6 @@ private:
         vec3 rd = lens_radius * random_in_unit_disk();
         vec3 offset = u * rd.x() + v * rd.y();
 
-        /*returns ray from camera passing through viewport local coordinates (s,t) based on viewport 
-        width, height and focus distance*/
         return ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset);
     }
 

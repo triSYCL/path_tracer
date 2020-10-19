@@ -82,7 +82,7 @@ struct image_texture {
     }
     color value(double u, double v, const point3& p) const
     {
-        //if texture data is unavailble return solid cyan
+        //if texture data is unavailable return solid cyan
         if (data == nullptr)
             return { 0, 1, 1 };
 
