@@ -35,7 +35,7 @@ inline std::ostream& operator<<(std::ostream& out, const vec3& v)
 
 vec3 operator-(const vec3& u) { return vec3(-u.x(), -u.y(), -u.z()); }
 
-//returns unit vector or input vector
+// Compute a unit vector from a non-null vector
 inline vec3 unit_vector(vec3 v)
 {
     return v / sycl::length(v);
