@@ -91,7 +91,6 @@ private:
                 if (rec.scatter_material(cur_ray, cur_attenuation, scattered)) {
                     // On hitting the sphere, the ray gets scattered
                     cur_ray = scattered;
-                    ;
                 } else {
                     // Ray did not get scattered or reflected
                     return vec3(0.0, 0.0, 0.0);

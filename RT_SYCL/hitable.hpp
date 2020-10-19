@@ -51,8 +51,9 @@ public:
     real_t refraction_index;
 };
 
-// Computes normalised values of theta and phi
-void get_sphere_uv(const vec3& p, double& u, double& v)
+/* Computes normalised values of theta and phi. The input point p
+corresponds to a point on a unit sphere centered at origin */
+std::pair<double,double> get_sphere_uv(const point3& p)
 {
     // phi is the angle around the axis
     auto phi = atan2(p.z(), p.x());
@@ -60,9 +61,10 @@ void get_sphere_uv(const vec3& p, double& u, double& v)
     auto theta = asin(p.y());
     // theta and phi together constitute the spherical coordinates
     // phi is between -pi and pi , u is between 0 and 1
-    u = 1 - (phi + pi) / (2 * pi);
+    auto u = 1 - (phi + pi) / (2 * pi);
     // theta is between -pi/2 and pi/2 , v is between 0 and 1
-    v = (theta + pi / 2) / pi;
+    auto v = (theta + pi / 2) / pi;
+    return { u, v };
 }
 
 template <class derived>
@@ -162,8 +164,10 @@ public:
                 // Ray hits the sphere at p
                 rec.p = r.at(rec.t);
                 rec.normal = (rec.p - center) / radius;
-                // Update u and v values in the hit record
-                get_sphere_uv((rec.p - center) / radius, rec.u, rec.v);
+                /* Update u and v values in the hit record. Normal of a
+                point is calculated as above. Its the same way the point is 
+                transformed into a point on unit sphere centered at origin.*/
+                std::tie(rec.u, rec.v) = get_sphere_uv((point3)rec.normal);
                 return true;
             }
             // Second root
@@ -174,7 +178,7 @@ public:
                 rec.p = r.at(rec.t);
                 rec.normal = (rec.p - center) / radius;
                 // Update u and v values in the hit record
-                get_sphere_uv((rec.p - center) / radius, rec.u, rec.v);
+                std::tie(rec.u, rec.v) = get_sphere_uv((point3)rec.normal);
                 return true;
             }
         }
