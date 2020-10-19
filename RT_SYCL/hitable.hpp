@@ -91,38 +91,38 @@ public:
     sphere() = default;
     // Constructor for lambertian sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, const vec3& color)
-        : center(cen)
-        , radius(r)
-        , material_type(mat_type)
-        , lambertian_albedo(solid_texture(color))
+        : center { cen }
+        , radius { r }
+        , material_type { mat_type }
+        , lambertian_albedo { solid_texture(color) }
     {
     }
 
     // Constructor for lambertian sphere with texture
     sphere(const vec3& cen, real_t r, material_t mat_type, texture_t& texture)
-        : center(cen)
-        , radius(r)
-        , material_type(mat_type)
-        , lambertian_albedo(texture)
+        : center { cen }
+        , radius { r }
+        , material_type { mat_type }
+        , lambertian_albedo { texture }
     {
     }
 
     // Constructor for metal sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, const vec3& mat_color, real_t f)
-        : center(cen)
-        , radius(r)
-        , material_type(mat_type)
-        , albedo(mat_color)
-        , fuzz(std::clamp(f, 0.0, 1.0))
+        : center { cen }
+        , radius { r }
+        , material_type { mat_type }
+        , albedo { mat_color }
+        , fuzz { std::clamp(f, 0.0, 1.0) }
     {
     }
 
     // Constructor for dielectric sphere with color
     sphere(const vec3& cen, real_t r, material_t mat_type, real_t ref_idx)
-        : center(cen)
-        , radius(r)
-        , material_type(mat_type)
-        , refraction_index(ref_idx)
+        : center { cen }
+        , radius { r }
+        , material_type { mat_type }
+        , refraction_index { ref_idx }
     {
     }
 
