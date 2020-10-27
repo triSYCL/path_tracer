@@ -75,7 +75,7 @@ public:
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec, Material_t& hit_material_type) const
     {
         // Storing data in hit_record
-        rec.material_type = material_type;
+        //rec.material_type = material_type;
         rec.center = center;
         rec.radius = radius;
         hit_material_type = Material_type;

@@ -23,7 +23,7 @@ public:
     double v;
 
     // material properties
-    material_t material_type;
+    //Material_t material_type;
 };
 
 #endif
