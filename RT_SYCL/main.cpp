@@ -66,19 +66,19 @@ private:
     vec3 vertical;
 
     // Check if ray hits anything in the world
-    bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres, Material_t& Material_type)
+    bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres, material& material_type)
     {
         hit_record temp_rec;
-        Material_t temp_mat;
+        material_t temp_material_type;
         auto hit_anything = false;
         auto closest_so_far = max;
         // Checking if the ray hits any of the spheres
         for (auto i = 0; i < num_spheres; i++) {
-            if (spheres[i].hit(r, min, closest_so_far, temp_rec, temp_mat)) {
+            if (spheres[i].hit(r, min, closest_so_far, temp_rec, temp_material_type)) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 rec = temp_rec;
-                Material_type = temp_mat;
+                material_type = temp_material_type;
             }
         }
         return hit_anything;
@@ -89,11 +89,11 @@ private:
         ray cur_ray = r;
         vec3 cur_attenuation(1.0, 1.0, 1.0);
         ray scattered;
-        Material_t Material_type;
+        material_t material_type;
         for (auto i = 0; i < max_depth; i++) {
             hit_record rec;
-            if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, spheres,Material_type)) {
-                if(std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, Material_type)){
+            if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, spheres,material_type)) {
+                if(std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)){
                     // On hitting the sphere, the ray gets scattered
                     cur_ray = scattered;
                 } else {
@@ -204,7 +204,7 @@ int main()
 
     // Generating a checkered ground and some random spheres
     texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
-    Material_t m = lambertian_material(t);
+    material_t m = lambertian_material(t);
     spheres.emplace_back(vec3 { 0, -1000, 0 }, 1000, m);
 
     // //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
