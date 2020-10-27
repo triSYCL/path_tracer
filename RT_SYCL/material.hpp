@@ -61,6 +61,6 @@ struct dielectric_material{
     double ref_idx;
 };
 
-using Material_t = std::variant<lambertian_material, metal_material, dielectric_material>;
+using material_t = std::variant<lambertian_material, metal_material, dielectric_material>;
 
 #endif

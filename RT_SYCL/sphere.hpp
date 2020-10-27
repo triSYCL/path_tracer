@@ -29,56 +29,15 @@ class sphere {
 public:
     sphere() = default;
 
-    sphere(const vec3& cen, real_t r, Material_t mat_type)
+    sphere(const vec3& cen, real_t r, material_t mat_type)
         : center { cen }
         , radius { r }
-        , Material_type { mat_type }
+        , material_type { mat_type }
     {}
 
-    // Constructor for lambertian sphere with color
-    sphere(const vec3& cen, real_t r, material_t mat_type, const vec3& color)
-        : center { cen }
-        , radius { r }
-        , material_type { mat_type }
-        , lambertian_albedo { solid_texture(color) }
+    bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
     {
-    }
-
-    // Constructor for lambertian sphere with texture
-    sphere(const vec3& cen, real_t r, material_t mat_type, texture_t& texture)
-        : center { cen }
-        , radius { r }
-        , material_type { mat_type }
-        , lambertian_albedo { texture }
-    {
-    }
-
-    // Constructor for metal sphere with color
-    sphere(const vec3& cen, real_t r, material_t mat_type, const vec3& mat_color, real_t f)
-        : center { cen }
-        , radius { r }
-        , material_type { mat_type }
-        , albedo { mat_color }
-        , fuzz { std::clamp(f, 0.0, 1.0) }
-    {
-    }
-
-    // Constructor for dielectric sphere with color
-    sphere(const vec3& cen, real_t r, material_t mat_type, real_t ref_idx)
-        : center { cen }
-        , radius { r }
-        , material_type { mat_type }
-        , refraction_index { ref_idx }
-    {
-    }
-
-    bool hit(const ray& r, real_t min, real_t max, hit_record& rec, Material_t& hit_material_type) const
-    {
-        // Storing data in hit_record
-        //rec.material_type = material_type;
-        rec.center = center;
-        rec.radius = radius;
-        hit_material_type = Material_type;
+        hit_material_type = material_type;
         
         /*(P(t)-C).(P(t)-C)=r^2
         in the above sphere equation P(t) is the point on sphere hit by the ray
@@ -127,11 +86,6 @@ public:
 
     // Material properties
     material_t material_type;
-    Material_t Material_type;
-    texture_t lambertian_albedo;
-    vec3 albedo;
-    real_t fuzz;
-    real_t refraction_index;
 };
 
 #endif
