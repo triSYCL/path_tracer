@@ -69,14 +69,16 @@ private:
     bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres, Material_t& Material_type)
     {
         hit_record temp_rec;
+        Material_t temp_mat;
         auto hit_anything = false;
         auto closest_so_far = max;
         // Checking if the ray hits any of the spheres
         for (auto i = 0; i < num_spheres; i++) {
-            if (spheres[i].hit(r, min, closest_so_far, temp_rec, Material_type)) {
+            if (spheres[i].hit(r, min, closest_so_far, temp_rec, temp_mat)) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 rec = temp_rec;
+                Material_type = temp_mat;
             }
         }
         return hit_anything;
@@ -196,7 +198,7 @@ int main()
     constexpr auto width = 800;
     constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
-    constexpr auto num_spheres = 1;
+    constexpr auto num_spheres = 460;
     constexpr auto samples = 100;
     std::vector<sphere> spheres;
 
@@ -204,41 +206,39 @@ int main()
     texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
     Material_t m = lambertian_material(t);
     spheres.emplace_back(vec3 { 0, -1000, 0 }, 1000, m);
-    //spheres.emplace_back(vec3 { 0, -1000, 0 }, 1000, material_t::Lambertian, t);
 
     // //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
-    // for (int a = -11; a < 11; a++) {
-    //     for (int b = -11; b < 11; b++) {
-    //         // Based on a random variable , the material type is chosen
-    //         auto choose_mat = random_double();
-    //         // Spheres are placed at a point randomly displaced from a,b
-    //         point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
-    //         if (sycl::length((center - point3(4, 0.2, 0))) > 0.9) {
-    //             if (choose_mat < 0.8) {
-    //                 // lambertian
-    //                 auto albedo = randomvec3() * randomvec3();
-    //                 spheres.emplace_back(center, 0.2, material_t::Lambertian, albedo);
-    //             } else if (choose_mat < 0.95) {
-    //                 // metal
-    //                 auto albedo = randomvec3(0.5, 1);
-    //                 auto fuzz = random_double(0, 0.5);
-    //                 spheres.emplace_back(center, 0.2, material_t::Metal, albedo, fuzz);
-    //             }
-    //         }
-    //     }
-    // }
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            // Based on a random variable , the material type is chosen
+            auto choose_mat = random_double();
+            // Spheres are placed at a point randomly displaced from a,b
+            point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
+            if (sycl::length((center - point3(4, 0.2, 0))) > 0.9) {
+                if (choose_mat < 0.8) {
+                    // lambertian
+                    auto albedo = randomvec3() * randomvec3();
+                    //spheres.emplace_back(center, 0.2, material_t::Lambertian, albedo);
+                    spheres.emplace_back(center,0.2,lambertian_material(albedo));
+                } else if (choose_mat < 0.95) {
+                    // metal
+                    auto albedo = randomvec3(0.5, 1);
+                    auto fuzz = random_double(0, 0.5);
+                    //spheres.emplace_back(center, 0.2, material_t::Metal, albedo, fuzz);
+                    spheres.emplace_back(center, 0.2, metal_material(albedo,fuzz));
+                }else{
+                    //glass
+                    //spheres.emplace_back(center,0.2,dielectric_material(0.8));
+                }
+            }
+        }
+    }
 
-    // // Three large spheres of metal and lambertian material types
-    // spheres.emplace_back(point3 { 4, 1, 2.25 }, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
-    // t = image_texture("../RT_SYCL/Xilinx.jpg");
-    // spheres.emplace_back(point3 { 4, 1, 0 }, 1, material_t::Lambertian, t);
-    //t = image_texture("../RT_SYCL/Xilinx.jpg");
-    //spheres.emplace_back(point3 { -4, 1, 0 }, 1, material_t::Lambertian, t);
-
-    // spheres.push_back(sphere(vec3(0.0, 0.0, -1.0), 0.5,material_t::Lambertian,color(0.1,0.2,0.5))); // (small) center sphere
-    // spheres.push_back(sphere(vec3(0.0, -100.5, -1.0), 100,material_t::Lambertian,color(0.2,0.2,0.2))); // (large) ground sphere
-    // spheres.push_back(sphere(vec3(-1.0, -0.05, -3), 0.5,material_t::Metal,color(0.8,0.8,0.8),0.1));
-    // spheres.push_back(sphere(vec3(1.0, -0.1, 3), 0.5,material_t::Metal,color(0.8,0.6,0.2),0.5));
+    // Three large spheres of metal and lambertian material types
+    spheres.emplace_back(point3 { 4, 1, 2.25 }, 1,metal_material(color(0.7, 0.6, 0.5), 0.0));
+    t = image_texture("../RT_SYCL/Xilinx.jpg");
+    spheres.emplace_back(point3 { 4, 1, 0 }, 1,lambertian_material(t));
+    spheres.emplace_back(point3 { -4, 1, 0 }, 1, lambertian_material(t));
 
     // SYCL queue
     sycl::queue myQueue;
