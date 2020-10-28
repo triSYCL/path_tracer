@@ -66,7 +66,7 @@ private:
     vec3 vertical;
 
     // Check if ray hits anything in the world
-    bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres, material& material_type)
+    bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres, material_t& material_type)
     {
         hit_record temp_rec;
         material_t temp_material_type;
@@ -198,13 +198,13 @@ int main()
     constexpr auto width = 800;
     constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
-    constexpr auto num_spheres = 460;
+    constexpr auto num_spheres = 487;
     constexpr auto samples = 100;
     std::vector<sphere> spheres;
 
     // Generating a checkered ground and some random spheres
     texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
-    material_t m = lambertian_material(t);
+    material_t m = lambertian_material(color(0.5,0.5,0.5));
     spheres.emplace_back(vec3 { 0, -1000, 0 }, 1000, m);
 
     // //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
@@ -228,17 +228,18 @@ int main()
                     spheres.emplace_back(center, 0.2, metal_material(albedo,fuzz));
                 }else{
                     //glass
-                    //spheres.emplace_back(center,0.2,dielectric_material(0.8));
+                    spheres.emplace_back(center,0.2,dielectric_material(1.5));
                 }
             }
         }
     }
 
     // Three large spheres of metal and lambertian material types
-    spheres.emplace_back(point3 { 4, 1, 2.25 }, 1,metal_material(color(0.7, 0.6, 0.5), 0.0));
     t = image_texture("../RT_SYCL/Xilinx.jpg");
-    spheres.emplace_back(point3 { 4, 1, 0 }, 1,lambertian_material(t));
-    spheres.emplace_back(point3 { -4, 1, 0 }, 1, lambertian_material(t));
+    spheres.emplace_back(point3 { 4, 1, 2.25 }, 1,lambertian_material(t));
+    spheres.emplace_back(point3 { 0, 1, 0 }, 1,dielectric_material(1.5));
+    spheres.emplace_back(point3 { -4, 1, 0 }, 1,lambertian_material(color(0.4,0.2,0.1)));
+    spheres.emplace_back(point3 { 4, 1, 0 }, 1, metal_material(color(0.7,0.6,0.5),0.0));
 
     // SYCL queue
     sycl::queue myQueue;

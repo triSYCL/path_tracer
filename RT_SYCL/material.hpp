@@ -52,10 +52,18 @@ struct dielectric_material{
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
         attenuation = color{0.1,0.1,0.1};
-        double etai_over_etat = ref_idx;
+        double refraction_ratio = rec.front_face ? (1.0/ref_idx) : ref_idx;
         vec3 unit_direction = unit_vector(r_in.direction());
-        vec3 refracted = refract(unit_direction, rec.normal, etai_over_etat);
-        scattered = ray(rec.p, refracted);
+        double cos_theta = sycl::fmin(sycl::dot(-unit_direction,rec.normal),1.0);
+        double sin_theta = sycl::sqrt(1.0 - cos_theta*cos_theta);
+        bool cannot_refract = refraction_ratio * sin_theta > 1.0;
+        vec3 direction;
+        if(cannot_refract)
+            direction = reflect(unit_direction, rec.normal);
+        else
+            direction = refract(unit_direction, rec.normal, refraction_ratio);
+
+        scattered = ray(rec.p, direction);
         return true;
     }
     double ref_idx;
