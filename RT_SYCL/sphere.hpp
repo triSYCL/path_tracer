@@ -11,7 +11,7 @@
 
 /* Computes normalised values of theta and phi. The input point p
 corresponds to a point on a unit sphere centered at origin */
-std::pair<double,double> get_sphere_uv(const point3& p)
+std::pair<double,double> mercator_coordinates(const point3& p)
 {
     // phi is the angle around the axis
     auto phi = atan2(p.z(), p.x());
@@ -57,13 +57,13 @@ public:
                 rec.t = temp;
                 // Ray hits the sphere at p
                 rec.p = r.at(rec.t);
-                //rec.normal = (rec.p - center) / radius;
                 vec3 outward_normal = (rec.p - center) / radius;
+                // To set if hit point is on the front face and the outward normal in rec
                 rec.set_face_normal(r,outward_normal);
                 /* Update u and v values in the hit record. Normal of a
                 point is calculated as above. Its the same way the point is 
                 transformed into a point on unit sphere centered at origin.*/
-                std::tie(rec.u, rec.v) = get_sphere_uv((point3)rec.normal);
+                std::tie(rec.u, rec.v) = mercator_coordinates((point3)rec.normal);
                 return true;
             }
             // Second root
@@ -76,7 +76,7 @@ public:
                 vec3 outward_normal = (rec.p - center) / radius;
                 rec.set_face_normal(r,outward_normal);
                 // Update u and v values in the hit record
-                std::tie(rec.u, rec.v) = get_sphere_uv((point3)rec.normal);
+                std::tie(rec.u, rec.v) = mercator_coordinates((point3)rec.normal);
                 return true;
             }
         }
