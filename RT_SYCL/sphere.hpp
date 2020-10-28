@@ -57,7 +57,9 @@ public:
                 rec.t = temp;
                 // Ray hits the sphere at p
                 rec.p = r.at(rec.t);
-                rec.normal = (rec.p - center) / radius;
+                //rec.normal = (rec.p - center) / radius;
+                vec3 outward_normal = (rec.p - center) / radius;
+                rec.set_face_normal(r,outward_normal);
                 /* Update u and v values in the hit record. Normal of a
                 point is calculated as above. Its the same way the point is 
                 transformed into a point on unit sphere centered at origin.*/
@@ -70,7 +72,9 @@ public:
                 rec.t = temp;
                 // Ray hits the sphere at p
                 rec.p = r.at(rec.t);
-                rec.normal = (rec.p - center) / radius;
+                //rec.normal = (rec.p - center) / radius;
+                vec3 outward_normal = (rec.p - center) / radius;
+                rec.set_face_normal(r,outward_normal);
                 // Update u and v values in the hit record
                 std::tie(rec.u, rec.v) = get_sphere_uv((point3)rec.normal);
                 return true;
