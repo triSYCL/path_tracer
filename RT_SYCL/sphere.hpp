@@ -9,9 +9,10 @@
 #include "vec3.hpp"
 
 
-/* Computes normalised values of theta and phi. The input point p
-corresponds to a point on a unit sphere centered at origin */
-std::pair<double,double> mercator_coordinates(const point3& p)
+/* Computes normalised values of theta and phi. The input vector p
+corresponds to a vector passing through the centre of the a sphere 
+and the hipoint on the surface of the sphere */
+std::pair<double,double> mercator_coordinates(const vec3& p)
 {
     // phi is the angle around the axis
     auto phi = atan2(p.z(), p.x());
@@ -63,7 +64,7 @@ public:
                 /* Update u and v values in the hit record. Normal of a
                 point is calculated as above. Its the same way the point is 
                 transformed into a point on unit sphere centered at origin.*/
-                std::tie(rec.u, rec.v) = mercator_coordinates((point3)rec.normal);
+                std::tie(rec.u, rec.v) = mercator_coordinates(rec.normal);
                 return true;
             }
             // Second root
@@ -76,7 +77,7 @@ public:
                 vec3 outward_normal = (rec.p - center) / radius;
                 rec.set_face_normal(r,outward_normal);
                 // Update u and v values in the hit record
-                std::tie(rec.u, rec.v) = mercator_coordinates((point3)rec.normal);
+                std::tie(rec.u, rec.v) = mercator_coordinates(rec.normal);
                 return true;
             }
         }
