@@ -62,8 +62,8 @@ public:
                 // To set if hit point is on the front face and the outward normal in rec
                 rec.set_face_normal(r,outward_normal);
                 /* Update u and v values in the hit record. Normal of a
-                point is calculated as above. Its the same way the point is 
-                transformed into a point on unit sphere centered at origin.*/
+                point is calculated as above. This vector is used to also 
+                used to get the mercator coordinates of the hitpoint.*/
                 std::tie(rec.u, rec.v) = mercator_coordinates(rec.normal);
                 return true;
             }
