@@ -14,19 +14,20 @@
 #include "hitable.hpp"
 #include "material.hpp"
 #include "sphere.hpp"
+#include "rectangle.hpp"
 #include "ray.hpp"
 #include "rtweekend.hpp"
 #include "texture.hpp"
 #include "vec3.hpp"
 
 using int_type = std::uint32_t;
-
+using hittable_t = std::variant<sphere>;
 namespace constants {
 static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
 }
 
-template <int width, int height, int samples, int depth, int num_spheres>
+template <int width, int height, int samples, int depth, int num_hittables>
 class render_kernel {
 public:
     render_kernel(sycl::accessor<vec3, 1, sycl::access::mode::write, sycl::access::target::global_buffer> frame_ptr,
@@ -73,7 +74,7 @@ private:
         auto hit_anything = false;
         auto closest_so_far = max;
         // Checking if the ray hits any of the spheres
-        for (auto i = 0; i < num_spheres; i++) {
+        for (auto i = 0; i < num_hittables; i++) {
             if (spheres[i].hit(r, min, closest_so_far, temp_rec, temp_material_type)) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
@@ -152,13 +153,13 @@ private:
 };
 
 // Render function to call the render kernel
-template <int width, int height, int samples, int num_spheres>
+template <int width, int height, int samples, int num_hittables>
 void render(sycl::queue queue, vec3* fb_data, const sphere* spheres)
 {
     constexpr auto num_pixels = width * height;
     auto const depth = 5;
     auto frame_buf = sycl::buffer<vec3, 1>(fb_data, sycl::range<1>(num_pixels));
-    auto sphere_buf = sycl::buffer<sphere, 1>(spheres, sycl::range<1>(num_spheres));
+    auto sphere_buf = sycl::buffer<sphere, 1>(spheres, sycl::range<1>(num_hittables));
     // Submit command group on device
     queue.submit([&](sycl::handler& cgh) {
         // Get memory access
@@ -169,7 +170,7 @@ void render(sycl::queue queue, vec3* fb_data, const sphere* spheres)
         const auto local = sycl::range<2>(constants::TileX, constants::TileY);
         const auto index_space = sycl::nd_range<2>(global, local);
         // Construct kernel functor
-        auto render_func = render_kernel<width, height, samples, depth, num_spheres>(frame_ptr, spheres_ptr);
+        auto render_func = render_kernel<width, height, samples, depth, num_hittables>(frame_ptr, spheres_ptr);
         // Execute kernel
         cgh.parallel_for(index_space, render_func);
     });
@@ -198,7 +199,7 @@ int main()
     constexpr auto width = 800;
     constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
-    constexpr auto num_spheres = 487;
+    constexpr auto num_hittables = 487;
     constexpr auto samples = 100;
     std::vector<sphere> spheres;
 
@@ -250,7 +251,7 @@ int main()
     camera cam;
 
     // Sycl render kernel
-    render<width, height, samples, num_spheres>(myQueue, fb.data(), spheres.data());
+    render<width, height, samples, num_hittables>(myQueue, fb.data(), spheres.data());
 
     // Save image to file
     save_image<width, height>(fb.data());
