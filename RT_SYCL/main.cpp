@@ -12,6 +12,8 @@
 
 #include "camera.hpp"
 #include "hitable.hpp"
+#include "material.hpp"
+#include "sphere.hpp"
 #include "ray.hpp"
 #include "rtweekend.hpp"
 #include "texture.hpp"
@@ -24,11 +26,11 @@ static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
 }
 
-template <int width, int height, int samples, int depth, int num_spheres, class hitable>
+template <int width, int height, int samples, int depth, int num_spheres>
 class render_kernel {
 public:
     render_kernel(sycl::accessor<vec3, 1, sycl::access::mode::write, sycl::access::target::global_buffer> frame_ptr,
-        sycl::accessor<hitable, 1, sycl::access::mode::read, sycl::access::target::global_buffer> hitable_ptr)
+        sycl::accessor<sphere, 1, sycl::access::mode::read, sycl::access::target::global_buffer> hitable_ptr)
         : m_frame_ptr { frame_ptr }
         , m_hitable_ptr { hitable_ptr }
     {
@@ -64,17 +66,19 @@ private:
     vec3 vertical;
 
     // Check if ray hits anything in the world
-    bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres)
+    bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, sphere* spheres, material_t& material_type)
     {
         hit_record temp_rec;
+        material_t temp_material_type;
         auto hit_anything = false;
         auto closest_so_far = max;
         // Checking if the ray hits any of the spheres
         for (auto i = 0; i < num_spheres; i++) {
-            if (spheres[i].hit(r, min, closest_so_far, temp_rec)) {
+            if (spheres[i].hit(r, min, closest_so_far, temp_rec, temp_material_type)) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 rec = temp_rec;
+                material_type = temp_material_type;
             }
         }
         return hit_anything;
@@ -85,10 +89,11 @@ private:
         ray cur_ray = r;
         vec3 cur_attenuation(1.0, 1.0, 1.0);
         ray scattered;
+        material_t material_type;
         for (auto i = 0; i < max_depth; i++) {
             hit_record rec;
-            if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, spheres)) {
-                if (rec.scatter_material(cur_ray, cur_attenuation, scattered)) {
+            if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, spheres,material_type)) {
+                if(std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)){
                     // On hitting the sphere, the ray gets scattered
                     cur_ray = scattered;
                 } else {
@@ -143,12 +148,12 @@ private:
 
     // Accessor objects
     sycl::accessor<vec3, 1, sycl::access::mode::write, sycl::access::target::global_buffer> m_frame_ptr;
-    sycl::accessor<hitable, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
+    sycl::accessor<sphere, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
 };
 
 // Render function to call the render kernel
-template <int width, int height, int samples, int num_spheres, class hitable>
-void render(sycl::queue queue, vec3* fb_data, const hitable* spheres)
+template <int width, int height, int samples, int num_spheres>
+void render(sycl::queue queue, vec3* fb_data, const sphere* spheres)
 {
     constexpr auto num_pixels = width * height;
     auto const depth = 5;
@@ -164,7 +169,7 @@ void render(sycl::queue queue, vec3* fb_data, const hitable* spheres)
         const auto local = sycl::range<2>(constants::TileX, constants::TileY);
         const auto index_space = sycl::nd_range<2>(global, local);
         // Construct kernel functor
-        auto render_func = render_kernel<width, height, samples, depth, num_spheres, hitable>(frame_ptr, spheres_ptr);
+        auto render_func = render_kernel<width, height, samples, depth, num_spheres>(frame_ptr, spheres_ptr);
         // Execute kernel
         cgh.parallel_for(index_space, render_func);
     });
@@ -193,15 +198,16 @@ int main()
     constexpr auto width = 800;
     constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
-    constexpr auto num_spheres = 460;
+    constexpr auto num_spheres = 487;
     constexpr auto samples = 100;
     std::vector<sphere> spheres;
 
     // Generating a checkered ground and some random spheres
     texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
-    spheres.emplace_back(vec3 { 0, -1000, 0 }, 1000, material_t::Lambertian, t);
+    material_t m = lambertian_material(t);
+    spheres.emplace_back(vec3 { 0, -1000, 0 }, 1000, m);
 
-    //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
+    // //spheres.push_back(sphere(vec3(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             // Based on a random variable , the material type is chosen
@@ -212,28 +218,28 @@ int main()
                 if (choose_mat < 0.8) {
                     // lambertian
                     auto albedo = randomvec3() * randomvec3();
-                    spheres.emplace_back(center, 0.2, material_t::Lambertian, albedo);
+                    //spheres.emplace_back(center, 0.2, material_t::Lambertian, albedo);
+                    spheres.emplace_back(center,0.2,lambertian_material(albedo));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = randomvec3(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
-                    spheres.emplace_back(center, 0.2, material_t::Metal, albedo, fuzz);
+                    //spheres.emplace_back(center, 0.2, material_t::Metal, albedo, fuzz);
+                    spheres.emplace_back(center, 0.2, metal_material(albedo,fuzz));
+                }else{
+                    //glass
+                    spheres.emplace_back(center,0.2,dielectric_material(1.5));
                 }
             }
         }
     }
 
     // Three large spheres of metal and lambertian material types
-    spheres.emplace_back(point3 { 4, 1, 2.25 }, 1, material_t::Metal, color(0.7, 0.6, 0.5), 0.0);
     t = image_texture("../RT_SYCL/Xilinx.jpg");
-    spheres.emplace_back(point3 { 4, 1, 0 }, 1, material_t::Lambertian, t);
-    t = image_texture("../RT_SYCL/Xilinx.jpg");
-    spheres.emplace_back(point3 { -4, 1, 0 }, 1, material_t::Lambertian, t);
-
-    // spheres.push_back(sphere(vec3(0.0, 0.0, -1.0), 0.5,material_t::Lambertian,color(0.1,0.2,0.5))); // (small) center sphere
-    // spheres.push_back(sphere(vec3(0.0, -100.5, -1.0), 100,material_t::Lambertian,color(0.2,0.2,0.2))); // (large) ground sphere
-    // spheres.push_back(sphere(vec3(-1.0, -0.05, -3), 0.5,material_t::Metal,color(0.8,0.8,0.8),0.1));
-    // spheres.push_back(sphere(vec3(1.0, -0.1, 3), 0.5,material_t::Metal,color(0.8,0.6,0.2),0.5));
+    spheres.emplace_back(point3 { 4, 1, 2.25 }, 1,lambertian_material(t));
+    spheres.emplace_back(point3 { 0, 1, 0 }, 1,dielectric_material(1.5));
+    spheres.emplace_back(point3 { -4, 1, 0 }, 1,lambertian_material(color(0.4,0.2,0.1)));
+    spheres.emplace_back(point3 { 4, 1, 0 }, 1, metal_material(color(0.7,0.6,0.5),0.0));
 
     // SYCL queue
     sycl::queue myQueue;
@@ -244,7 +250,7 @@ int main()
     camera cam;
 
     // Sycl render kernel
-    render<width, height, samples, num_spheres, class sphere>(myQueue, fb.data(), spheres.data());
+    render<width, height, samples, num_spheres>(myQueue, fb.data(), spheres.data());
 
     // Save image to file
     save_image<width, height>(fb.data());
