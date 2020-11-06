@@ -207,9 +207,8 @@ int main()
     // Generating a checkered ground and some random spheres
     texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
     material_t m = lambertian_material(t);
-    hittables.emplace_back(point{ 0, -1000, 0 }, 1000, m);
+    hittables.emplace_back(sphere(point{ 0, -1000, 0 }, 1000, m));
 
-    // //spheres.push_back(sphere(vec(0, -1000, 0), 1000, material_t::Lambertian, color(0.2, 0.2, 0.2)));
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             // Based on a random variable , the material type is chosen
@@ -220,15 +219,15 @@ int main()
                 if (choose_mat < 0.8) {
                     // lambertian
                     auto albedo = randomvec() * randomvec();
-                    hittables.emplace_back(center,0.2,lambertian_material(albedo));
+                    hittables.emplace_back(sphere(center,0.2,lambertian_material(albedo)));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = randomvec(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
-                    hittables.emplace_back(center, 0.2, metal_material(albedo,fuzz));
+                    hittables.emplace_back(sphere(center, 0.2, metal_material(albedo,fuzz)));
                 }else{
                     //glass
-                    hittables.emplace_back(center,0.2,dielectric_material(1.5));
+                    hittables.emplace_back(sphere(center,0.2,dielectric_material(1.5)));
                 }
             }
         }
@@ -236,10 +235,10 @@ int main()
 
     // Three large spheres of metal and lambertian material types
     t = image_texture("../RT_SYCL/Xilinx.jpg");
-    hittables.emplace_back(point { 4, 1, 2.25 }, 1,lambertian_material(t));
-    hittables.emplace_back(point { 0, 1, 0 }, 1,dielectric_material(1.5));
-    hittables.emplace_back(point { -4, 1, 0 }, 1,lambertian_material(color(0.4,0.2,0.1)));
-    hittables.emplace_back(point { 4, 1, 0 }, 1, metal_material(color(0.7,0.6,0.5),0.0));
+    hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1,lambertian_material(t)));
+    hittables.emplace_back(sphere(point { 0, 1, 0 }, 1,dielectric_material(1.5)));
+    hittables.emplace_back(sphere(point { -4, 1, 0 }, 1,lambertian_material(color(0.4,0.2,0.1))));
+    hittables.emplace_back(sphere(point { 4, 1, 0 }, 1, metal_material(color(0.7,0.6,0.5),0.0)));
 
     // SYCL queue
     sycl::queue myQueue;
