@@ -5,9 +5,10 @@
 #include "rtweekend.hpp"
 #include "texture.hpp"
 #include "material.hpp"
-#include "vec3.hpp"
+#include "vec.hpp"
 
 class xy_rect{
+public:
     xy_rect() = default;
 
     xy_rect(double _x0, double _x1, double _y0, double _y1, double _k,material_t mat_type)
@@ -34,7 +35,7 @@ class xy_rect{
         rec.v = (y - y0) / (y1 - y0);
         rec.t = t;
         rec.p = r.at(rec.t);
-        vec3 outward_normal = vec3(0,0,1);
+        vec outward_normal = vec(0,0,1);
         rec.set_face_normal(r,outward_normal);
         return true;
     }

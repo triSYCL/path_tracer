@@ -1,6 +1,6 @@
 #ifndef RT_SYCL_TEXTURE_HPP
 #define RT_SYCL_TEXTURE_HPP
-#include "vec3.hpp"
+#include "vec.hpp"
 #include <iostream>
 #include <variant>
 #include <vector>
@@ -20,7 +20,7 @@ struct solid_texture {
     {
     }
     // For solid texture, the color is same throughout the sphere
-    color value(double u, double v, const vec3& p) const
+    color value(double u, double v, const color& p) const
     {
         return color_value;
     }
@@ -44,7 +44,7 @@ struct checker_texture {
     {
     }
     // Color value is different based on normalised spherical coordinates
-    color value(double u, double v, const point3& p) const
+    color value(double u, double v, const point& p) const
     {
         auto sines = sin(10 * p.x()) * sin(10 * p.y()) * sin(10 * p.z());
         if (sines < 0)
@@ -79,7 +79,7 @@ struct image_texture {
 
         bytes_per_scanline = bytes_per_pixel * width;
     }
-    color value(double u, double v, const point3& p) const
+    color value(double u, double v, const point& p) const
     {
         // If texture data is unavailable return solid cyan
         if (data == nullptr)
