@@ -3,16 +3,17 @@
 
 #include "ray.hpp"
 #include "rtweekend.hpp"
-#include "texture.hpp"
 #include "vec.hpp"
 
 class hit_record {
 public:
-    double t;
-    point p;
-    vec normal;
-    bool front_face;
-    double u;
+    double t; //
+    point p; // hit point
+    vec normal; // normal at hit point
+    bool front_face; // to check if hit point is on the outer surface
+    /*local coordinates for rectangles 
+    and mercator coordintes for spheres */
+    double u; 
     double v;
 
     // To set if the hit point is on the front face  

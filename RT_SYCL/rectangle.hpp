@@ -11,7 +11,7 @@ class xy_rect{
 public:
     xy_rect() = default;
 
-    xy_rect(double _x0, double _x1, double _y0, double _y1, double _k,material_t mat_type)
+    xy_rect(real_t _x0, real_t _x1, real_t _y0, real_t _y1, real_t _k,material_t mat_type)
     : x0 { _x0 }
     , x1 { _x1 }
     , y0 { _y0 }
