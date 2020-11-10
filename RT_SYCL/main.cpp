@@ -15,6 +15,7 @@
 #include "material.hpp"
 #include "sphere.hpp"
 #include "rectangle.hpp"
+#include "triangle.hpp"
 #include "ray.hpp"
 #include "rtweekend.hpp"
 #include "texture.hpp"
@@ -91,16 +92,18 @@ private:
         ray cur_ray = r;
         color cur_attenuation{1.0, 1.0, 1.0};
         ray scattered;
+        color emitted;
         material_t material_type;
         for (auto i = 0; i < max_depth; i++) {
             hit_record rec;
             if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, hittables,material_type)) {
-                if(std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)){
+                emitted = std::visit([&](auto&& arg) { return arg.emitted(rec); }, material_type);
+                if (std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)) {
                     // On hitting the sphere, the ray gets scattered
                     cur_ray = scattered;
                 } else {
                     // Ray did not get scattered or reflected
-                    return color{0.0, 0.0, 0.0};
+                    return emitted;
                 }
             } else {
                 /* If ray doesn't hit anything during iteration linearly blend white and 
@@ -110,7 +113,7 @@ private:
                 vec unit_direction = unit_vector(cur_ray.direction());
                 auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
                 color c = (1.0 - hit_pt) * color{1.0, 1.0, 1.0} + hit_pt * color{0.5, 0.7, 1.0};
-                return cur_attenuation * c;
+                return emitted + cur_attenuation * c;
             }
         }
         // If not returned within max_depth return black
@@ -200,7 +203,7 @@ int main()
     constexpr auto width = 800;
     constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
-    constexpr auto num_hittables = 487;
+    constexpr auto num_hittables = 489;
     constexpr auto samples = 100;
     std::vector<hittable_t> hittables;
 
@@ -208,6 +211,7 @@ int main()
     texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
     material_t m = lambertian_material(t);
     hittables.emplace_back(sphere(point{ 0, -1000, 0 }, 1000, m));
+    t = checker_texture(color { 0.9, 0.9, 0.9 }, color { 0.4, 0.2, 0.1 });
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
@@ -233,12 +237,14 @@ int main()
         }
     }
 
+    hittables.emplace_back(xy_rect(2,4,0,1,-1,lambertian_material(t)));
+    hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(1.18, 1.12, 1))));
     // Three large spheres of metal and lambertian material types
     t = image_texture("../RT_SYCL/Xilinx.jpg");
     hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1,lambertian_material(t)));
     hittables.emplace_back(sphere(point { 0, 1, 0 }, 1,dielectric_material(1.5)));
     hittables.emplace_back(sphere(point { -4, 1, 0 }, 1,lambertian_material(color(0.4,0.2,0.1))));
-    hittables.emplace_back(sphere(point { 4, 1, 0 }, 1, metal_material(color(0.7,0.6,0.5),0.0)));
+    hittables.emplace_back(sphere(point { 0, 1, -2.25 }, 1, metal_material(color(0.7,0.6,0.5),0.0)));
 
     // SYCL queue
     sycl::queue myQueue;
