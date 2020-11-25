@@ -22,7 +22,7 @@
 #include "vec.hpp"
 
 using int_type = std::uint32_t;
-using hittable_t = std::variant<sphere,xy_rect>;
+using hittable_t = std::variant<sphere,xy_rect,triangle>;
 namespace constants {
 static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
@@ -203,7 +203,7 @@ int main()
     constexpr auto width = 800;
     constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
-    constexpr auto num_hittables = 489;
+    constexpr auto num_hittables = 490;
     constexpr auto samples = 100;
     std::vector<hittable_t> hittables;
 
@@ -238,7 +238,8 @@ int main()
     }
 
     hittables.emplace_back(xy_rect(2,4,0,1,-1,lambertian_material(t)));
-    hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(1.18, 1.12, 1))));
+    hittables.emplace_back(triangle(point{4.5,0.5,0.25},point{4.5,0.75,0},point{4.5,0.5,-0.25},lambertian_material(color(0.0,0.0,1))));
+    hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(10, 0, 10))));
     // Three large spheres of metal and lambertian material types
     t = image_texture("../RT_SYCL/Xilinx.jpg");
     hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1,lambertian_material(t)));

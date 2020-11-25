@@ -22,7 +22,7 @@ public:
     {
         hit_material_type = material_type;
 
-        // Get triangle edge vectors and plae normal
+        // Get triangle edge vectors and plane normal
         auto u = v1-v0;
         auto v = v2-v0;
         vec outward_normal = sycl::cross(u, v);
@@ -39,7 +39,7 @@ public:
         else if (length < min || length > max)
             return false;
 
-        vec hit_pt = r.at(rec.t);
+        vec hit_pt = r.at(length);
         auto uu = sycl::dot(u, u);
         auto uv = sycl::dot(u, v);
         auto vv = sycl::dot(v, v);
