@@ -6,13 +6,13 @@
 #include "texture.hpp"
 //#include"hitable.hpp"
 #include "material.hpp"
-#include "vec3.hpp"
+#include "vec.hpp"
 
 
 /* Computes normalised values of theta and phi. The input vector p
 corresponds to a vector passing through the centre of the a sphere 
 and the hipoint on the surface of the sphere */
-std::pair<double,double> mercator_coordinates(const vec3& p)
+std::pair<double,double> mercator_coordinates(const vec& p)
 {
     // phi is the angle around the axis
     auto phi = atan2(p.z(), p.x());
@@ -30,7 +30,7 @@ class sphere {
 public:
     sphere() = default;
 
-    sphere(const vec3& cen, real_t r, material_t mat_type)
+    sphere(const point& cen, real_t r, material_t mat_type)
         : center { cen }
         , radius { r }
         , material_type { mat_type }
@@ -45,7 +45,7 @@ public:
         (A+tb−C)⋅(A+tb−C)=r^2
         (t^2)b⋅b + 2tb⋅(A−C) + (A−C)⋅(A−C)−r^2 = 0
         There can 0 or 1 or 2 real roots*/
-        vec3 oc = r.origin() - center; // oc = A-C
+        vec oc = r.origin() - center; // oc = A-C
         auto a = sycl::dot(r.direction(), r.direction());
         auto b = sycl::dot(oc, r.direction());
         auto c = sycl::dot(oc, oc) - radius * radius;
@@ -58,7 +58,7 @@ public:
                 rec.t = temp;
                 // Ray hits the sphere at p
                 rec.p = r.at(rec.t);
-                vec3 outward_normal = (rec.p - center) / radius;
+                vec outward_normal = (rec.p - center) / radius;
                 // To set if hit point is on the front face and the outward normal in rec
                 rec.set_face_normal(r,outward_normal);
                 /* Update u and v values in the hit record. Normal of a
@@ -74,7 +74,7 @@ public:
                 // Ray hits the sphere at p
                 rec.p = r.at(rec.t);
                 //rec.normal = (rec.p - center) / radius;
-                vec3 outward_normal = (rec.p - center) / radius;
+                vec outward_normal = (rec.p - center) / radius;
                 rec.set_face_normal(r,outward_normal);
                 // Update u and v values in the hit record
                 std::tie(rec.u, rec.v) = mercator_coordinates(rec.normal);
@@ -86,7 +86,7 @@ public:
     }
 
     // Geometry properties
-    vec3 center;
+    point center;
     real_t radius;
 
     // Material properties

@@ -1,6 +1,7 @@
 #ifndef RT_SYCL_TEXTURE_HPP
 #define RT_SYCL_TEXTURE_HPP
-#include "vec3.hpp"
+#include "vec.hpp"
+#include "hitable.hpp"
 #include <iostream>
 #include <variant>
 #include <vector>
@@ -20,7 +21,7 @@ struct solid_texture {
     {
     }
     // For solid texture, the color is same throughout the sphere
-    color value(double u, double v, const vec3& p) const
+    color value(const hit_record& rec) const
     {
         return color_value;
     }
@@ -44,13 +45,13 @@ struct checker_texture {
     {
     }
     // Color value is different based on normalised spherical coordinates
-    color value(double u, double v, const point3& p) const
+    color value(const hit_record& rec) const
     {
-        auto sines = sin(10 * p.x()) * sin(10 * p.y()) * sin(10 * p.z());
+        auto sines = sin(10 * rec.p.x()) * sin(10 * rec.p.y()) * sin(10 * rec.p.z());
         if (sines < 0)
-            return odd.value(u, v, p);
+            return odd.value(rec);
         else
-            return even.value(u, v, p);
+            return even.value(rec);
     }
     solid_texture odd;
     solid_texture even;
@@ -79,14 +80,14 @@ struct image_texture {
 
         bytes_per_scanline = bytes_per_pixel * width;
     }
-    color value(double u, double v, const point3& p) const
+    color value(const hit_record& rec) const
     {
         // If texture data is unavailable return solid cyan
         if (data == nullptr)
             return { 0, 1, 1 };
 
-        u = std::clamp(u, 0.0, 1.0);
-        v = 1.0 - std::clamp(v, 0.0, 1.0);
+        auto u = std::clamp(rec.u, 0.0, 1.0);
+        auto v = 1.0 - std::clamp(rec.v, 0.0, 1.0);
 
         auto i = static_cast<int>(u * width);
         auto j = static_cast<int>(v * height);

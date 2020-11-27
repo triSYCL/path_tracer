@@ -1,7 +1,8 @@
 #ifndef RT_SYCL_MATERIAL_HPP
 #define RT_SYCL_MATERIAL_HPP
 #include "hitable.hpp"
-#include "vec3.hpp"
+#include "texture.hpp"
+#include "vec.hpp"
 #include <iostream>
 #include <variant>
 #include <vector>
@@ -18,10 +19,13 @@ struct lambertian_material {
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
-        vec3 scatter_direction = rec.normal + random_unit_vector();
+        vec scatter_direction = rec.normal + random_unit_vector();
         scattered = ray(rec.p, scatter_direction);
-        attenuation = std::visit([&](auto&& arg) { return arg.value(rec.u, rec.v, rec.p); },albedo);
+        attenuation = std::visit([&](auto&& arg) { return arg.value(rec); },albedo);
         return true;
+    }
+    color emitted( const hit_record& rec){
+        return color(0,0,0);
     }
     texture_t albedo;
 };
@@ -36,10 +40,14 @@ struct metal_material {
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
-        vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
+        vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
         scattered = ray(rec.p, reflected + fuzz*random_in_unit_sphere());
         attenuation = albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
+    }
+
+    color emitted( const hit_record& rec){
+        return color(0,0,0);
     }
     color albedo;
     double fuzz;
@@ -53,11 +61,11 @@ struct dielectric_material{
     {
         attenuation = color{0.1,0.1,0.1};
         double refraction_ratio = rec.front_face ? (1.0/ref_idx) : ref_idx;
-        vec3 unit_direction = unit_vector(r_in.direction());
+        vec unit_direction = unit_vector(r_in.direction());
         double cos_theta = sycl::fmin(sycl::dot(-unit_direction,rec.normal),1.0);
         double sin_theta = sycl::sqrt(1.0 - cos_theta*cos_theta);
         bool cannot_refract = refraction_ratio * sin_theta > 1.0;
-        vec3 direction;
+        vec direction;
         if(cannot_refract)
             direction = reflect(unit_direction, rec.normal);
         else
@@ -66,9 +74,34 @@ struct dielectric_material{
         scattered = ray(rec.p, direction);
         return true;
     }
+
+    color emitted( const hit_record& rec){
+        return color(0,0,0);
+    }
     double ref_idx;
 };
 
-using material_t = std::variant<lambertian_material, metal_material, dielectric_material>;
+struct lightsource_material{
+    lightsource_material() = default;
+    lightsource_material(texture_t& a) 
+        : emit { a }
+    {}
+    lightsource_material(const color& a)
+        : emit { solid_texture{ a } }
+    {}
+
+    bool scatter( const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
+    {
+        return false;
+    }
+
+    color emitted( const hit_record& rec){
+        return std::visit([&](auto&& arg) { return arg.value(rec); },emit);
+    }
+
+    texture_t emit;
+};
+
+using material_t = std::variant<lambertian_material, metal_material, dielectric_material,lightsource_material>;
 
 #endif
