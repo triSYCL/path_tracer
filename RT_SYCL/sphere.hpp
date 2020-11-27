@@ -1,18 +1,16 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include "material.hpp"
 #include "ray.hpp"
 #include "rtweekend.hpp"
 #include "texture.hpp"
-//#include"hitable.hpp"
-#include "material.hpp"
 #include "vec.hpp"
-
 
 /* Computes normalised values of theta and phi. The input vector p
 corresponds to a vector passing through the centre of the a sphere 
 and the hipoint on the surface of the sphere */
-std::pair<double,double> mercator_coordinates(const vec& p)
+std::pair<double, double> mercator_coordinates(const vec& p)
 {
     // phi is the angle around the axis
     auto phi = atan2(p.z(), p.x());
@@ -34,12 +32,13 @@ public:
         : center { cen }
         , radius { r }
         , material_type { mat_type }
-    {}
+    {
+    }
 
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
     {
         hit_material_type = material_type;
-        
+
         /*(P(t)-C).(P(t)-C)=r^2
         in the above sphere equation P(t) is the point on sphere hit by the ray
         (A+tb−C)⋅(A+tb−C)=r^2
@@ -60,7 +59,7 @@ public:
                 rec.p = r.at(rec.t);
                 vec outward_normal = (rec.p - center) / radius;
                 // To set if hit point is on the front face and the outward normal in rec
-                rec.set_face_normal(r,outward_normal);
+                rec.set_face_normal(r, outward_normal);
                 /* Update u and v values in the hit record. Normal of a
                 point is calculated as above. This vector is used to also 
                 used to get the mercator coordinates of the hitpoint.*/
@@ -75,7 +74,7 @@ public:
                 rec.p = r.at(rec.t);
                 //rec.normal = (rec.p - center) / radius;
                 vec outward_normal = (rec.p - center) / radius;
-                rec.set_face_normal(r,outward_normal);
+                rec.set_face_normal(r, outward_normal);
                 // Update u and v values in the hit record
                 std::tie(rec.u, rec.v) = mercator_coordinates(rec.normal);
                 return true;
