@@ -13,16 +13,16 @@
 #include "camera.hpp"
 #include "hitable.hpp"
 #include "material.hpp"
-#include "sphere.hpp"
-#include "rectangle.hpp"
-#include "triangle.hpp"
 #include "ray.hpp"
+#include "rectangle.hpp"
 #include "rtweekend.hpp"
+#include "sphere.hpp"
 #include "texture.hpp"
+#include "triangle.hpp"
 #include "vec.hpp"
 
 using int_type = std::uint32_t;
-using hittable_t = std::variant<sphere,xy_rect,triangle>;
+using hittable_t = std::variant<sphere, xy_rect, triangle>;
 namespace constants {
 static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
@@ -77,7 +77,7 @@ private:
         // Checking if the ray hits any of the spheres
         for (auto i = 0; i < num_hittables; i++) {
             //if (hittables[i].hit(r, min, closest_so_far, temp_rec, temp_material_type)) {
-            if (std::visit([&](auto&& arg){return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type);},hittables[i])){
+            if (std::visit([&](auto&& arg) { return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type); }, hittables[i])) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 rec = temp_rec;
@@ -90,13 +90,13 @@ private:
     color get_color(const ray& r, hittable_t* hittables, int max_depth)
     {
         ray cur_ray = r;
-        color cur_attenuation{1.0, 1.0, 1.0};
+        color cur_attenuation { 1.0, 1.0, 1.0 };
         ray scattered;
         color emitted;
         material_t material_type;
         for (auto i = 0; i < max_depth; i++) {
             hit_record rec;
-            if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, hittables,material_type)) {
+            if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, hittables, material_type)) {
                 emitted = std::visit([&](auto&& arg) { return arg.emitted(rec); }, material_type);
                 if (std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)) {
                     // On hitting the sphere, the ray gets scattered
@@ -112,12 +112,12 @@ private:
                 and 1. This produces a blue to white gradient in the background */
                 vec unit_direction = unit_vector(cur_ray.direction());
                 auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
-                color c = (1.0 - hit_pt) * color{1.0, 1.0, 1.0} + hit_pt * color{0.5, 0.7, 1.0};
+                color c = (1.0 - hit_pt) * color { 1.0, 1.0, 1.0 } + hit_pt * color { 0.5, 0.7, 1.0 };
                 return emitted + cur_attenuation * c;
             }
         }
         // If not returned within max_depth return black
-        return color{0.0, 0.0, 0.0};
+        return color { 0.0, 0.0, 0.0 };
     }
 
     /* Computes ray from camera passing through 
@@ -210,7 +210,7 @@ int main()
     // Generating a checkered ground and some random spheres
     texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
     material_t m = lambertian_material(t);
-    hittables.emplace_back(sphere(point{ 0, -1000, 0 }, 1000, m));
+    hittables.emplace_back(sphere(point { 0, -1000, 0 }, 1000, m));
     t = checker_texture(color { 0.9, 0.9, 0.9 }, color { 0.4, 0.2, 0.1 });
 
     for (int a = -11; a < 11; a++) {
@@ -223,29 +223,29 @@ int main()
                 if (choose_mat < 0.8) {
                     // lambertian
                     auto albedo = randomvec() * randomvec();
-                    hittables.emplace_back(sphere(center,0.2,lambertian_material(albedo)));
+                    hittables.emplace_back(sphere(center, 0.2, lambertian_material(albedo)));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = randomvec(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
-                    hittables.emplace_back(sphere(center, 0.2, metal_material(albedo,fuzz)));
-                }else{
+                    hittables.emplace_back(sphere(center, 0.2, metal_material(albedo, fuzz)));
+                } else {
                     //glass
-                    hittables.emplace_back(sphere(center,0.2,dielectric_material(1.5)));
+                    hittables.emplace_back(sphere(center, 0.2, dielectric_material(1.5)));
                 }
             }
         }
     }
 
-    hittables.emplace_back(xy_rect(2,4,0,1,-1,lambertian_material(t)));
-    hittables.emplace_back(triangle(point{4.5,0.5,0.25},point{4.5,0.75,0},point{4.5,0.5,-0.25},lambertian_material(color(0.0,0.0,1))));
+    hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
+    hittables.emplace_back(triangle(point { 4.5, 0.5, 0.25 }, point { 4.5, 0.75, 0 }, point { 4.5, 0.5, -0.25 }, lambertian_material(color(0.0, 0.0, 1))));
     hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(10, 0, 10))));
     // Three large spheres of metal and lambertian material types
     t = image_texture("../RT_SYCL/Xilinx.jpg");
-    hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1,lambertian_material(t)));
-    hittables.emplace_back(sphere(point { 0, 1, 0 }, 1,dielectric_material(1.5)));
-    hittables.emplace_back(sphere(point { -4, 1, 0 }, 1,lambertian_material(color(0.4,0.2,0.1))));
-    hittables.emplace_back(sphere(point { 0, 1, -2.25 }, 1, metal_material(color(0.7,0.6,0.5),0.0)));
+    hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1, lambertian_material(t)));
+    hittables.emplace_back(sphere(point { 0, 1, 0 }, 1, dielectric_material(1.5)));
+    hittables.emplace_back(sphere(point { -4, 1, 0 }, 1, lambertian_material(color(0.4, 0.2, 0.1))));
+    hittables.emplace_back(sphere(point { 0, 1, -2.25 }, 1, metal_material(color(0.7, 0.6, 0.5), 0.0)));
 
     // SYCL queue
     sycl::queue myQueue;
