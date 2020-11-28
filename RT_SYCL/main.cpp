@@ -34,7 +34,6 @@ int main()
     constexpr auto width = 800;
     constexpr auto height = 480;
     constexpr auto num_pixels = width * height;
-    constexpr auto num_hittables = 493;
     constexpr auto samples = 100;
     std::vector<hittable_t> hittables;
 
@@ -94,7 +93,7 @@ int main()
     camera cam;
 
     // Sycl render kernel
-    render<width, height, samples, num_hittables>(myQueue, fb.data(), hittables.data());
+    render<width, height, samples>(myQueue, fb.data(), hittables.data(), hittables.size());
 
     // Save image to file
     save_image<width, height>(fb.data());

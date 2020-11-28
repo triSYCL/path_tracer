@@ -16,13 +16,14 @@ static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
 }
 
-template <int width, int height, int samples, int depth, int num_hittables>
+template <int width, int height, int samples, int depth>
 class render_kernel {
 public:
     render_kernel(sycl::accessor<color, 1, sycl::access::mode::write, sycl::access::target::global_buffer> frame_ptr,
-        sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> hitable_ptr)
+        sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> hitable_ptr, int num_hittables)
         : m_frame_ptr { frame_ptr }
         , m_hitable_ptr { hitable_ptr }
+        , num_hittables { num_hittables }
     {
     }
 
@@ -143,11 +144,12 @@ private:
     // Accessor objects
     sycl::accessor<color, 1, sycl::access::mode::write, sycl::access::target::global_buffer> m_frame_ptr;
     sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
+    int num_hittables;
 };
 
 // Render function to call the render kernel
-template <int width, int height, int samples, int num_hittables>
-void render(sycl::queue queue, color* fb_data, const hittable_t* hittables)
+template <int width, int height, int samples>
+void render(sycl::queue queue, color* fb_data, const hittable_t* hittables, int num_hittables)
 {
     constexpr auto num_pixels = width * height;
     auto const depth = 50;
@@ -163,7 +165,7 @@ void render(sycl::queue queue, color* fb_data, const hittable_t* hittables)
         const auto local = sycl::range<2>(constants::TileX, constants::TileY);
         const auto index_space = sycl::nd_range<2>(global, local);
         // Construct kernel functor
-        auto render_func = render_kernel<width, height, samples, depth, num_hittables>(frame_ptr, hittables_ptr);
+        auto render_func = render_kernel<width, height, samples, depth>(frame_ptr, hittables_ptr, num_hittables);
         // Execute kernel
         cgh.parallel_for(index_space, render_func);
     });
