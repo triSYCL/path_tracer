@@ -121,6 +121,7 @@ private:
         auto focal_length = 1.0;
         point look_from = { 13, 2, 3 };
         auto focus_dist = 10;
+        auto aperature = 15;
 
         vec w = unit_vector(look_from - point(0, 0, 0));
         vec u = unit_vector(sycl::cross(vec(0, 1, 0), w));
@@ -131,7 +132,7 @@ private:
         horizontal = focus_dist * viewport_width * u;
         vertical = focus_dist * viewport_height * v;
         lower_left_corner = origin - horizontal / 2 - vertical / 2 - focus_dist * w;
-        auto lens_radius = 0.1 / 2;
+        auto lens_radius = 0.1 / aperature;
 
         vec rd = lens_radius * random_in_unit_disk();
         vec offset = u * rd.x() + v * rd.y();
@@ -149,7 +150,7 @@ template <int width, int height, int samples, int num_hittables>
 void render(sycl::queue queue, color* fb_data, const hittable_t* hittables)
 {
     constexpr auto num_pixels = width * height;
-    auto const depth = 5;
+    auto const depth = 50;
     auto frame_buf = sycl::buffer<color, 1>(fb_data, sycl::range<1>(num_pixels));
     auto hittables_buf = sycl::buffer<hittable_t, 1>(hittables, sycl::range<1>(num_hittables));
     // Submit command group on device
