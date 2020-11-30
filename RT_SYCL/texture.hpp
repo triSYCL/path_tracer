@@ -1,7 +1,7 @@
 #ifndef RT_SYCL_TEXTURE_HPP
 #define RT_SYCL_TEXTURE_HPP
-#include "vec.hpp"
 #include "hitable.hpp"
+#include "vec.hpp"
 #include <iostream>
 #include <variant>
 #include <vector>

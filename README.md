@@ -21,7 +21,7 @@ time RT_SYCL/sycl-rt >! result.ppm
 ```
 This results in the image ``result.ppm`` produced by the Ray Tracer.
 
-![img](doc/XilinxRect.jpg)
+![img](doc/pyramid.jpg)
 
 The following are the references that were tremendously useful in writing this project:
 
@@ -35,4 +35,5 @@ The following are the references that were tremendously useful in writing this p
     [Ray-tracing in a Weekend with SYCL - Part 2](https://www.codeplay.com/portal/blogs/2020/06/19/ray-tracing-in-a-weekend-with-sycl-part-2-pixel-sampling-and-material-tracing.html)
 
 3. [CppCon 2018: Mateusz Pusz “Effective replacement of dynamic polymorphism with std::variant”](https://www.youtube.com/watch?v=gKbORJtnVu8)
-3. [Runtime Polymorphism with std::variant and std::visit - Bartek](https://www.bfilipek.com/2020/04/variant-virtual-polymorphism.html)
+4. [Runtime Polymorphism with std::variant and std::visit - Bartek](https://www.bfilipek.com/2020/04/variant-virtual-polymorphism.html)
+5. [http://geomalgorithms.com/a06-_intersect-2.html](http://geomalgorithms.com/a06-_intersect-2.html)

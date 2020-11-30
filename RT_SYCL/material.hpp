@@ -10,22 +10,24 @@
 struct lambertian_material {
     lambertian_material() = default;
     lambertian_material(const color& a)
-        : albedo { solid_texture{ a } }
+        : albedo { solid_texture { a } }
     {
     }
-    lambertian_material( texture_t& a)
-        :albedo { a }
-    {}
+    lambertian_material(texture_t& a)
+        : albedo { a }
+    {
+    }
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
         vec scatter_direction = rec.normal + random_unit_vector();
         scattered = ray(rec.p, scatter_direction);
-        attenuation = std::visit([&](auto&& arg) { return arg.value(rec); },albedo);
+        attenuation = std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
         return true;
     }
-    color emitted( const hit_record& rec){
-        return color(0,0,0);
+    color emitted(const hit_record& rec)
+    {
+        return color(0, 0, 0);
     }
     texture_t albedo;
 };
@@ -41,32 +43,36 @@ struct metal_material {
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
         vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-        scattered = ray(rec.p, reflected + fuzz*random_in_unit_sphere());
+        scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
         attenuation = albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
     }
 
-    color emitted( const hit_record& rec){
-        return color(0,0,0);
+    color emitted(const hit_record& rec)
+    {
+        return color(0, 0, 0);
     }
     color albedo;
     double fuzz;
 };
 
-struct dielectric_material{
+struct dielectric_material {
     dielectric_material() = default;
-    dielectric_material(double ri) : ref_idx {ri}{}
+    dielectric_material(double ri)
+        : ref_idx { ri }
+    {
+    }
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
-        attenuation = color{0.1,0.1,0.1};
-        double refraction_ratio = rec.front_face ? (1.0/ref_idx) : ref_idx;
+        attenuation = color { 0.1, 0.1, 0.1 };
+        double refraction_ratio = rec.front_face ? (1.0 / ref_idx) : ref_idx;
         vec unit_direction = unit_vector(r_in.direction());
-        double cos_theta = sycl::fmin(sycl::dot(-unit_direction,rec.normal),1.0);
-        double sin_theta = sycl::sqrt(1.0 - cos_theta*cos_theta);
+        double cos_theta = sycl::fmin(sycl::dot(-unit_direction, rec.normal), 1.0);
+        double sin_theta = sycl::sqrt(1.0 - cos_theta * cos_theta);
         bool cannot_refract = refraction_ratio * sin_theta > 1.0;
         vec direction;
-        if(cannot_refract)
+        if (cannot_refract)
             direction = reflect(unit_direction, rec.normal);
         else
             direction = refract(unit_direction, rec.normal, refraction_ratio);
@@ -75,33 +81,37 @@ struct dielectric_material{
         return true;
     }
 
-    color emitted( const hit_record& rec){
-        return color(0,0,0);
+    color emitted(const hit_record& rec)
+    {
+        return color(0, 0, 0);
     }
     double ref_idx;
 };
 
-struct lightsource_material{
+struct lightsource_material {
     lightsource_material() = default;
-    lightsource_material(texture_t& a) 
+    lightsource_material(texture_t& a)
         : emit { a }
-    {}
+    {
+    }
     lightsource_material(const color& a)
-        : emit { solid_texture{ a } }
-    {}
+        : emit { solid_texture { a } }
+    {
+    }
 
-    bool scatter( const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
+    bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
         return false;
     }
 
-    color emitted( const hit_record& rec){
-        return std::visit([&](auto&& arg) { return arg.value(rec); },emit);
+    color emitted(const hit_record& rec)
+    {
+        return std::visit([&](auto&& arg) { return arg.value(rec); }, emit);
     }
 
     texture_t emit;
 };
 
-using material_t = std::variant<lambertian_material, metal_material, dielectric_material,lightsource_material>;
+using material_t = std::variant<lambertian_material, metal_material, dielectric_material, lightsource_material>;
 
 #endif
