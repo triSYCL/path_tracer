@@ -20,10 +20,12 @@ template <int width, int height, int samples, int depth>
 class render_kernel {
 public:
     render_kernel(sycl::accessor<color, 1, sycl::access::mode::write, sycl::access::target::global_buffer> frame_ptr,
-        sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> hitable_ptr, int num_hittables)
+        sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> hitable_ptr, int num_hittables,
+        sycl::accessor<camera, 1, sycl::access::mode::read, sycl::access::target::global_buffer> camera_ptr)
         : m_frame_ptr { frame_ptr }
         , m_hitable_ptr { hitable_ptr }
         , num_hittables { num_hittables }
+        , m_camera_ptr { camera_ptr }
     {
     }
 
@@ -35,12 +37,14 @@ public:
         // map the 2D indices to a single linear, 1D index
         const auto pixel_index = y_coord * width + x_coord;
 
+        auto camera = m_camera_ptr.get_pointer();
         // Color sampling for antialiasing
         color final_color(0.0, 0.0, 0.0);
         for (auto i = 0; i < samples; i++) {
             const auto u = (x_coord + random_double()) / width;
             const auto v = (y_coord + random_double()) / height;
             // u and v are points on the viewport
+            //ray r = camera->get_ray(u, v);
             ray r = get_ray(u, v);
             final_color += get_color(r, m_hitable_ptr.get_pointer(), depth);
         }
@@ -144,28 +148,31 @@ private:
     // Accessor objects
     sycl::accessor<color, 1, sycl::access::mode::write, sycl::access::target::global_buffer> m_frame_ptr;
     sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
+    sycl::accessor<camera, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_camera_ptr;
     int num_hittables;
 };
 
 // Render function to call the render kernel
 template <int width, int height, int samples>
-void render(sycl::queue queue, color* fb_data, const hittable_t* hittables, int num_hittables)
+void render(sycl::queue queue, color* fb_data, const hittable_t* hittables, int num_hittables, camera* cam)
 {
     constexpr auto num_pixels = width * height;
     auto const depth = 50;
     auto frame_buf = sycl::buffer<color, 1>(fb_data, sycl::range<1>(num_pixels));
     auto hittables_buf = sycl::buffer<hittable_t, 1>(hittables, sycl::range<1>(num_hittables));
+    auto camera_buf = sycl::buffer<camera, 1>(cam, sycl::range<1>(1));
     // Submit command group on device
     queue.submit([&](sycl::handler& cgh) {
         // Get memory access
         auto frame_ptr = frame_buf.get_access<sycl::access::mode::write>(cgh);
         auto hittables_ptr = hittables_buf.get_access<sycl::access::mode::read>(cgh);
+        auto camera_ptr = camera_buf.get_access<sycl::access::mode::read>(cgh);
         // Setup kernel index space
         const auto global = sycl::range<2>(width, height);
         const auto local = sycl::range<2>(constants::TileX, constants::TileY);
         const auto index_space = sycl::nd_range<2>(global, local);
         // Construct kernel functor
-        auto render_func = render_kernel<width, height, samples, depth>(frame_ptr, hittables_ptr, num_hittables);
+        auto render_func = render_kernel<width, height, samples, depth>(frame_ptr, hittables_ptr, num_hittables, camera_ptr);
         // Execute kernel
         cgh.parallel_for(index_space, render_func);
     });

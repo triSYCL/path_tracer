@@ -69,17 +69,21 @@ int main()
 
     // Pyramid
     hittables.emplace_back(triangle(point { 6.5, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 0.80 }, lambertian_material(color(0.68, 0.50, 0.1))));
-    hittables.emplace_back(triangle(point { 6.5, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 1.30 }, lambertian_material(color(0.89, 0.73, 0.29))));
-    hittables.emplace_back(triangle(point { 6.0, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 0.80 }, lambertian_material(color(0.0, 0.0, 1))));
-    hittables.emplace_back(triangle(point { 6.0, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 0.80 }, lambertian_material(color(0.0, 0.0, 1))));
+    hittables.emplace_back(triangle(point { 6.0, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 1.30 }, lambertian_material(color(0.89, 0.73, 0.29))));
+    hittables.emplace_back(triangle(point { 6.5, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 0.80 }, lambertian_material(color(0.0, 0.0, 1))));
+    hittables.emplace_back(triangle(point { 6.0, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 1.30 }, lambertian_material(color(0.0, 0.0, 1))));
+    // hittables.emplace_back(triangle(point { 6.5, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 0.80 }, metal_material(color(0.7, 0.6, 0.5), 0.0)));
+    // hittables.emplace_back(triangle(point { 6.0, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 1.30 }, metal_material(color(0.7, 0.6, 0.5), 0.0)));
+    // hittables.emplace_back(triangle(point { 6.5, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 0.80 }, metal_material(color(0.7, 0.6, 0.5), 0.0)));
+    // hittables.emplace_back(triangle(point { 6.0, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 1.30 }, metal_material(color(0.7, 0.6, 0.5), 0.0)));
 
     // Glowing ball
     hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(10, 0, 10))));
 
     // Four large spheres of metal, dielectric and lambertian material types
-    t = image_texture("../RT_SYCL/Xilinx.jpg");
-    hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
-    hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1, lambertian_material(t)));
+    //t = image_texture("../RT_SYCL/Xilinx.jpg");
+    //hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
+    //hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1, lambertian_material(t)));
     hittables.emplace_back(sphere(point { 0, 1, 0 }, 1, dielectric_material(1.5)));
     hittables.emplace_back(sphere(point { -4, 1, 0 }, 1, lambertian_material(color(0.4, 0.2, 0.1))));
     hittables.emplace_back(sphere(point { 0, 1, -2.25 }, 1, metal_material(color(0.7, 0.6, 0.5), 0.0)));
@@ -90,10 +94,18 @@ int main()
     // Allocate frame buffer on host
     std::vector<color> fb(num_pixels);
 
-    camera cam;
-
+    // camera setup
+    point look_from = { 13, 2, 3 };
+    point look_at = {0, 0, 0};
+    vec vup = {0, 1, 0};
+    real_t angle = 20;
+    real_t aperature = 15;
+    real_t focus_dist = 10;
+    camera cam(look_from, look_at, vup, angle, static_cast<real_t>(width)/ static_cast<real_t>(height), aperature, focus_dist);
+    cam.get_ray(2.1,3.1);
+    
     // Sycl render kernel
-    render<width, height, samples>(myQueue, fb.data(), hittables.data(), hittables.size());
+    render<width, height, samples>(myQueue, fb.data(), hittables.data(), hittables.size(), &cam);
 
     // Save image to file
     save_image<width, height>(fb.data());
