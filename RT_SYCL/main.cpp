@@ -105,7 +105,7 @@ int main()
     cam.get_ray(2.1,3.1);
     
     // Sycl render kernel
-    render<width, height, samples>(myQueue, fb.data(), hittables.data(), hittables.size(), &cam);
+    render<width, height, samples>(myQueue, fb.data(), hittables.data(), hittables.size(), cam);
 
     // Save image to file
     save_image<width, height>(fb.data());
