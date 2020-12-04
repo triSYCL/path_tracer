@@ -102,7 +102,6 @@ int main()
     real_t aperature = 15;
     real_t focus_dist = 10;
     camera cam(look_from, look_at, vup, angle, static_cast<real_t>(width) / static_cast<real_t>(height), aperature, focus_dist);
-    cam.get_ray(2.1, 3.1);
 
     // Sycl render kernel
     render<width, height, samples>(myQueue, fb.data(), hittables.data(), hittables.size(), cam);
