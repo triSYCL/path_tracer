@@ -53,7 +53,8 @@ struct checker_texture {
         else
             return even.value(rec);
     }
-    solid_texture odd, even;
+    solid_texture odd; 
+    solid_texture even;
 };
 
 // Takes input image as texture
