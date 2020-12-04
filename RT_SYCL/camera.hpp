@@ -86,6 +86,9 @@ public:
     lens_radius = aperture/2;
   }
 
+  /* Computes ray from camera passing through 
+    viewport local coordinates (s,t) based on viewport 
+    width, height and focus distance */
   ray get_ray(real_t s, real_t t) const {
     vec rd = lens_radius*random_in_unit_disk();
     vec offset = u * rd.x() + v * rd.y();
