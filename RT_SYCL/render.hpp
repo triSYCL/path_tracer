@@ -67,7 +67,6 @@ private:
         auto closest_so_far = max;
         // Checking if the ray hits any of the spheres
         for (auto i = 0; i < num_hittables; i++) {
-            //if (hittables[i].hit(r, min, closest_so_far, temp_rec, temp_material_type)) {
             if (std::visit([&](auto&& arg) { return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type); }, hittables[i])) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
@@ -78,6 +77,7 @@ private:
         return hit_anything;
     }
 
+    /// Compute the color of the ray 
     color get_color(const ray& r, hittable_t* hittables, int max_depth)
     {
         ray cur_ray = r;
@@ -97,10 +97,12 @@ private:
                     return emitted;
                 }
             } else {
-                /* If ray doesn't hit anything during iteration linearly blend white and 
-                blue color depending on the height of the y coordinate after scaling the 
-                ray direction to unit length. While -1.0 < y < 1.0, hit_pt is between 0 
-                and 1. This produces a blue to white gradient in the background */
+                /**
+                 * If ray doesn't hit anything during iteration linearly blend white and 
+                 * blue color depending on the height of the y coordinate after scaling the 
+                 * ray direction to unit length. While -1.0 < y < 1.0, hit_pt is between 0 
+                 * and 1. This produces a blue to white gradient in the background 
+                */
                 vec unit_direction = unit_vector(cur_ray.direction());
                 auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
                 color c = (1.0 - hit_pt) * color { 1.0, 1.0, 1.0 } + hit_pt * color { 0.5, 0.7, 1.0 };
