@@ -30,7 +30,7 @@ public:
     vertical = focus_dist * viewport_height * v;
     lower_left_corner = origin - horizontal/2 - vertical/2 - focus_dist*w;
 
-    lens_radius = aperature / 2;
+    lens_radius = 0.1/aperature;
   }
 
   ray get_ray(real_t s, real_t t) const {
