@@ -33,8 +33,11 @@ int main()
     // Frame buffer dimensions
     constexpr auto width = 800;
     constexpr auto height = 480;
-    constexpr auto num_pixels = width * height;
-    constexpr auto samples = 100;
+
+    // Allocate frame buffer on host
+    std::vector<color> fb(width*height);
+
+    /// Graphical objects
     std::vector<hittable_t> hittables;
 
     // Generating a checkered ground and some random spheres
@@ -91,20 +94,30 @@ int main()
     // SYCL queue
     sycl::queue myQueue;
 
-    // Allocate frame buffer on host
-    std::vector<color> fb(num_pixels);
+    // Camera setup
+    /// Position of the camera
+    point look_from { 13, 2, 3 };
+    /// The center of the scene
+    point look_at { 0, 0, 0 };
+    // Make the camera oriented upwards
+    vec vup { 0, 1, 0 };
 
-    // camera setup
-    point look_from = { 13, 2, 3 };
-    point look_at = { 0, 0, 0 };
-    vec vup = { 0, 1, 0 };
-    real_t angle = 20;
-    real_t aperature = 15;
-    real_t focus_dist = 10;
-    camera cam(look_from, look_at, vup, angle, static_cast<real_t>(width) / static_cast<real_t>(height), aperature, focus_dist);
+    /// Vertical angle of view in degree
+    real_t angle = 30;
+    // Lens aperture. 0 if not depth-of-field
+    real_t aperture = 0.04;
+    // Make the focus on the point we are looking at
+    real_t focus_dist = length(look_at - look_from);
+    camera cam { look_from, look_at, vup, angle,
+                 static_cast<real_t>(width)/height,
+                 aperture, focus_dist };
 
-    // Sycl render kernel
-    render<width, height, samples>(myQueue, fb.data(), hittables.data(), hittables.size(), cam);
+    // Sample per pixel
+    constexpr auto samples = 100;
+
+    // SYCL render kernel
+    render<width, height, samples>(myQueue, fb.data(),
+                                   hittables.data(), hittables.size(), cam);
 
     // Save image to file
     save_image<width, height>(fb.data());
