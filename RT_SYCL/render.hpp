@@ -111,43 +111,12 @@ private:
         return color { 0.0, 0.0, 0.0 };
     }
 
-    /* Computes ray from camera passing through 
-    viewport local coordinates (s,t) based on viewport 
-    width, height and focus distance */
-    ray get_ray(real_t s, real_t t)
-    {
-        auto theta = degrees_to_radians(20);
-        auto h = tan(theta / 2);
-        auto aspect_ratio = 16.0 / 9.0;
-        auto viewport_height = 2.0 * h;
-        auto viewport_width = aspect_ratio * viewport_height;
-        auto focal_length = 1.0;
-        point look_from = { 13, 2, 3 };
-        auto focus_dist = 10;
-        auto aperature = 15;
-
-        vec w = unit_vector(look_from - point(0, 0, 0));
-        vec u = unit_vector(sycl::cross(vec(0, 1, 0), w));
-        vec v = sycl::cross(w, u);
-
-        // Camera arguments
-        origin = look_from;
-        horizontal = focus_dist * viewport_width * u;
-        vertical = focus_dist * viewport_height * v;
-        lower_left_corner = origin - horizontal / 2 - vertical / 2 - focus_dist * w;
-        auto lens_radius = 0.1 / aperature;
-
-        vec rd = lens_radius * random_in_unit_disk();
-        vec offset = u * rd.x() + v * rd.y();
-
-        return ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset);
-    }
-
     // Accessor objects
     sycl::accessor<color, 1, sycl::access::mode::write, sycl::access::target::global_buffer> m_frame_ptr;
     sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
-    camera m_camera;
     int num_hittables;
+    camera m_camera;
+    
 };
 
 // Render function to call the render kernel

@@ -40,8 +40,8 @@ struct checker_texture {
     {
     }
     checker_texture(color c1, color c2)
-        : even { solid_texture { c1 } }
-        , odd { solid_texture { c2 } }
+        : odd { solid_texture { c1 } }
+        , even { solid_texture { c2 } }
     {
     }
     // Color value is different based on normalised spherical coordinates
@@ -53,8 +53,7 @@ struct checker_texture {
         else
             return even.value(rec);
     }
-    solid_texture odd;
-    solid_texture even;
+    solid_texture odd, even;
 };
 
 // Takes input image as texture
