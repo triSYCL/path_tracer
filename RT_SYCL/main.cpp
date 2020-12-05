@@ -75,12 +75,12 @@ int main()
     hittables.emplace_back(triangle(point { 6.0, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 1.30 }, lambertian_material(color(0.89, 0.73, 0.29))));
     hittables.emplace_back(triangle(point { 6.5, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 0.80 }, lambertian_material(color(0.0, 0.0, 1))));
     hittables.emplace_back(triangle(point { 6.0, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 1.30 }, lambertian_material(color(0.0, 0.0, 1))));
-   
+
     // Glowing ball
     hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(10, 0, 10))));
 
     // Four large spheres of metal, dielectric and lambertian material types
-    t = image_texture("../RT_SYCL/Xilinx.jpg");
+    t = image_texture("../images/Xilinx.jpg");
     hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
     hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1, lambertian_material(t)));
     hittables.emplace_back(sphere(point { 0, 1, 0 }, 1, dielectric_material(1.5)));
