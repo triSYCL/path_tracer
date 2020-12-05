@@ -86,9 +86,7 @@ public:
     lens_radius = aperture/2;
   }
 
-  /** get_ray(s,t) 
-     
-      Computes ray from camera passing through 
+  /** Computes ray from camera passing through 
       viewport local coordinates (s,t) based on viewport 
       width, height and focus distance 
   */
