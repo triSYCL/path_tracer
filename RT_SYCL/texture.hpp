@@ -53,7 +53,7 @@ struct checker_texture {
         else
             return even.value(rec);
     }
-    solid_texture odd; 
+    solid_texture odd;
     solid_texture even;
 };
 
