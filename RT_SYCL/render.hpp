@@ -67,7 +67,6 @@ private:
         auto closest_so_far = max;
         // Checking if the ray hits any of the spheres
         for (auto i = 0; i < num_hittables; i++) {
-            //if (hittables[i].hit(r, min, closest_so_far, temp_rec, temp_material_type)) {
             if (std::visit([&](auto&& arg) { return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type); }, hittables[i])) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
@@ -78,6 +77,7 @@ private:
         return hit_anything;
     }
 
+    /// Compute the color of the ray 
     color get_color(const ray& r, hittable_t* hittables, int max_depth)
     {
         ray cur_ray = r;
@@ -97,10 +97,12 @@ private:
                     return emitted;
                 }
             } else {
-                /* If ray doesn't hit anything during iteration linearly blend white and 
-                blue color depending on the height of the y coordinate after scaling the 
-                ray direction to unit length. While -1.0 < y < 1.0, hit_pt is between 0 
-                and 1. This produces a blue to white gradient in the background */
+                /**
+                 * If ray doesn't hit anything during iteration linearly blend white and 
+                 * blue color depending on the height of the y coordinate after scaling the 
+                 * ray direction to unit length. While -1.0 < y < 1.0, hit_pt is between 0 
+                 * and 1. This produces a blue to white gradient in the background 
+                */
                 vec unit_direction = unit_vector(cur_ray.direction());
                 auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
                 color c = (1.0 - hit_pt) * color { 1.0, 1.0, 1.0 } + hit_pt * color { 0.5, 0.7, 1.0 };
@@ -111,43 +113,12 @@ private:
         return color { 0.0, 0.0, 0.0 };
     }
 
-    /* Computes ray from camera passing through 
-    viewport local coordinates (s,t) based on viewport 
-    width, height and focus distance */
-    ray get_ray(real_t s, real_t t)
-    {
-        auto theta = degrees_to_radians(20);
-        auto h = tan(theta / 2);
-        auto aspect_ratio = 16.0 / 9.0;
-        auto viewport_height = 2.0 * h;
-        auto viewport_width = aspect_ratio * viewport_height;
-        auto focal_length = 1.0;
-        point look_from = { 13, 2, 3 };
-        auto focus_dist = 10;
-        auto aperature = 15;
-
-        vec w = unit_vector(look_from - point(0, 0, 0));
-        vec u = unit_vector(sycl::cross(vec(0, 1, 0), w));
-        vec v = sycl::cross(w, u);
-
-        // Camera arguments
-        origin = look_from;
-        horizontal = focus_dist * viewport_width * u;
-        vertical = focus_dist * viewport_height * v;
-        lower_left_corner = origin - horizontal / 2 - vertical / 2 - focus_dist * w;
-        auto lens_radius = 0.1 / aperature;
-
-        vec rd = lens_radius * random_in_unit_disk();
-        vec offset = u * rd.x() + v * rd.y();
-
-        return ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset);
-    }
-
     // Accessor objects
     sycl::accessor<color, 1, sycl::access::mode::write, sycl::access::target::global_buffer> m_frame_ptr;
     sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
-    camera m_camera;
     int num_hittables;
+    camera m_camera;
+    
 };
 
 // Render function to call the render kernel

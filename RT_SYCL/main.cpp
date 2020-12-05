@@ -75,11 +75,7 @@ int main()
     hittables.emplace_back(triangle(point { 6.0, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 1.30 }, lambertian_material(color(0.89, 0.73, 0.29))));
     hittables.emplace_back(triangle(point { 6.5, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 0.80 }, lambertian_material(color(0.0, 0.0, 1))));
     hittables.emplace_back(triangle(point { 6.0, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 1.30 }, lambertian_material(color(0.0, 0.0, 1))));
-    // hittables.emplace_back(triangle(point { 6.5, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 0.80 }, metal_material(color(0.7, 0.6, 0.5), 0.0)));
-    // hittables.emplace_back(triangle(point { 6.0, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 1.30 }, metal_material(color(0.7, 0.6, 0.5), 0.0)));
-    // hittables.emplace_back(triangle(point { 6.5, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 0.80 }, metal_material(color(0.7, 0.6, 0.5), 0.0)));
-    // hittables.emplace_back(triangle(point { 6.0, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 1.30 }, metal_material(color(0.7, 0.6, 0.5), 0.0)));
-
+   
     // Glowing ball
     hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(10, 0, 10))));
 
