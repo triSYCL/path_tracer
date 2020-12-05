@@ -87,19 +87,25 @@ int main()
     hittables.emplace_back(sphere(point { -4, 1, 0 }, 1, lambertian_material(color(0.4, 0.2, 0.1))));
     hittables.emplace_back(sphere(point { 0, 1, -2.25 }, 1, metal_material(color(0.7, 0.6, 0.5), 0.0)));
 
+    t = image_texture { "../images/SYCL.png", 5 };
+
+    // Add a sphere with a SYCL logo in the background
+    hittables.emplace_back(sphere {  point { -60, 3, 5 }, 4,
+                                     lambertian_material { t } });
+
     // SYCL queue
     sycl::queue myQueue;
 
     // Camera setup
     /// Position of the camera
-    point look_from { 13, 2, 3 };
+    point look_from { 13, 3, 3 };
     /// The center of the scene
-    point look_at { 0, 0, 0 };
+    point look_at { 0, -1, 0 };
     // Make the camera oriented upwards
     vec vup { 0, 1, 0 };
 
     /// Vertical angle of view in degree
-    real_t angle = 30;
+    real_t angle = 40;
     // Lens aperture. 0 if not depth-of-field
     real_t aperture = 0.04;
     // Make the focus on the point we are looking at
