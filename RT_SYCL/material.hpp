@@ -13,7 +13,7 @@ struct lambertian_material {
         : albedo { solid_texture { a } }
     {
     }
-    lambertian_material(texture_t& a)
+    lambertian_material(const texture_t& a)
         : albedo { a }
     {
     }

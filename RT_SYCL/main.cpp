@@ -54,7 +54,7 @@ int main()
             point center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
             if (sycl::length((center - point(4, 0.2, 0))) > 0.9) {
                 if (choose_mat < 0.8) {
-                    // lambertian
+                    // Lambertian
                     auto albedo = randomvec() * randomvec();
                     hittables.emplace_back(sphere(center, 0.2, lambertian_material(albedo)));
                 } else if (choose_mat < 0.95) {
@@ -79,7 +79,7 @@ int main()
     // Glowing ball
     hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(10, 0, 10))));
 
-    // Four large spheres of metal, dielectric and lambertian material types
+    // Four large spheres of metal, dielectric and Lambertian material types
     t = image_texture("../images/Xilinx.jpg");
     hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
     hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1, lambertian_material(t)));
