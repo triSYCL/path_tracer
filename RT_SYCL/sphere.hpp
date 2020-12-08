@@ -8,7 +8,7 @@
 #include "vec.hpp"
 
 /* Computes normalised values of theta and phi. The input vector p
-corresponds to a vector passing through the centre of the a sphere 
+corresponds to a vector passing through the centre of the a sphere
 and the hipoint on the surface of the sphere */
 std::pair<double, double> mercator_coordinates(const vec& p)
 {
@@ -28,7 +28,7 @@ class sphere {
 public:
     sphere() = default;
 
-    sphere(const point& cen, real_t r, material_t mat_type)
+    sphere(const point& cen, real_t r, const material_t& mat_type)
         : center { cen }
         , radius { r }
         , material_type { mat_type }

@@ -2,6 +2,7 @@
 #define RT_SYCL_TEXTURE_HPP
 #include "hitable.hpp"
 #include "vec.hpp"
+#include <cmath>
 #include <iostream>
 #include <variant>
 #include <vector>
@@ -57,57 +58,60 @@ struct checker_texture {
     solid_texture even;
 };
 
-// Takes input image as texture
+/// A texture based on an image
 struct image_texture {
-    image_texture()
-        : data { nullptr }
-        , width { 0 }
-        , height { 0 }
-        , bytes_per_scanline { 0 }
-    {
+
+  unsigned char* data {};
+  int width {};
+  int height {};
+
+  /// The repetition rate of the image
+  float cyclic_frequency { 1 };
+
+  int bytes_per_scanline {};
+
+  static constexpr auto bytes_per_pixel = 3;
+
+  /** Create a texture from an image file
+
+      \param[in] file_name is the path name to the image file
+
+      \param[in] cyclic_frequency is an optional repetition rate of
+      the image in the texture
+  */
+  image_texture(const char* file_name, float cyclic_frequency = 1)
+  : cyclic_frequency { cyclic_frequency } {
+    auto components_per_pixel = bytes_per_pixel;
+    data = stbi_load(file_name, &width, &height, &components_per_pixel,
+                     bytes_per_pixel);
+
+    if (!data) {
+      std::cerr << "ERROR: Could not load texture image file '"
+                << file_name << "'.\n" << stbi_failure_reason() << std::endl;
+      width = height = 0;
     }
-    image_texture(const char* filename)
-    {
-        auto components_per_pixel = bytes_per_pixel;
-        data = stbi_load(
-            filename, &width, &height, &components_per_pixel, components_per_pixel);
+    // \todo deallocate the image memory in the constructor
 
-        if (!data) {
-            std::cerr << "ERROR: Could not load texture image file '" << filename << "'.\n";
-            std::cerr << stbi_failure_reason() << std::endl;
-            width = height = 0;
-        }
+    bytes_per_scanline = bytes_per_pixel*width;
+  }
 
-        bytes_per_scanline = bytes_per_pixel * width;
-    }
-    color value(const hit_record& rec) const
-    {
-        // If texture data is unavailable return solid cyan
-        if (data == nullptr)
-            return { 0, 1, 1 };
 
-        auto u = std::clamp(rec.u, 0.0, 1.0);
-        auto v = 1.0 - std::clamp(rec.v, 0.0, 1.0);
+  /// Get the color for the texture at the given place
+  /// \todo rename this value() to color() everywhere?
+  color value(const hit_record& rec) const  {
+    // If texture data is unavailable, return solid cyan
+    if (!data)
+      return { 0, 1, 1 };
 
-        auto i = static_cast<int>(u * width);
-        auto j = static_cast<int>(v * height);
+    // The image is repeated by the repetition factor
+    int i = std::fmod(rec.u*cyclic_frequency, 1)*(width - 1);
+    // The image frame buffer is going downwards, so flip the y axis
+    int j = (1 - std::fmod(rec.v*cyclic_frequency, 1))*(height - 1);
 
-        // Clamp integer mapping, since actual coordinates should be less than 1.0
-        if (i >= width)
-            i = width - 1;
-        if (j >= height)
-            j = height - 1;
-
-        const auto color_scale = 1.0 / 255.0;
-        auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
-
-        return { color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2] };
-    }
-    unsigned char* data;
-    int bytes_per_pixel = 3;
-    int width;
-    int height;
-    int bytes_per_scanline;
+    auto scale = 1.f/255;
+    auto pixel = data + j*bytes_per_scanline + i*bytes_per_pixel;
+    return { pixel[0]*scale, pixel[1]*scale, pixel[2]*scale };
+  }
 };
 
 using texture_t = std::variant<checker_texture, solid_texture, image_texture>;

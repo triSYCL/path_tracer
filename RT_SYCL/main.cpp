@@ -54,7 +54,7 @@ int main()
             point center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
             if (sycl::length((center - point(4, 0.2, 0))) > 0.9) {
                 if (choose_mat < 0.8) {
-                    // lambertian
+                    // Lambertian
                     auto albedo = randomvec() * randomvec();
                     hittables.emplace_back(sphere(center, 0.2, lambertian_material(albedo)));
                 } else if (choose_mat < 0.95) {
@@ -75,31 +75,37 @@ int main()
     hittables.emplace_back(triangle(point { 6.0, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 1.30 }, lambertian_material(color(0.89, 0.73, 0.29))));
     hittables.emplace_back(triangle(point { 6.5, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 0.80 }, lambertian_material(color(0.0, 0.0, 1))));
     hittables.emplace_back(triangle(point { 6.0, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 1.30 }, lambertian_material(color(0.0, 0.0, 1))));
-   
+
     // Glowing ball
     hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(10, 0, 10))));
 
-    // Four large spheres of metal, dielectric and lambertian material types
-    t = image_texture("../RT_SYCL/Xilinx.jpg");
+    // Four large spheres of metal, dielectric and Lambertian material types
+    t = image_texture("../images/Xilinx.jpg");
     hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
     hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1, lambertian_material(t)));
     hittables.emplace_back(sphere(point { 0, 1, 0 }, 1, dielectric_material(1.5)));
     hittables.emplace_back(sphere(point { -4, 1, 0 }, 1, lambertian_material(color(0.4, 0.2, 0.1))));
     hittables.emplace_back(sphere(point { 0, 1, -2.25 }, 1, metal_material(color(0.7, 0.6, 0.5), 0.0)));
 
+    t = image_texture { "../images/SYCL.png", 5 };
+
+    // Add a sphere with a SYCL logo in the background
+    hittables.emplace_back(sphere {  point { -60, 3, 5 }, 4,
+                                     lambertian_material { t } });
+
     // SYCL queue
     sycl::queue myQueue;
 
     // Camera setup
     /// Position of the camera
-    point look_from { 13, 2, 3 };
+    point look_from { 13, 3, 3 };
     /// The center of the scene
-    point look_at { 0, 0, 0 };
+    point look_at { 0, -1, 0 };
     // Make the camera oriented upwards
     vec vup { 0, 1, 0 };
 
     /// Vertical angle of view in degree
-    real_t angle = 30;
+    real_t angle = 40;
     // Lens aperture. 0 if not depth-of-field
     real_t aperture = 0.04;
     // Make the focus on the point we are looking at
