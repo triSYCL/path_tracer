@@ -22,7 +22,7 @@ struct lambertian_material {
     {
         vec scatter_direction = rec.normal + random_unit_vector();
         scattered = ray(rec.p, scatter_direction);
-        attenuation = std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
+        attenuation *= std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
         return true;
     }
     color emitted(const hit_record& rec)
@@ -44,7 +44,7 @@ struct metal_material {
     {
         vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
         scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
-        attenuation = albedo;
+        attenuation *= albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
     }
 
@@ -58,14 +58,15 @@ struct metal_material {
 
 struct dielectric_material {
     dielectric_material() = default;
-    dielectric_material(double ri)
+    dielectric_material(real_t ri, color albedo)
         : ref_idx { ri }
+        , albedo { albedo }
     {
     }
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
-        attenuation = color { 0.1, 0.1, 0.1 };
+        attenuation *= albedo;
         double refraction_ratio = rec.front_face ? (1.0 / ref_idx) : ref_idx;
         vec unit_direction = unit_vector(r_in.direction());
         double cos_theta = sycl::fmin(sycl::dot(-unit_direction, rec.normal), 1.0);
@@ -85,7 +86,10 @@ struct dielectric_material {
     {
         return color(0, 0, 0);
     }
-    double ref_idx;
+    // Refracive index of the glass
+    real_t ref_idx;
+    // Color of the glass
+    color albedo;
 };
 
 struct lightsource_material {

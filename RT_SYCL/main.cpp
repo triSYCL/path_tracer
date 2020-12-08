@@ -64,7 +64,7 @@ int main()
                     hittables.emplace_back(sphere(center, 0.2, metal_material(albedo, fuzz)));
                 } else {
                     //glass
-                    hittables.emplace_back(sphere(center, 0.2, dielectric_material(1.5)));
+                    hittables.emplace_back(sphere(center, 0.2, dielectric_material(1.5, color {1.0, 1.0, 1.0 })));
                 }
             }
         }
@@ -83,7 +83,7 @@ int main()
     t = image_texture("../RT_SYCL/Xilinx.jpg");
     hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
     hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1, lambertian_material(t)));
-    hittables.emplace_back(sphere(point { 0, 1, 0 }, 1, dielectric_material(1.5)));
+    hittables.emplace_back(sphere(point { 0, 1, 0 }, 1, dielectric_material(1.5, color {1.0, 0.5, 0.5 })));
     hittables.emplace_back(sphere(point { -4, 1, 0 }, 1, lambertian_material(color(0.4, 0.2, 0.1))));
     hittables.emplace_back(sphere(point { 0, 1, -2.25 }, 1, metal_material(color(0.7, 0.6, 0.5), 0.0)));
 
