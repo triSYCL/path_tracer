@@ -22,7 +22,8 @@ struct lambertian_material {
     {
         vec scatter_direction = rec.normal + random_unit_vector();
         scattered = ray(rec.p, scatter_direction);
-        attenuation = std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
+        // Attenuation of the ray hitting the object is modified based on the color at hit point
+        attenuation *= std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
         return true;
     }
     color emitted(const hit_record& rec)
@@ -44,7 +45,8 @@ struct metal_material {
     {
         vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
         scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
-        attenuation = albedo;
+        // Attenuation of the ray hitting the object is modified based on the color at hit point
+        attenuation *= albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
     }
 
@@ -58,21 +60,31 @@ struct metal_material {
 
 struct dielectric_material {
     dielectric_material() = default;
-    dielectric_material(double ri)
+    dielectric_material(real_t ri, color albedo)
         : ref_idx { ri }
+        , albedo { albedo }
     {
+    }
+
+    // Schlick's approximation for reflectance
+    real_t reflectance(real_t cosine, real_t ref_idx) const
+    {
+        auto r0 = (1-ref_idx) / (1+ref_idx);
+        r0 *= r0;
+        return r0 + (1 - r0) * sycl::pow((1 - cosine), 5.0);
     }
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
-        attenuation = color { 0.1, 0.1, 0.1 };
+        // Attenuation of the ray hitting the object is modified based on the color at hit point
+        attenuation *= albedo;
         double refraction_ratio = rec.front_face ? (1.0 / ref_idx) : ref_idx;
         vec unit_direction = unit_vector(r_in.direction());
         double cos_theta = sycl::fmin(sycl::dot(-unit_direction, rec.normal), 1.0);
         double sin_theta = sycl::sqrt(1.0 - cos_theta * cos_theta);
         bool cannot_refract = refraction_ratio * sin_theta > 1.0;
         vec direction;
-        if (cannot_refract)
+        if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double())
             direction = reflect(unit_direction, rec.normal);
         else
             direction = refract(unit_direction, rec.normal, refraction_ratio);
@@ -85,7 +97,10 @@ struct dielectric_material {
     {
         return color(0, 0, 0);
     }
-    double ref_idx;
+    // Refractive index of the glass
+    real_t ref_idx;
+    // Color of the glass
+    color albedo;
 };
 
 struct lightsource_material {
