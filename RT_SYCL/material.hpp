@@ -86,7 +86,7 @@ struct dielectric_material {
     {
         return color(0, 0, 0);
     }
-    // Refracive index of the glass
+    // Refractive index of the glass
     real_t ref_idx;
     // Color of the glass
     color albedo;
