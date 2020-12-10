@@ -10,7 +10,7 @@
 #include "vec.hpp"
 #include <SYCL/sycl.hpp>
 
-using hittable_t = std::variant<sphere, xy_rect, triangle>;
+using hittable_t = std::variant<sphere, moving_sphere, xy_rect, triangle>;
 namespace constants {
 static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
