@@ -53,10 +53,15 @@ int main()
             // Spheres are placed at a point randomly displaced from a,b
             point center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
             if (sycl::length((center - point(4, 0.2, 0))) > 0.9) {
-                if (choose_mat < 0.8) {
+                if (choose_mat < 0.4) {
                     // Lambertian
                     auto albedo = randomvec() * randomvec();
                     hittables.emplace_back(sphere(center, 0.2, lambertian_material(albedo)));
+                }else if(choose_mat < 0.8){
+                    // Lambertian movig spheres
+                    auto albedo = randomvec() * randomvec();
+                    auto center2 = center + point { 0, random_double(0, 0.25), 0 };
+                    hittables.emplace_back(moving_sphere(center, center2, 0.0, 1.0, 0.2, lambertian_material(albedo)));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = randomvec(0.5, 1);
@@ -112,7 +117,7 @@ int main()
     real_t focus_dist = length(look_at - look_from);
     camera cam { look_from, look_at, vup, angle,
                  static_cast<real_t>(width)/height,
-                 aperture, focus_dist };
+                 aperture, focus_dist, 0.0, 1.0 };
 
     // Sample per pixel
     constexpr auto samples = 100;
