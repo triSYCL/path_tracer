@@ -92,6 +92,9 @@ public:
     material_t material_type;
 };
 
+
+///Simulates moving spheres from center0 to 
+///center1 between time0 and time1
 class moving_sphere {
 public:
     moving_sphere() = default;
@@ -105,6 +108,8 @@ public:
         {
         }
 
+    /// Computes center of the sphere based on 
+    /// the time information stored in the ray
     point center(real_t time) const
     {
         return center0 + ((time - time0) / (time1 - time0)) * (center1 - center0);

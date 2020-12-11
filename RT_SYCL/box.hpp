@@ -12,6 +12,7 @@ public:
         , box_max { p1 }
         , material_type { mat_type }
         {
+            /// Add six sides of the box based on box_min and box_max to sides
             sides.emplace_back(xy_rect(p0.x(), p1.x(), p0.y(), p1.y(), p1.z(), mat_type));
             sides.emplace_back(xy_rect(p0.x(), p1.x(), p0.y(), p1.y(), p0.z(), mat_type));
             sides.emplace_back(xz_rect(p0.x(), p1.x(), p0.z(), p1.z(), p1.y(), mat_type));
