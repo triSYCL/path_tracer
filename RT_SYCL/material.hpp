@@ -4,8 +4,7 @@
 #include "texture.hpp"
 #include "vec.hpp"
 #include <iostream>
-#include <variant>
-#include <vector>
+
 
 struct lambertian_material {
     lambertian_material() = default;
@@ -21,7 +20,7 @@ struct lambertian_material {
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
         vec scatter_direction = rec.normal + random_unit_vector();
-        scattered = ray(rec.p, scatter_direction);
+        scattered = ray(rec.p, scatter_direction, r_in.time());
         // Attenuation of the ray hitting the object is modified based on the color at hit point
         attenuation *= std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
         return true;
@@ -44,7 +43,7 @@ struct metal_material {
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
         vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-        scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
+        scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere(), r_in.time());
         // Attenuation of the ray hitting the object is modified based on the color at hit point
         attenuation *= albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
@@ -89,7 +88,7 @@ struct dielectric_material {
         else
             direction = refract(unit_direction, rec.normal, refraction_ratio);
 
-        scattered = ray(rec.p, direction);
+        scattered = ray(rec.p, direction, r_in.time());
         return true;
     }
 

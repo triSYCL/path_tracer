@@ -40,7 +40,10 @@ class camera {
   /// Size of the lens simulating the depth-of-field
   real_t lens_radius;
 
-public:
+  /// Shutter open and close times
+  real_t time0, time1;
+
+  public:
 
   /** Create a parameterized camera
 
@@ -66,7 +69,9 @@ public:
          real_t degree_vfov,
          real_t aspect_ratio,
          real_t aperture,
-         real_t focus_dist
+         real_t focus_dist,
+         real_t _time0 = 0,
+         real_t _time1 = 0
          )
     : origin { look_from }
   {
@@ -84,6 +89,8 @@ public:
     lower_left_corner = origin - horizontal/2 - vertical/2 - focus_dist*w;
 
     lens_radius = aperture/2;
+    time0 = _time0;
+    time1 = _time1;
   }
 
   /** Computes ray from camera passing through 
@@ -94,7 +101,8 @@ public:
     vec rd = lens_radius*random_in_unit_disk();
     vec offset = u * rd.x() + v * rd.y();
     return { origin + offset,
-             lower_left_corner + s*horizontal + t*vertical - origin - offset };
+             lower_left_corner + s*horizontal + t*vertical - origin - offset,
+             random_double(time0, time1) };
   }
 };
 
