@@ -98,8 +98,12 @@ int main()
     hittables.emplace_back(sphere {  point { -60, 3, 5 }, 4,
                                      lambertian_material { t } });
 
+    // Add a metallic monolith
+    hittables.emplace_back(box { point{ 6.5, 0, -1.5 }, point { 7.0, 3.0, -1.0 }, 
+                                     metal_material { color { 0.7, 0.6, 0.5 }, 0.25 } });
+
     // SYCL queue
-    sycl::queue myQueue;
+    sycl::queue myQueue; 
 
     // Camera setup
     /// Position of the camera
