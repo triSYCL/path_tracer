@@ -61,7 +61,7 @@ int main()
                     // Lambertian movig spheres
                     auto albedo = randomvec() * randomvec();
                     auto center2 = center + point { 0, random_double(0, 0.25), 0 };
-                    hittables.emplace_back(moving_sphere(center, center2, 0.0, 1.0, 0.2, lambertian_material(albedo)));
+                    hittables.emplace_back(sphere(center, center2, 0.0, 1.0, 0.2, lambertian_material(albedo)));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = randomvec(0.5, 1);
