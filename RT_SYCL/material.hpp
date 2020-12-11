@@ -4,8 +4,7 @@
 #include "texture.hpp"
 #include "vec.hpp"
 #include <iostream>
-#include <variant>
-#include <vector>
+
 
 struct lambertian_material {
     lambertian_material() = default;

@@ -4,8 +4,6 @@
 #include "vec.hpp"
 #include <cmath>
 #include <iostream>
-#include <variant>
-#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>

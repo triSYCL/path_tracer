@@ -7,6 +7,8 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include <vector>
+#include <variant>
 
 namespace {
 std::uniform_real_distribution<double> distribution(0.0, 1.0);
