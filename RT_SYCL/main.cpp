@@ -102,6 +102,10 @@ int main()
     hittables.emplace_back(box { point{ 6.5, 0, -1.5 }, point { 7.0, 3.0, -1.0 }, 
                                      metal_material { color { 0.7, 0.6, 0.5 }, 0.25 } });
 
+    // Add a smoke ball
+    sphere smoke_sphere = sphere { point { 5, 1, 3.5 }, 1, lambertian_material { color { 0.75, 0.75, 0.75 } } };
+    hittables.emplace_back(constant_medium { smoke_sphere, 1, color { 1, 1, 1 } });
+
     // SYCL queue
     sycl::queue myQueue; 
 

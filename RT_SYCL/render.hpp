@@ -1,4 +1,5 @@
 #include "camera.hpp"
+#include "constant_medium.hpp"
 #include "hitable.hpp"
 #include "material.hpp"
 #include "ray.hpp"
@@ -11,7 +12,7 @@
 #include "vec.hpp"
 #include <SYCL/sycl.hpp>
 
-using hittable_t = std::variant<sphere, xy_rect, triangle, box>;
+using hittable_t = std::variant<sphere, xy_rect, triangle, box, constant_medium>;
 namespace constants {
 static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
