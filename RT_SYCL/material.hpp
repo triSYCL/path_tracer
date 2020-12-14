@@ -126,6 +126,31 @@ struct lightsource_material {
     texture_t emit;
 };
 
-using material_t = std::variant<lambertian_material, metal_material, dielectric_material, lightsource_material>;
+struct isotropic_material{
+    isotropic_material(const color& a)
+        : albedo { solid_texture { a } }
+    {
+    }
+    isotropic_material( texture_t& a)
+        : albedo { a }
+    {
+    }
+
+    bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
+    {
+        scattered = ray(rec.p, random_in_unit_sphere(), r_in.time());
+        attenuation *= std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
+        return true;
+    }
+
+    color emitted(const hit_record& rec)
+    {
+        return color(0, 0, 0);
+    }
+
+    texture_t albedo;
+};
+
+using material_t = std::variant<lambertian_material, metal_material, dielectric_material, lightsource_material, isotropic_material>;
 
 #endif
