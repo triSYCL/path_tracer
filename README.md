@@ -21,7 +21,7 @@ time RT_SYCL/sycl-rt >! result.ppm
 ```
 This results in the image ``result.ppm`` produced by the Ray Tracer.
 
-![img](doc/MovingSpheres.jpg)
+![img](doc/SmokeSphere.jpg)
 
 The following are the references that were tremendously useful in writing this project:
 
