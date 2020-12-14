@@ -8,6 +8,10 @@
 
 using hittableVolume_t = std::variant<sphere, box>;
 
+/**
+ * A ray going through the volume can either make it all the way through
+ * or be scattered at some point on or inside the volume.
+*/
 class constant_medium{
 public:
     constant_medium(const hittableVolume_t& b, real_t d, texture_t& a)
