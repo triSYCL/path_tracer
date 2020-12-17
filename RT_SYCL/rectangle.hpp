@@ -54,7 +54,7 @@ public:
 class xz_rect {
 public:
     xz_rect() = default;
-    
+
     /// x0 <= x1 and z0 <= z1
     xz_rect(real_t _x0, real_t _x1, real_t _z0, real_t _z1, real_t _k, material_t mat_type)
         : x0 { _x0 }
@@ -129,6 +129,6 @@ public:
     material_t material_type;
 };
 
-using rectangle_t = std::variant<xy_rect,xz_rect,yz_rect>;
+using rectangle_t = std::variant<xy_rect, xz_rect, yz_rect>;
 
 #endif

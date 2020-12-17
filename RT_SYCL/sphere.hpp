@@ -38,7 +38,7 @@ public:
     {
     }
 
-    ///Simulates moving spheres from center0 to 
+    ///Simulates moving spheres from center0 to
     ///center1 between time0 and time1
     sphere(point& cen0, point& cen1, real_t _time0, real_t _time1, real_t r, material_t mat_type)
         : center0 { cen0 }
@@ -47,14 +47,14 @@ public:
         , time0 { _time0 }
         , time1 { _time1 }
         , material_type { mat_type }
-        {
-        }
+    {
+    }
 
-    /// Computes center of the sphere based on 
+    /// Computes center of the sphere based on
     /// the time information stored in the ray
     point center(real_t time) const
-    {   
-        if ( center0 == center1 )
+    {
+        if (center0 == center1)
             return center0;
         else
             return center0 + ((time - time0) / (time1 - time0)) * (center1 - center0);

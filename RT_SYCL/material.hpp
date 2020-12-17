@@ -5,7 +5,6 @@
 #include "vec.hpp"
 #include <iostream>
 
-
 struct lambertian_material {
     lambertian_material() = default;
     lambertian_material(const color& a)
@@ -68,7 +67,7 @@ struct dielectric_material {
     // Schlick's approximation for reflectance
     real_t reflectance(real_t cosine, real_t ref_idx) const
     {
-        auto r0 = (1-ref_idx) / (1+ref_idx);
+        auto r0 = (1 - ref_idx) / (1 + ref_idx);
         r0 *= r0;
         return r0 + (1 - r0) * sycl::pow((1 - cosine), 5.0);
     }
@@ -126,12 +125,12 @@ struct lightsource_material {
     texture_t emit;
 };
 
-struct isotropic_material{
+struct isotropic_material {
     isotropic_material(const color& a)
         : albedo { solid_texture { a } }
     {
     }
-    isotropic_material( texture_t& a)
+    isotropic_material(texture_t& a)
         : albedo { a }
     {
     }

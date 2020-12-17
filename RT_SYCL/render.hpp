@@ -1,3 +1,4 @@
+#include "box.hpp"
 #include "camera.hpp"
 #include "constant_medium.hpp"
 #include "hitable.hpp"
@@ -6,7 +7,6 @@
 #include "rectangle.hpp"
 #include "rtweekend.hpp"
 #include "sphere.hpp"
-#include "box.hpp"
 #include "texture.hpp"
 #include "triangle.hpp"
 #include "vec.hpp"
@@ -79,7 +79,7 @@ private:
         return hit_anything;
     }
 
-    /// Compute the color of the ray 
+    /// Compute the color of the ray
     color get_color(const ray& r, hittable_t* hittables, int max_depth)
     {
         ray cur_ray = r;
@@ -120,7 +120,6 @@ private:
     sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
     int num_hittables;
     camera m_camera;
-    
 };
 
 // Render function to call the render kernel
