@@ -92,7 +92,7 @@ private:
             if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, hittables, material_type)) {
                 emitted = std::visit([&](auto&& arg) { return arg.emitted(rec); }, material_type);
                 if (std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)) {
-                    // On hitting the sphere, the ray gets scattered
+                    // On hitting the object, the ray gets scattered
                     cur_ray = scattered;
                 } else {
                     // Ray did not get scattered or reflected

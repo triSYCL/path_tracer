@@ -4,9 +4,13 @@
 #include "rtweekend.hpp"
 #include "rectangle.hpp"
 
+/// This class implements a axis aligned cuboid using 6 rectangles 
 class box{
 public:
     box() = default;
+
+    /// p0 = { x0, y0, z0 } and p1 = { x1, y1. z1 } 
+    /// where x0 <= x1, y0 <= y1 and z0 <= z1
     box(const point& p0, const point& p1, material_t mat_type)
         : box_min { p0 }
         , box_max { p1 }
@@ -20,14 +24,15 @@ public:
             sides.emplace_back(yz_rect(p0.y(), p1.y(), p0.z(), p1.z(), p1.x(), mat_type));
             sides.emplace_back(yz_rect(p0.y(), p1.y(), p0.z(), p1.z(), p0.x(), mat_type));
         }
-    
+
+    /// Compute ray interaction with the box
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
     {
         hit_record temp_rec;
         material_t temp_material_type;
         auto hit_anything = false;
         auto closest_so_far = max;
-        // Checking if the ray hits any of the spheres
+        // Checking if the ray hits any of the sides
         for (const auto& side : sides) {
             if (std::visit([&](auto&& arg) { return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type); }, side)) {
                 hit_anything = true;
