@@ -1,6 +1,7 @@
 #ifndef RT_SYCL_VEC_HPP
 #define RT_SYCL_VEC_HPP
 
+#include "rtweekend.hpp"
 #include <cmath>
 #include <iostream>
 

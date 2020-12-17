@@ -13,12 +13,12 @@ public:
     bool front_face; // to check if hit point is on the outer surface
     /*local coordinates for rectangles 
     and mercator coordintes for spheres */
-    double u; 
+    double u;
     double v;
 
-    // To set if the hit point is on the front face  
-    void set_face_normal(const ray& r, const vec& outward_normal){
-        front_face = dot(r.direction(),outward_normal)<0;
+    // To set if the hit point is on the front face
+    void set_face_normal(const ray& r, const vec& outward_normal) {
+        front_face = dot(r.direction(), outward_normal) < 0;
         normal = front_face ? outward_normal : -outward_normal;
     }
 };

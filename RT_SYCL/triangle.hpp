@@ -7,6 +7,7 @@
 #include "texture.hpp"
 #include "vec.hpp"
 
+// A triangle based on 3 points
 class triangle {
 public:
     triangle() = default;
@@ -18,6 +19,7 @@ public:
     {
     }
 
+    /// Compute ray interaction with triangle
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
     {
         hit_material_type = material_type;
@@ -26,13 +28,14 @@ public:
         auto u = v1 - v0;
         auto v = v2 - v0;
         vec outward_normal = sycl::cross(u, v);
-        rec.set_face_normal(r, outward_normal);
 
         auto w0 = r.origin() - v0;
         auto a = -sycl::dot(outward_normal, w0);
         auto b = sycl::dot(outward_normal, r.direction());
+
+        // ray is parallel to triangle plane
         if (sycl::fabs(b) < 0.000001)
-            return false; // ray is parallel to triangle plane
+            return false;
 
         // intersection point of ray with traingle
         real_t length = a / b;
@@ -59,7 +62,7 @@ public:
         rec.t = length;
         rec.p = hit_pt;
         return true;
-    }
+        }
 
     point v0, v1, v2;
     material_t material_type;

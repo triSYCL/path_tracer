@@ -3,7 +3,7 @@
 This is an experimental toy ray tracer using C++20 and SYCL for
 acceleration.
 
-![img](doc/MovingSpheres.jpg)
+![img](doc/SmokeSphere.jpg)
 
 This is using triSYCL for now but it might work even better on some
 other SYCL implementations. Contributions and optimization welcome!

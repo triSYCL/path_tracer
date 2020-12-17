@@ -1,17 +1,18 @@
+#include "box.hpp"
 #include "camera.hpp"
+#include "constant_medium.hpp"
 #include "hitable.hpp"
 #include "material.hpp"
 #include "ray.hpp"
 #include "rectangle.hpp"
 #include "rtweekend.hpp"
 #include "sphere.hpp"
-#include "box.hpp"
 #include "texture.hpp"
 #include "triangle.hpp"
 #include "vec.hpp"
 #include <SYCL/sycl.hpp>
 
-using hittable_t = std::variant<sphere, xy_rect, triangle, box>;
+using hittable_t = std::variant<sphere, xy_rect, triangle, box, constant_medium>;
 namespace constants {
 static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
@@ -78,7 +79,7 @@ private:
         return hit_anything;
     }
 
-    /// Compute the color of the ray 
+    /// Compute the color of the ray
     color get_color(const ray& r, hittable_t* hittables, int max_depth)
     {
         ray cur_ray = r;
@@ -91,7 +92,7 @@ private:
             if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, hittables, material_type)) {
                 emitted = std::visit([&](auto&& arg) { return arg.emitted(rec); }, material_type);
                 if (std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)) {
-                    // On hitting the sphere, the ray gets scattered
+                    // On hitting the object, the ray gets scattered
                     cur_ray = scattered;
                 } else {
                     // Ray did not get scattered or reflected
@@ -119,7 +120,6 @@ private:
     sycl::accessor<hittable_t, 1, sycl::access::mode::read, sycl::access::target::global_buffer> m_hitable_ptr;
     int num_hittables;
     camera m_camera;
-    
 };
 
 // Render function to call the render kernel

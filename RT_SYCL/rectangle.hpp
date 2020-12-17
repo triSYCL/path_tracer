@@ -7,10 +7,16 @@
 #include "texture.hpp"
 #include "vec.hpp"
 
+/** The Following classes implement:
+ 
+    - https://raytracing.github.io/books/RayTracingTheNextWeek.html#rectanglesandlights/creatingrectangleobjectsa
+*/
+
 class xy_rect {
 public:
     xy_rect() = default;
 
+    /// x0 <= x1 and y0 <= y1
     xy_rect(real_t _x0, real_t _x1, real_t _y0, real_t _y1, real_t _k, material_t mat_type)
         : x0 { _x0 }
         , x1 { _x1 }
@@ -21,6 +27,7 @@ public:
     {
     }
 
+    /// Compute ray interaction with rectangle
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
     {
         hit_material_type = material_type;
@@ -48,6 +55,7 @@ class xz_rect {
 public:
     xz_rect() = default;
 
+    /// x0 <= x1 and z0 <= z1
     xz_rect(real_t _x0, real_t _x1, real_t _z0, real_t _z1, real_t _k, material_t mat_type)
         : x0 { _x0 }
         , x1 { _x1 }
@@ -58,6 +66,7 @@ public:
     {
     }
 
+    /// Compute ray interaction with rectangle
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
     {
         hit_material_type = material_type;
@@ -85,6 +94,7 @@ class yz_rect {
 public:
     yz_rect() = default;
 
+    /// y0 <= y1 and z0 <= z1
     yz_rect(real_t _y0, real_t _y1, real_t _z0, real_t _z1, real_t _k, material_t mat_type)
         : y0 { _y0 }
         , y1 { _y1 }
@@ -95,6 +105,7 @@ public:
     {
     }
 
+    /// Compute ray interaction with rectangle
     bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
     {
         hit_material_type = material_type;
@@ -118,6 +129,6 @@ public:
     material_t material_type;
 };
 
-using rectangle_t = std::variant<xy_rect,xz_rect,yz_rect>;
+using rectangle_t = std::variant<xy_rect, xz_rect, yz_rect>;
 
 #endif
