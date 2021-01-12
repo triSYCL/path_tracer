@@ -31,8 +31,8 @@ void save_image(color* fb_data)
 int main()
 {
     // Frame buffer dimensions
-    constexpr auto width = 800;
-    constexpr auto height = 480;
+    constexpr auto width = 80;
+    constexpr auto height = 48;
 
     // Allocate frame buffer on host
     std::vector<color> fb(width*height);
@@ -128,7 +128,7 @@ int main()
                  aperture, focus_dist, 0.0, 1.0 };
 
     // Sample per pixel
-    constexpr auto samples = 100;
+    constexpr auto samples = 1;
 
     // SYCL render kernel
     render<width, height, samples>(myQueue, fb.data(),

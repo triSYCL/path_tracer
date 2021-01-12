@@ -31,11 +31,20 @@ public:
     {
     }
 
+#ifdef USE_SINGLE_TASK
+    void operator()()
+#else
     void operator()(sycl::nd_item<2> item)
+#endif
     {
+#ifdef USE_SINGLE_TASK
+        for (int x_coord = 0; x_coord != width; ++x_coord)
+            for (int y_coord = 0; y_coord != height; ++y_coord) {
+#else
         // Get our Ids
         const auto x_coord = item.get_global_id(0);
         const auto y_coord = item.get_global_id(1);
+#endif
         // map the 2D indices to a single linear, 1D index
         const auto pixel_index = y_coord * width + x_coord;
 
@@ -52,6 +61,9 @@ public:
 
         // Write final color to the frame buffer global memory
         m_frame_ptr[pixel_index] = final_color;
+#ifdef USE_SINGLE_TASK
+        }
+#endif
     }
 
 private:
@@ -135,13 +147,20 @@ void render(sycl::queue queue, color* fb_data, const hittable_t* hittables, int 
         // Get memory access
         auto frame_ptr = frame_buf.get_access<sycl::access::mode::write>(cgh);
         auto hittables_ptr = hittables_buf.get_access<sycl::access::mode::read>(cgh);
+        // Construct kernel functor
+        render_kernel<width, height, samples, depth> render_func =
+          { frame_ptr, hittables_ptr, num_hittables, cam };
+        // Execute kernel
+#ifdef USE_SINGLE_TASK
+        // Use a single task iterating on all pixels
+        cgh.single_task(render_func);
+#else
         // Setup kernel index space
         const auto global = sycl::range<2>(width, height);
         const auto local = sycl::range<2>(constants::TileX, constants::TileY);
         const auto index_space = sycl::nd_range<2>(global, local);
-        // Construct kernel functor
-        auto render_func = render_kernel<width, height, samples, depth>(frame_ptr, hittables_ptr, num_hittables, cam);
-        // Execute kernel
+        // Launch 1 work-item per pixel in parallel
         cgh.parallel_for(index_space, render_func);
+#endif
     });
 }

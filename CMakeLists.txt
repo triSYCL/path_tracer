@@ -12,6 +12,9 @@ set(CMAKE_BUILD_TYPE Release)
 # ... or to debug
 #set(CMAKE_BUILD_TYPE Debug)
 
+# On FPGA use a loop on image pixels instead of a parallel_for
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_SINGLE_TASK")
+
 # Use triSYCL
 include(FindtriSYCL)
 # TODO when using graphics later: Use gtkmm-3.0 or later
