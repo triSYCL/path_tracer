@@ -42,11 +42,17 @@ and jump into it.
 From there, assuming you have the https://github.com/triSYCL/triSYCL
 repository somewhere, run:
 ```sh
-cmake .. -DCMAKE_MODULE_PATH=.../triSYCL/cmake
+cmake .. -DCMAKE_MODULE_PATH=<absolute_path_to>/triSYCL/cmake
 ```
+
+For FPGA execution you might add `-DUSE_SINGLE_TASK=ON` on the
+previous `cmake` configuration to use a SYCL execution based on a
+`.single_task()` instead of `.parallel_for()`, probably more efficient
+on FPGA.
+
 Build the project with:
 ```sh
-cmake --build .
+cmake --build . --verbose --parallel `nproc`
 ```
 This creates the executable.
 

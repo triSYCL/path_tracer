@@ -24,7 +24,9 @@ target_compile_features(sycl-rt PRIVATE cxx_std_20)
 #target_link_options(sycl-rt PRIVATE -fstack-check)
 
 
-# On FPGA use a loop on image pixels instead of a parallel_for
-set_property(TARGET sycl-rt
-  APPEND PROPERTY
-  COMPILE_DEFINITIONS USE_SINGLE_TASK=)
+if(USE_SINGLE_TASK)
+  # On FPGA use a loop on image pixels instead of a parallel_for
+  set_property(TARGET sycl-rt
+    APPEND PROPERTY
+    COMPILE_DEFINITIONS USE_SINGLE_TASK=)
+endif()
