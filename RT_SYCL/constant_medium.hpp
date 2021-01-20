@@ -37,7 +37,7 @@ public:
             return false;
         }
 
-        if (!std::visit([&](auto&& arg) { return arg.hit(r, rec1.t + 0.0001, infinity, rec2, temp_material_type); }, boundary)) {
+        if (!std::visit([&](auto&& arg) { return arg.hit(r, rec1.t + 0.0001f, infinity, rec2, temp_material_type); }, boundary)) {
             return false;
         }
 
@@ -54,7 +54,7 @@ public:
         /// Distance between the two hitpoints affect of probability
         /// of the ray hitting a smoke particle
         const auto distance_inside_boundary = (rec2.t - rec1.t) * ray_length;
-        const auto hit_distance = neg_inv_density * log(random_double());
+        const auto hit_distance = neg_inv_density * log(random_float());
 
         /// With lower density, hit_distance has higher probabilty
         /// of being greater than distance_inside_boundary

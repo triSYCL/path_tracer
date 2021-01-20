@@ -77,7 +77,7 @@ class camera {
   {
     auto theta = degrees_to_radians(degree_vfov);
     auto h = std::tan(theta/2);
-    auto viewport_height = 2.0*h;
+    auto viewport_height = 2.0f*h;
     auto viewport_width = aspect_ratio * viewport_height;
 
     w = unit_vector(look_from - look_at);
@@ -102,7 +102,7 @@ class camera {
     vec offset = u * rd.x() + v * rd.y();
     return { origin + offset,
              lower_left_corner + s*horizontal + t*vertical - origin - offset,
-             random_double(time0, time1) };
+             random_float(time0, time1) };
   }
 };
 

@@ -40,10 +40,10 @@ public:
         const auto pixel_index = y_coord * width + x_coord;
 
         // Color sampling for antialiasing
-        color final_color(0.0, 0.0, 0.0);
+        color final_color(0.0f, 0.0f, 0.0f);
         for (auto i = 0; i < samples; i++) {
-            const auto u = (x_coord + random_double()) / width;
-            const auto v = (y_coord + random_double()) / height;
+            const auto u = (x_coord + random_float()) / width;
+            const auto v = (y_coord + random_float()) / height;
             // u and v are points on the viewport
             ray r = m_camera.get_ray(u, v);
             final_color += get_color(r, m_hitable_ptr.get_pointer(), depth);
@@ -83,13 +83,13 @@ private:
     color get_color(const ray& r, hittable_t* hittables, int max_depth)
     {
         ray cur_ray = r;
-        color cur_attenuation { 1.0, 1.0, 1.0 };
+        color cur_attenuation { 1.0f, 1.0f, 1.0f };
         ray scattered;
         color emitted;
         material_t material_type;
         for (auto i = 0; i < max_depth; i++) {
             hit_record rec;
-            if (hit_world(cur_ray, real_t { 0.001 }, infinity, rec, hittables, material_type)) {
+            if (hit_world(cur_ray, real_t { 0.001f }, infinity, rec, hittables, material_type)) {
                 emitted = std::visit([&](auto&& arg) { return arg.emitted(rec); }, material_type);
                 if (std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)) {
                     // On hitting the object, the ray gets scattered
@@ -102,17 +102,17 @@ private:
                 /**
                  * If ray doesn't hit anything during iteration linearly blend white and 
                  * blue color depending on the height of the y coordinate after scaling the 
-                 * ray direction to unit length. While -1.0 < y < 1.0, hit_pt is between 0 
+                 * ray direction to unit length. While -1.0f < y < 1.0f, hit_pt is between 0 
                  * and 1. This produces a blue to white gradient in the background 
                 */
                 vec unit_direction = unit_vector(cur_ray.direction());
-                auto hit_pt = 0.5 * (unit_direction.y() + 1.0);
-                color c = (1.0 - hit_pt) * color { 1.0, 1.0, 1.0 } + hit_pt * color { 0.5, 0.7, 1.0 };
+                auto hit_pt = 0.5f * (unit_direction.y() + 1.0f);
+                color c = (1.0f - hit_pt) * color { 1.0f, 1.0f, 1.0f } + hit_pt * color { 0.5f, 0.7f, 1.0f };
                 return emitted + cur_attenuation * c;
             }
         }
         // If not returned within max_depth return black
-        return color { 0.0, 0.0, 0.0 };
+        return color { 0.0f, 0.0f, 0.0f };
     }
 
     // Accessor objects

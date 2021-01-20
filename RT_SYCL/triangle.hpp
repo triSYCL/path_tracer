@@ -34,7 +34,7 @@ public:
         auto b = sycl::dot(outward_normal, r.direction());
 
         // ray is parallel to triangle plane
-        if (sycl::fabs(b) < 0.000001)
+        if (sycl::fabs(b) < 0.000001f)
             return false;
 
         // intersection point of ray with traingle
@@ -55,7 +55,7 @@ public:
 
         auto s = (uv * wv - vv * wu) / D;
         auto t = (uv * wu - uu * wv) / D;
-        if (s < 0.0 || s > 1.0 || t < 0.0 || (s + t) > 1.0)
+        if (s < 0.0f || s > 1.0f || t < 0.0f || (s + t) > 1.0f)
             return false;
 
         rec.set_face_normal(r, outward_normal);

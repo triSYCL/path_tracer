@@ -10,7 +10,7 @@
 /* Computes normalised values of theta and phi. The input vector p
 corresponds to a vector passing through the centre of the a sphere
 and the hipoint on the surface of the sphere */
-std::pair<double, double> mercator_coordinates(const vec& p)
+std::pair<float, float> mercator_coordinates(const vec& p)
 {
     // phi is the angle around the axis
     auto phi = atan2(p.z(), p.x());
