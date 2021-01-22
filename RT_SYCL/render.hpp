@@ -10,6 +10,7 @@
 #include "texture.hpp"
 #include "triangle.hpp"
 #include "vec.hpp"
+#include "visit.hpp"
 #include <SYCL/sycl.hpp>
 
 using hittable_t = std::variant<sphere, xy_rect, triangle, box, constant_medium>;
@@ -81,7 +82,7 @@ private:
         auto closest_so_far = max;
         // Checking if the ray hits any of the spheres
         for (auto i = 0; i < num_hittables; i++) {
-            if (std::visit([&](auto&& arg) { return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type); }, hittables[i])) {
+            if (dev_visit([&](auto&& arg) { return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type); }, hittables[i])) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 rec = temp_rec;
@@ -102,8 +103,8 @@ private:
         for (auto i = 0; i < max_depth; i++) {
             hit_record rec;
             if (hit_world(cur_ray, real_t { 0.001f }, infinity, rec, hittables, material_type)) {
-                emitted = std::visit([&](auto&& arg) { return arg.emitted(rec); }, material_type);
-                if (std::visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)) {
+                emitted = dev_visit([&](auto&& arg) { return arg.emitted(rec); }, material_type);
+                if (dev_visit([&](auto&& arg) { return arg.scatter(cur_ray, rec, cur_attenuation, scattered); }, material_type)) {
                     // On hitting the object, the ray gets scattered
                     cur_ray = scattered;
                 } else {

@@ -34,7 +34,7 @@ public:
         auto closest_so_far = max;
         // Checking if the ray hits any of the sides
         for (const auto& side : sides) {
-            if (std::visit([&](auto&& arg) { return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type); }, side)) {
+            if (dev_visit([&](auto&& arg) { return arg.hit(r, min, closest_so_far, temp_rec, temp_material_type); }, side)) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 rec = temp_rec;

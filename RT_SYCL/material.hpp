@@ -21,7 +21,7 @@ struct lambertian_material {
         vec scatter_direction = rec.normal + random_unit_vector();
         scattered = ray(rec.p, scatter_direction, r_in.time());
         // Attenuation of the ray hitting the object is modified based on the color at hit point
-        attenuation *= std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
+        attenuation *= dev_visit([&](auto&& arg) { return arg.value(rec); }, albedo);
         return true;
     }
     color emitted(const hit_record& rec)
@@ -119,7 +119,7 @@ struct lightsource_material {
 
     color emitted(const hit_record& rec)
     {
-        return std::visit([&](auto&& arg) { return arg.value(rec); }, emit);
+        return dev_visit([&](auto&& arg) { return arg.value(rec); }, emit);
     }
 
     texture_t emit;
@@ -138,7 +138,7 @@ struct isotropic_material {
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const
     {
         scattered = ray(rec.p, random_in_unit_sphere(), r_in.time());
-        attenuation *= std::visit([&](auto&& arg) { return arg.value(rec); }, albedo);
+        attenuation *= dev_visit([&](auto&& arg) { return arg.value(rec); }, albedo);
         return true;
     }
 
