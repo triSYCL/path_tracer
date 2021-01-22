@@ -20,9 +20,9 @@ void save_image(color* fb_data)
     for (int y = height - 1; y >= 0; y--) {
         for (int x = 0; x < width; x++) {
             auto pixel_index = y * width + x;
-            int r = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].x()), 0.0, 0.999));
-            int g = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].y()), 0.0, 0.999));
-            int b = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].z()), 0.0, 0.999));
+            int r = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].x()), 0.0f, 0.999f));
+            int g = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].y()), 0.0f, 0.999f));
+            int b = static_cast<int>(256 * std::clamp(sycl::sqrt(fb_data[pixel_index].z()), 0.0f, 0.999f));
             std::cout << r << " " << g << " " << b << "\n";
         }
     }
@@ -41,56 +41,56 @@ int main()
     std::vector<hittable_t> hittables;
 
     // Generating a checkered ground and some random spheres
-    texture_t t = checker_texture(color { 0.2, 0.3, 0.1 }, color { 0.9, 0.9, 0.9 });
+    texture_t t = checker_texture(color { 0.2f, 0.3f, 0.1f }, color { 0.9f, 0.9f, 0.9f });
     material_t m = lambertian_material(t);
     hittables.emplace_back(sphere(point { 0, -1000, 0 }, 1000, m));
-    t = checker_texture(color { 0.9, 0.9, 0.9 }, color { 0.4, 0.2, 0.1 });
+    t = checker_texture(color { 0.9f, 0.9f, 0.9f }, color { 0.4f, 0.2f, 0.1f });
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             // Based on a random variable , the material type is chosen
-            auto choose_mat = random_double();
+            auto choose_mat = random_float();
             // Spheres are placed at a point randomly displaced from a,b
-            point center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
-            if (sycl::length((center - point(4, 0.2, 0))) > 0.9) {
-                if (choose_mat < 0.4) {
+            point center(a + 0.9f * random_float(), 0.2f, b + 0.9f * random_float());
+            if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
+                if (choose_mat < 0.4f) {
                     // Lambertian
                     auto albedo = randomvec() * randomvec();
-                    hittables.emplace_back(sphere(center, 0.2, lambertian_material(albedo)));
-                } else if (choose_mat < 0.8) {
+                    hittables.emplace_back(sphere(center, 0.2f, lambertian_material(albedo)));
+                } else if (choose_mat < 0.8f) {
                     // Lambertian movig spheres
                     auto albedo = randomvec() * randomvec();
-                    auto center2 = center + point { 0, random_double(0, 0.25), 0 };
-                    hittables.emplace_back(sphere(center, center2, 0.0, 1.0, 0.2, lambertian_material(albedo)));
-                } else if (choose_mat < 0.95) {
+                    auto center2 = center + point { 0, random_float(0, 0.25f), 0 };
+                    hittables.emplace_back(sphere(center, center2, 0.0f, 1.0f, 0.2f, lambertian_material(albedo)));
+                } else if (choose_mat < 0.95f) {
                     // metal
-                    auto albedo = randomvec(0.5, 1);
-                    auto fuzz = random_double(0, 0.5);
-                    hittables.emplace_back(sphere(center, 0.2, metal_material(albedo, fuzz)));
+                    auto albedo = randomvec(0.5f, 1);
+                    auto fuzz = random_float(0, 0.5f);
+                    hittables.emplace_back(sphere(center, 0.2f, metal_material(albedo, fuzz)));
                 } else {
                     //glass
-                    hittables.emplace_back(sphere(center, 0.2, dielectric_material(1.5, color {1.0, 1.0, 1.0 })));
+                    hittables.emplace_back(sphere(center, 0.2f, dielectric_material(1.5f, color {1.0f, 1.0f, 1.0f })));
                 }
             }
         }
     }
 
     // Pyramid
-    hittables.emplace_back(triangle(point { 6.5, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 0.80 }, lambertian_material(color(0.68, 0.50, 0.1))));
-    hittables.emplace_back(triangle(point { 6.0, 0.0, 1.30 }, point { 6.25, 0.50, 1.05 }, point { 6.5, 0.0, 1.30 }, lambertian_material(color(0.89, 0.73, 0.29))));
-    hittables.emplace_back(triangle(point { 6.5, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 0.80 }, lambertian_material(color(0.0, 0.0, 1))));
-    hittables.emplace_back(triangle(point { 6.0, 0.0, 0.80 }, point { 6.25, 0.50, 1.05 }, point { 6.0, 0.0, 1.30 }, lambertian_material(color(0.0, 0.0, 1))));
+    hittables.emplace_back(triangle(point { 6.5f, 0.0f, 1.30f }, point { 6.25f, 0.50f, 1.05f }, point { 6.5f, 0.0f, 0.80f }, lambertian_material(color(0.68f, 0.50f, 0.1f))));
+    hittables.emplace_back(triangle(point { 6.0f, 0.0f, 1.30f }, point { 6.25f, 0.50f, 1.05f }, point { 6.5f, 0.0f, 1.30f }, lambertian_material(color(0.89f, 0.73f, 0.29f))));
+    hittables.emplace_back(triangle(point { 6.5f, 0.0f, 0.80f }, point { 6.25f, 0.50f, 1.05f }, point { 6.0f, 0.0f, 0.80f }, lambertian_material(color(0.0f, 0.0f, 1))));
+    hittables.emplace_back(triangle(point { 6.0f, 0.0f, 0.80f }, point { 6.25f, 0.50f, 1.05f }, point { 6.0f, 0.0f, 1.30f }, lambertian_material(color(0.0f, 0.0f, 1))));
 
     // Glowing ball
-    hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2, lightsource_material(color(10, 0, 10))));
+    hittables.emplace_back(sphere(point { 4, 1, 0 }, 0.2f, lightsource_material(color(10, 0, 10))));
 
     // Four large spheres of metal, dielectric and Lambertian material types
     t = image_texture("../images/Xilinx.jpg");
     hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
-    hittables.emplace_back(sphere(point { 4, 1, 2.25 }, 1, lambertian_material(t)));
-    hittables.emplace_back(sphere(point { 0, 1, 0 }, 1, dielectric_material(1.5, color {1.0, 0.5, 0.5 })));
-    hittables.emplace_back(sphere(point { -4, 1, 0 }, 1, lambertian_material(color(0.4, 0.2, 0.1))));
-    hittables.emplace_back(sphere(point { 0, 1, -2.25 }, 1, metal_material(color(0.7, 0.6, 0.5), 0.0)));
+    hittables.emplace_back(sphere(point { 4, 1, 2.25f }, 1, lambertian_material(t)));
+    hittables.emplace_back(sphere(point { 0, 1, 0 }, 1, dielectric_material(1.5f, color {1.0f, 0.5f, 0.5f })));
+    hittables.emplace_back(sphere(point { -4, 1, 0 }, 1, lambertian_material(color(0.4f, 0.2f, 0.1f))));
+    hittables.emplace_back(sphere(point { 0, 1, -2.25f }, 1, metal_material(color(0.7f, 0.6f, 0.5f), 0.0f)));
 
     t = image_texture { "../images/SYCL.png", 5 };
 
@@ -99,11 +99,11 @@ int main()
                                      lambertian_material { t } });
 
     // Add a metallic monolith
-    hittables.emplace_back(box { point{ 6.5, 0, -1.5 }, point { 7.0, 3.0, -1.0 }, 
-                                     metal_material { color { 0.7, 0.6, 0.5 }, 0.25 } });
+    hittables.emplace_back(box { point{ 6.5f, 0, -1.5f }, point { 7.0f, 3.0f, -1.0f }, 
+                                     metal_material { color { 0.7f, 0.6f, 0.5f }, 0.25f } });
 
     // Add a smoke ball
-    sphere smoke_sphere = sphere { point { 5, 1, 3.5 }, 1, lambertian_material { color { 0.75, 0.75, 0.75 } } };
+    sphere smoke_sphere = sphere { point { 5, 1, 3.5f }, 1, lambertian_material { color { 0.75f, 0.75f, 0.75f } } };
     hittables.emplace_back(constant_medium { smoke_sphere, 1, color { 1, 1, 1 } });
 
     // SYCL queue
@@ -120,12 +120,12 @@ int main()
     /// Vertical angle of view in degree
     real_t angle = 40;
     // Lens aperture. 0 if not depth-of-field
-    real_t aperture = 0.04;
+    real_t aperture = 0.04f;
     // Make the focus on the point we are looking at
     real_t focus_dist = length(look_at - look_from);
     camera cam { look_from, look_at, vup, angle,
                  static_cast<real_t>(width)/height,
-                 aperture, focus_dist, 0.0, 1.0 };
+                 aperture, focus_dist, 0.0f, 1.0f };
 
     // Sample per pixel
     constexpr auto samples = 100;

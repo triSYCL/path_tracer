@@ -15,7 +15,7 @@ struct solid_texture {
         : color_value { c }
     {
     }
-    solid_texture(double red, double green, double blue)
+    solid_texture(float red, float green, float blue)
         : solid_texture { color { red, green, blue } }
     {
     }

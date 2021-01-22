@@ -7,14 +7,14 @@
 
 class hit_record {
 public:
-    double t; //
+    float t; //
     point p; // hit point
     vec normal; // normal at hit point
     bool front_face; // to check if hit point is on the outer surface
     /*local coordinates for rectangles 
     and mercator coordintes for spheres */
-    double u;
-    double v;
+    float u;
+    float v;
 
     // To set if the hit point is on the front face
     void set_face_normal(const ray& r, const vec& outward_normal) {

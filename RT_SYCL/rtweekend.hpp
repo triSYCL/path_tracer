@@ -11,31 +11,31 @@
 #include <vector>
 
 namespace {
-std::uniform_real_distribution<double> distribution(0.0, 1.0);
+std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
 std::mt19937 generator;
 }
 
 // Constants
 
-const double infinity = std::numeric_limits<double>::infinity();
-const double pi = 3.1415926535897932385;
+const float infinity = std::numeric_limits<float>::infinity();
+const float pi = 3.1415926535897932385f;
 
 // Utility Functions
 
-inline double degrees_to_radians(double degrees)
+inline float degrees_to_radians(float degrees)
 {
-    return degrees * pi / 180.0;
+    return degrees * pi / 180.0f;
 }
 
-inline double random_double()
+inline float random_float()
 {
     return distribution(generator);
 }
 
-inline double random_double(double min, double max)
+inline float random_float(float min, float max)
 {
     // Returns a random real in (min,max).
-    return min + (max - min) * random_double();
+    return min + (max - min) * random_float();
 }
 
 // Common Headers

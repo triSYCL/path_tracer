@@ -7,7 +7,7 @@ class ray {
 public:
     ray() = default;
 
-    ray(const point& origin, const vec& direction, real_t time = 0.0)
+    ray(const point& origin, const vec& direction, real_t time = 0.0f)
         : orig { origin }
         , dir { direction }
         , tm { time }
@@ -20,7 +20,7 @@ public:
 
     //returns point along the ray at distance t from ray's origin
     //the ray P(t) = Origin + t*direction
-    point at(double t) const
+    point at(float t) const
     {
         return orig + t * dir;
     }
