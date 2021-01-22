@@ -11,7 +11,8 @@
 class triangle {
 public:
     triangle() = default;
-    triangle(point _v0, point _v1, point _v2, material_t mat_type)
+    triangle(const point& _v0, const point& _v1, const point& _v2,
+             const material_t& mat_type)
         : v0 { _v0 }
         , v1 { _v1 }
         , v2 { _v2 }

@@ -58,7 +58,7 @@ struct metal_material {
 
 struct dielectric_material {
     dielectric_material() = default;
-    dielectric_material(real_t ri, color albedo)
+    dielectric_material(real_t ri, const color& albedo)
         : ref_idx { ri }
         , albedo { albedo }
     {
@@ -103,7 +103,7 @@ struct dielectric_material {
 
 struct lightsource_material {
     lightsource_material() = default;
-    lightsource_material(texture_t& a)
+    lightsource_material(const texture_t& a)
         : emit { a }
     {
     }

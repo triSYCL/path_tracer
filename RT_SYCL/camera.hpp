@@ -63,9 +63,9 @@ class camera {
 
       \param[in] focus_dist is the focus distance
   */
-  camera(point look_from,
-         point look_at,
-         vec vup,
+  camera(const point& look_from,
+         const point& look_at,
+         const vec& vup,
          real_t degree_vfov,
          real_t aspect_ratio,
          real_t aperture,

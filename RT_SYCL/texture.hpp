@@ -11,7 +11,7 @@
 // Solid texture consists of a single color
 struct solid_texture {
     solid_texture() = default;
-    solid_texture(color c)
+    solid_texture(const color& c)
         : color_value { c }
     {
     }
@@ -33,12 +33,12 @@ private:
 struct checker_texture {
     checker_texture() = default;
 
-    checker_texture(solid_texture x, solid_texture y)
+    checker_texture(const solid_texture& x, const solid_texture& y)
         : odd { x }
         , even { y }
     {
     }
-    checker_texture(color c1, color c2)
+    checker_texture(const color& c1, const color& c2)
         : odd { solid_texture { c1 } }
         , even { solid_texture { c2 } }
     {
