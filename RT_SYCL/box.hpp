@@ -17,12 +17,12 @@ public:
         , material_type { mat_type }
     {
         /// Add six sides of the box based on box_min and box_max to sides
-        sides.emplace_back(xy_rect(p0.x(), p1.x(), p0.y(), p1.y(), p1.z(), mat_type));
-        sides.emplace_back(xy_rect(p0.x(), p1.x(), p0.y(), p1.y(), p0.z(), mat_type));
-        sides.emplace_back(xz_rect(p0.x(), p1.x(), p0.z(), p1.z(), p1.y(), mat_type));
-        sides.emplace_back(xz_rect(p0.x(), p1.x(), p0.z(), p1.z(), p0.y(), mat_type));
-        sides.emplace_back(yz_rect(p0.y(), p1.y(), p0.z(), p1.z(), p1.x(), mat_type));
-        sides.emplace_back(yz_rect(p0.y(), p1.y(), p0.z(), p1.z(), p0.x(), mat_type));
+        sides[0] = xy_rect(p0.x(), p1.x(), p0.y(), p1.y(), p1.z(), mat_type);
+        sides[1] = xy_rect(p0.x(), p1.x(), p0.y(), p1.y(), p0.z(), mat_type);
+        sides[2] = xz_rect(p0.x(), p1.x(), p0.z(), p1.z(), p1.y(), mat_type);
+        sides[3] = xz_rect(p0.x(), p1.x(), p0.z(), p1.z(), p0.y(), mat_type);
+        sides[4] = yz_rect(p0.y(), p1.y(), p0.z(), p1.z(), p1.x(), mat_type);
+        sides[5] = yz_rect(p0.y(), p1.y(), p0.z(), p1.z(), p0.x(), mat_type);
     }
 
     /// Compute ray interaction with the box
@@ -47,7 +47,7 @@ public:
     point box_min;
     point box_max;
     material_t material_type;
-    std::vector<rectangle_t> sides;
+    std::array<rectangle_t, 6> sides;
 };
 
 #endif
