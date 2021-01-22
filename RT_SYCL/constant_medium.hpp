@@ -33,11 +33,11 @@ public:
         hit_material_type = phase_function;
         material_t temp_material_type;
         hit_record rec1, rec2;
-        if (!std::visit([&](auto&& arg) { return arg.hit(r, -infinity, infinity, rec1, temp_material_type); }, boundary)) {
+        if (!dev_visit([&](auto&& arg) { return arg.hit(r, -infinity, infinity, rec1, temp_material_type); }, boundary)) {
             return false;
         }
 
-        if (!std::visit([&](auto&& arg) { return arg.hit(r, rec1.t + 0.0001f, infinity, rec2, temp_material_type); }, boundary)) {
+        if (!dev_visit([&](auto&& arg) { return arg.hit(r, rec1.t + 0.0001f, infinity, rec2, temp_material_type); }, boundary)) {
             return false;
         }
 
