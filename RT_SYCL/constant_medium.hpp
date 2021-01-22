@@ -5,6 +5,7 @@
 #include "material.hpp"
 #include "sphere.hpp"
 #include "texture.hpp"
+#include "visit.hpp"
 
 using hittableVolume_t = std::variant<sphere, box>;
 

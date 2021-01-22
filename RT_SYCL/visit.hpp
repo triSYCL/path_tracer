@@ -1,3 +1,6 @@
+#ifndef VISIT_HPP
+#define VISIT_HPP
+
 #include <variant>
 #include <type_traits>
 #include <cassert>
@@ -65,3 +68,5 @@ auto dev_visit(Func &&f, Var &&var, Rest &&...rest) {
         },
         std::forward<Var>(var));
 }
+
+#endif // VISIT_HPP

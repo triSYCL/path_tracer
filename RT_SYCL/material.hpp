@@ -1,9 +1,13 @@
 #ifndef RT_SYCL_MATERIAL_HPP
 #define RT_SYCL_MATERIAL_HPP
+
+#include <iostream>
+
 #include "hitable.hpp"
 #include "texture.hpp"
 #include "vec.hpp"
-#include <iostream>
+#include "visit.hpp"
+
 
 struct lambertian_material {
     lambertian_material() = default;

@@ -3,6 +3,7 @@
 
 #include "rectangle.hpp"
 #include "rtweekend.hpp"
+#include "visit.hpp"
 
 /// This class implements a axis aligned cuboid using 6 rectangles
 class box {
