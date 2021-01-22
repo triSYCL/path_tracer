@@ -17,7 +17,8 @@ public:
     xy_rect() = default;
 
     /// x0 <= x1 and y0 <= y1
-    xy_rect(real_t _x0, real_t _x1, real_t _y0, real_t _y1, real_t _k, material_t mat_type)
+    xy_rect(real_t _x0, real_t _x1, real_t _y0, real_t _y1, real_t _k,
+            const material_t& mat_type)
         : x0 { _x0 }
         , x1 { _x1 }
         , y0 { _y0 }
@@ -56,7 +57,8 @@ public:
     xz_rect() = default;
 
     /// x0 <= x1 and z0 <= z1
-    xz_rect(real_t _x0, real_t _x1, real_t _z0, real_t _z1, real_t _k, material_t mat_type)
+    xz_rect(real_t _x0, real_t _x1, real_t _z0, real_t _z1, real_t _k,
+            const material_t& mat_type)
         : x0 { _x0 }
         , x1 { _x1 }
         , z0 { _z0 }
@@ -67,7 +69,8 @@ public:
     }
 
     /// Compute ray interaction with rectangle
-    bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
+    bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
+             material_t& hit_material_type) const
     {
         hit_material_type = material_type;
 
@@ -95,7 +98,8 @@ public:
     yz_rect() = default;
 
     /// y0 <= y1 and z0 <= z1
-    yz_rect(real_t _y0, real_t _y1, real_t _z0, real_t _z1, real_t _k, material_t mat_type)
+    yz_rect(real_t _y0, real_t _y1, real_t _z0, real_t _z1, real_t _k,
+            const material_t& mat_type)
         : y0 { _y0 }
         , y1 { _y1 }
         , z0 { _z0 }

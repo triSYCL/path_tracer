@@ -40,7 +40,9 @@ public:
 
     ///Simulates moving spheres from center0 to
     ///center1 between time0 and time1
-    sphere(point& cen0, point& cen1, real_t _time0, real_t _time1, real_t r, material_t mat_type)
+    sphere(const point& cen0, const point& cen1,
+           real_t _time0, real_t _time1, real_t r,
+           const material_t& mat_type)
         : center0 { cen0 }
         , center1 { cen1 }
         , radius { r }
@@ -61,7 +63,8 @@ public:
     }
 
     /// Compute ray interaction with sphere
-    bool hit(const ray& r, real_t min, real_t max, hit_record& rec, material_t& hit_material_type) const
+    bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
+             material_t& hit_material_type) const
     {
         hit_material_type = material_type;
 

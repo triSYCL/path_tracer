@@ -12,7 +12,7 @@ public:
 
     /// p0 = { x0, y0, z0 } and p1 = { x1, y1. z1 }
     /// where x0 <= x1, y0 <= y1 and z0 <= z1
-    box(const point& p0, const point& p1, material_t mat_type)
+    box(const point& p0, const point& p1, const material_t& mat_type)
         : box_min { p0 }
         , box_max { p1 }
         , material_type { mat_type }
