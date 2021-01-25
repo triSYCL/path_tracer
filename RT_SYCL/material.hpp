@@ -82,7 +82,7 @@ struct dielectric_material {
         attenuation *= albedo;
         float refraction_ratio = rec.front_face ? (1.0f / ref_idx) : ref_idx;
         vec unit_direction = unit_vector(r_in.direction());
-        float cos_theta = sycl::fmin(sycl::dot(-unit_direction, rec.normal), 1.0f);
+        float cos_theta = sycl::fmin(-sycl::dot(unit_direction, rec.normal), 1.0f);
         float sin_theta = sycl::sqrt(1.0f - cos_theta * cos_theta);
         bool cannot_refract = refraction_ratio * sin_theta > 1.0f;
         vec direction;
