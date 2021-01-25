@@ -44,6 +44,11 @@ repository somewhere, run:
 ```sh
 cmake .. -DCMAKE_MODULE_PATH=<absolute_path_to>/triSYCL/cmake
 ```
+It is also possible to build with https://github.com/triSYCL/sycl or https://github.com/intel/llvm/tree/sycl
+```sh
+cmake .. -DSYCL_CXX_COMPILER=<path_to_sycl_build>/bin/clang++ -DSYCL_DEVICE_TRIPLE=fpga64_sw_emu
+# the triple fpga64_sw_emu is only available with https://github.com/triSYCL/sycl
+```
 
 For FPGA execution you might add `-DUSE_SINGLE_TASK=ON` on the
 previous `cmake` configuration to use a SYCL execution based on a
@@ -55,7 +60,6 @@ Build the project with:
 cmake --build . --verbose --parallel `nproc`
 ```
 This creates the executable.
-
 
 ## Running
 

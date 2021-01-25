@@ -5,7 +5,7 @@
 #include <cmath>
 #include <iostream>
 
-#include <SYCL/sycl.hpp>
+#include "sycl.hpp"
 using real_t = float;
 
 //type aliases for float3 - vec, point and color
