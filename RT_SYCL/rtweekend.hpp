@@ -10,9 +10,14 @@
 #include <variant>
 #include <vector>
 
+#include <triSYCL/vendor/trisycl/random/xorshift.hpp>
+
+/// \todo Remove these global objects and move them into the kernel.
+/// It cannot work with SYCL on device otherwise.
 namespace {
 std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
-std::mt19937 generator;
+/// A fast random generator good on accelerator like FPGA
+trisycl::vendor::trisycl::random::xorshift generator;
 }
 
 // Constants
