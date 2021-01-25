@@ -4,7 +4,9 @@ add_executable(sycl-rt main.cpp)
 target_include_directories(sycl-rt PRIVATE .)
 
 # This is a SYCL program
-add_sycl_to_target(sycl-rt)
+if ("${SYCL_CXX_COMPILER}" STREQUAL "")
+  add_sycl_to_target(sycl-rt)
+endif()
 
 # Use C+20
 target_compile_features(sycl-rt PRIVATE cxx_std_20)

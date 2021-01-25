@@ -1,4 +1,4 @@
-#include <SYCL/sycl.hpp>
+#include "sycl.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cstdint>

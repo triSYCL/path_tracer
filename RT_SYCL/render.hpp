@@ -11,7 +11,7 @@
 #include "triangle.hpp"
 #include "vec.hpp"
 #include "visit.hpp"
-#include <SYCL/sycl.hpp>
+#include "sycl.hpp"
 
 using hittable_t = std::variant<sphere, xy_rect, triangle, box, constant_medium>;
 namespace constants {
