@@ -56,7 +56,7 @@ public:
     /// the time information stored in the ray
     point center(real_t time) const
     {
-        if (center0 == center1)
+        if (time0 == time1)
             return center0;
         else
             return center0 + ((time - time0) / (time1 - time0)) * (center1 - center0);

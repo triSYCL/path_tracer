@@ -83,7 +83,7 @@ vec random_in_unit_disk()
 // Computes refracted ray's direction based on refractive index
 vec refract(const vec& uv, const vec& n, float etai_over_etat)
 {
-    auto cos_theta = sycl::fmin(sycl::dot(-uv, n), 1.0f);
+    auto cos_theta = sycl::fmin(-sycl::dot(uv, n), 1.0f);
     vec r_out_perp = etai_over_etat * (uv + cos_theta * n);
     vec r_out_parallel = -sycl::sqrt(sycl::fabs(1.0f - length_squared(r_out_perp))) * n;
     return r_out_perp + r_out_parallel;

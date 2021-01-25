@@ -33,9 +33,9 @@ public:
     }
 
 #ifdef USE_SINGLE_TASK
-    void operator()()
+    void operator()() const
 #else
-    void operator()(sycl::nd_item<2> item)
+    void operator()(sycl::nd_item<2> item) const
 #endif
     {
 #ifdef USE_SINGLE_TASK
@@ -68,13 +68,13 @@ public:
     }
 
 private:
-    point origin;
-    point lower_left_corner;
-    vec horizontal;
-    vec vertical;
+    mutable point origin;
+    mutable point lower_left_corner;
+    mutable vec horizontal;
+    mutable vec vertical;
 
     // Check if ray hits anything in the world
-    bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, hittable_t* hittables, material_t& material_type)
+    bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec, hittable_t* hittables, material_t& material_type) const
     {
         hit_record temp_rec;
         material_t temp_material_type;
@@ -93,7 +93,7 @@ private:
     }
 
     /// Compute the color of the ray
-    color get_color(const ray& r, hittable_t* hittables, int max_depth)
+    color get_color(const ray& r, hittable_t* hittables, int max_depth) const
     {
         ray cur_ray = r;
         color cur_attenuation { 1.0f, 1.0f, 1.0f };

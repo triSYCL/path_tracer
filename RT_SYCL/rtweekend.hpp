@@ -29,7 +29,11 @@ inline float degrees_to_radians(float degrees)
 
 inline float random_float()
 {
+#ifndef USE_SYCL_COMPILER
     return distribution(generator);
+#else
+    return 0.5;
+#endif
 }
 
 inline float random_float(float min, float max)
