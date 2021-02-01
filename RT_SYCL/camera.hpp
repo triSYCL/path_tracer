@@ -3,14 +3,15 @@
 
 #include <cmath>
 
-#include "rtweekend.hpp"
 #include "ray.hpp"
+#include "rtweekend.hpp"
 
 /** Camera model
 
     This implements:
 
-    - https://raytracing.github.io/books/RayTracingInOneWeekend.html#positionablecamera
+    -
+   https://raytracing.github.io/books/RayTracingInOneWeekend.html#positionablecamera
 
     - https://raytracing.github.io/books/RayTracingInOneWeekend.html#defocusblur
 */
@@ -43,8 +44,7 @@ class camera {
   /// Shutter open and close times
   real_t time0, time1;
 
-  public:
-
+ public:
   /** Create a parameterized camera
 
       \param[in] look_from is the position of the camera
@@ -63,45 +63,38 @@ class camera {
 
       \param[in] focus_dist is the focus distance
   */
-  camera(const point& look_from,
-         const point& look_at,
-         const vec& vup,
-         real_t degree_vfov,
-         real_t aspect_ratio,
-         real_t aperture,
-         real_t focus_dist,
-         real_t _time0 = 0,
-         real_t _time1 = 0
-         )
-    : origin { look_from }
-  {
+  camera(const point& look_from, const point& look_at, const vec& vup,
+         real_t degree_vfov, real_t aspect_ratio, real_t aperture,
+         real_t focus_dist, real_t _time0 = 0, real_t _time1 = 0)
+      : origin { look_from } {
     auto theta = degrees_to_radians(degree_vfov);
-    auto h = std::tan(theta/2);
-    auto viewport_height = 2.0f*h;
+    auto h = std::tan(theta / 2);
+    auto viewport_height = 2.0f * h;
     auto viewport_width = aspect_ratio * viewport_height;
 
     w = unit_vector(look_from - look_at);
     u = unit_vector(sycl::cross(vup, w));
     v = sycl::cross(w, u);
 
-    horizontal = focus_dist * viewport_width*u;
-    vertical = focus_dist * viewport_height*v;
-    lower_left_corner = origin - horizontal/2 - vertical/2 - focus_dist*w;
+    horizontal = focus_dist * viewport_width * u;
+    vertical = focus_dist * viewport_height * v;
+    lower_left_corner = origin - horizontal / 2 - vertical / 2 - focus_dist * w;
 
-    lens_radius = aperture/2;
+    lens_radius = aperture / 2;
     time0 = _time0;
     time1 = _time1;
   }
 
-  /** Computes ray from camera passing through 
-      viewport local coordinates (s,t) based on viewport 
-      width, height and focus distance 
+  /** Computes ray from camera passing through
+      viewport local coordinates (s,t) based on viewport
+      width, height and focus distance
   */
   ray get_ray(real_t s, real_t t) const {
-    vec rd = lens_radius*random_in_unit_disk();
+    vec rd = lens_radius * random_in_unit_disk();
     vec offset = u * rd.x() + v * rd.y();
     return { origin + offset,
-             lower_left_corner + s*horizontal + t*vertical - origin - offset,
+             lower_left_corner + s * horizontal + t * vertical - origin -
+                 offset,
              random_float(time0, time1) };
   }
 };
