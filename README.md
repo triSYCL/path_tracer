@@ -29,6 +29,22 @@ more modern constructs such as `std::variant` and `std::visit`.
   - x/y/z-rectangles;
   - boxes;
 
+## Required dependancies
+
+In addition to triSYCL, this project requires the following dependancies:
+
+ - the [stb](https://github.com/nothings/stb) image manipulation library;
+
+On Linux, there's a good chance it can be installed with your package manager :
+
+On Ubuntu/Debian :
+
+```sh
+sudo apt install libstb-dev
+```
+
+On Archlinux, install the [stb](https://aur.archlinux.org/packages/stb) package from AUR.
+
 ## Compiling
 
 Clone the reposity such as with:
