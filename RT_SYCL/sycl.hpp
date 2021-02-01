@@ -1,6 +1,6 @@
 
 #ifdef USE_SYCL_COMPILER
-  #include <CL/sycl.hpp>
+#include <CL/sycl.hpp>
 #else
-  #include <SYCL/sycl.hpp>
+#include <SYCL/sycl.hpp>
 #endif

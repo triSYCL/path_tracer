@@ -4,32 +4,27 @@
 #include "vec.hpp"
 
 class ray {
-public:
-    ray() = default;
+ public:
+  ray() = default;
 
-    ray(const point& origin, const vec& direction, real_t time = 0.0f)
-        : orig { origin }
-        , dir { direction }
-        , tm { time }
-    {
-    }
+  ray(const point& origin, const vec& direction, real_t time = 0.0f)
+      : orig { origin }
+      , dir { direction }
+      , tm { time } {}
 
-    point origin() const { return orig; }
-    vec direction() const { return dir; }
-    real_t time() const { return tm; }
+  point origin() const { return orig; }
+  vec direction() const { return dir; }
+  real_t time() const { return tm; }
 
-    //returns point along the ray at distance t from ray's origin
-    //the ray P(t) = Origin + t*direction
-    point at(float t) const
-    {
-        return orig + t * dir;
-    }
+  // returns point along the ray at distance t from ray's origin
+  // the ray P(t) = Origin + t*direction
+  point at(float t) const { return orig + t * dir; }
 
-public:
-    //To store the origin and direction of the ray
-    point orig;
-    vec dir;
-    real_t tm;
+ public:
+  // To store the origin and direction of the ray
+  point orig;
+  vec dir;
+  real_t tm;
 };
 
 #endif

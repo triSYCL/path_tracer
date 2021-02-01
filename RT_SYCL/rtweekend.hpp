@@ -18,7 +18,7 @@ namespace {
 std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
 /// A fast random generator good on accelerator like FPGA
 trisycl::vendor::trisycl::random::xorshift generator;
-}
+} // namespace
 
 // Constants
 
@@ -27,24 +27,19 @@ const float pi = 3.1415926535897932385f;
 
 // Utility Functions
 
-inline float degrees_to_radians(float degrees)
-{
-    return degrees * pi / 180.0f;
-}
+inline float degrees_to_radians(float degrees) { return degrees * pi / 180.0f; }
 
-inline float random_float()
-{
+inline float random_float() {
 #ifndef USE_SYCL_COMPILER
-    return distribution(generator);
+  return distribution(generator);
 #else
-    return 0.5;
+  return 0.5;
 #endif
 }
 
-inline float random_float(float min, float max)
-{
-    // Returns a random real in (min,max).
-    return min + (max - min) * random_float();
+inline float random_float(float min, float max) {
+  // Returns a random real in (min,max).
+  return min + (max - min) * random_float();
 }
 
 // Common Headers
