@@ -10,7 +10,7 @@
 #include <variant>
 #include <vector>
 
-#include <triSYCL/vendor/trisycl/random/xorshift.hpp>
+#include <triSYCL/vendor/triSYCL/random/xorshift.hpp>
 
 /// \todo Remove these global objects and move them into the kernel.
 /// It cannot work with SYCL on device otherwise.
