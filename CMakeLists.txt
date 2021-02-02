@@ -11,11 +11,6 @@ endif()
 
 project(SYCL-path-tracer LANGUAGES CXX)
 
-# To run fast...
-set(CMAKE_BUILD_TYPE Release)
-# ... or to debug
-#set(CMAKE_BUILD_TYPE Debug)
-
 # Use triSYCL
 if ("${SYCL_CXX_COMPILER}" STREQUAL "")
   include(FindtriSYCL)
@@ -28,8 +23,15 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_SYCL_COMPILER")
 endif()
 
-# TODO when using graphics later: Use gtkmm-3.0 or later
-#find_package(GTK2 3.0 REQUIRED gtkmm)
+ 
+# Set a default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to Release as none was specified.")
+  set(CMAKE_BUILD_TYPE "Release" CACHE
+      STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
 
 add_subdirectory(RT_SYCL)
 
