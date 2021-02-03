@@ -98,12 +98,12 @@ auto moller_trumbore_triangle_intersec =
 };
 
 // A triangle based on 3 points
-template <auto IntersectionStrategy = badouel_ray_triangle_intersec>
-class _triangle : public _triangle_coord {
+template <auto IntersectionStrategy = moller_trumbore_triangle_intersec>
+class triangle : public _triangle_coord {
  public:
-  _triangle() = default;
-  _triangle(const point& _v0, const point& _v1, const point& _v2,
-            const material_t& mat_type)
+  triangle() = default;
+  triangle(const point& _v0, const point& _v1, const point& _v2,
+           const material_t& mat_type)
       : _triangle_coord { _v0, _v1, _v2 }
       , material_type { mat_type } {}
 
@@ -116,6 +116,4 @@ class _triangle : public _triangle_coord {
 
   material_t material_type;
 };
-
-using triangle = _triangle<moller_trumbore_triangle_intersec>;
 #endif
