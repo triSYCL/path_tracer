@@ -172,10 +172,10 @@ void render(sycl::queue queue, color* fb_data, const hittable_t* hittables,
     // Construct kernel functor
 
     auto render_kernel = get_render_kernel<width, height, samples, depth,
-                                           buildparams::SINGLE_TASK>(
+                                           buildparams::use_single_task>(
         frame_ptr, hittables_ptr, num_hittables, cam);
     // Execute kernel
-    if constexpr (buildparams::SINGLE_TASK) {
+    if constexpr (buildparams::use_single_task) {
       // Use a single task iterating on all pixels
       cgh.single_task(render_kernel);
     } else {
