@@ -117,41 +117,27 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
   };
 }
 
-template <int width, int height, int samples, int depth, bool single_task>
-auto get_render_kernel(sycl::accessor<color, 1, sycl::access::mode::write,
-                                      sycl::access::target::global_buffer>
-                           frame_ptr,
-                       sycl::accessor<hittable_t, 1, sycl::access::mode::read,
-                                      sycl::access::target::global_buffer>
-                           hitable_ptr,
-                       int num_hittables, camera& cam,
-                       typename std::enable_if<single_task>::type* = 0) {
-  auto pixel_kernel = pixel_renderer<width, height, samples, depth>(
-      frame_ptr, hitable_ptr, num_hittables, cam);
-  return [=]() {
-    for (int x_coord = 0; x_coord != width; ++x_coord)
-      for (int y_coord = 0; y_coord != height; ++y_coord) {
-        pixel_kernel(x_coord, y_coord);
-      }
-  };
-}
-
-template <int width, int height, int samples, int depth, bool single_task>
-auto get_render_kernel(sycl::accessor<color, 1, sycl::access::mode::write,
-                                      sycl::access::target::global_buffer>
-                           frame_ptr,
-                       sycl::accessor<hittable_t, 1, sycl::access::mode::read,
-                                      sycl::access::target::global_buffer>
-                           hitable_ptr,
-                       int num_hittables, camera& cam,
-                       typename std::enable_if<!single_task>::type* = 0) {
-  auto pixel_kernel = pixel_renderer<width, height, samples, depth>(
-      frame_ptr, hitable_ptr, num_hittables, cam);
-  return [=](sycl::nd_item<2> item) {
-    const auto x_coord = item.get_global_id(0);
-    const auto y_coord = item.get_global_id(1);
-    pixel_kernel(x_coord, y_coord);
-  };
+template <int width, int height, typename T>
+void executor(trisycl::handler& cgh, T render_kernel) {
+  if constexpr (buildparams::use_single_task) {
+    cgh.single_task([render_kernel]() -> void {
+      for (int x_coord = 0; x_coord != width; ++x_coord)
+        for (int y_coord = 0; y_coord != height; ++y_coord) {
+          render_kernel(x_coord, y_coord);
+        }
+    });
+  } else {
+    const auto global = sycl::range<2>(width, height);
+    const auto local = sycl::range<2>(constants::TileX, constants::TileY);
+    const auto index_space = sycl::nd_range<2>(global, local);
+    // Launch 1 work-item per pixel in parallel
+    cgh.parallel_for(index_space,
+                     [render_kernel](sycl::nd_item<2> item) -> void {
+                       const auto x_coord = item.get_global_id(0);
+                       const auto y_coord = item.get_global_id(1);
+                       render_kernel(x_coord, y_coord);
+                     });
+  }
 }
 
 // Render function to call the render kernel
@@ -171,20 +157,8 @@ void render(sycl::queue queue, color* fb_data, const hittable_t* hittables,
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
     // Construct kernel functor
 
-    auto render_kernel = get_render_kernel<width, height, samples, depth,
-                                           buildparams::use_single_task>(
+    auto render_kernel = pixel_renderer<width, height, samples, depth>(
         frame_ptr, hittables_ptr, num_hittables, cam);
-    // Execute kernel
-    if constexpr (buildparams::use_single_task) {
-      // Use a single task iterating on all pixels
-      cgh.single_task(render_kernel);
-    } else {
-      // Setup kernel index space
-      const auto global = sycl::range<2>(width, height);
-      const auto local = sycl::range<2>(constants::TileX, constants::TileY);
-      const auto index_space = sycl::nd_range<2>(global, local);
-      // Launch 1 work-item per pixel in parallel
-      cgh.parallel_for(index_space, render_kernel);
-    }
+    executor<width, height>(cgh, render_kernel);
   });
 }
