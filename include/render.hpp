@@ -14,7 +14,7 @@
 #include "visit.hpp"
 
 using hittable_t =
-    std::variant<sphere, xy_rect, triangle<>, box, constant_medium>;
+    std::variant<sphere, xy_rect, triangle, box, constant_medium>;
 namespace constants {
 static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
