@@ -1,4 +1,7 @@
+#include <type_traits>
+
 #include "box.hpp"
+#include "build_parameters.hpp"
 #include "camera.hpp"
 #include "constant_medium.hpp"
 #include "hitable.hpp"
@@ -20,64 +23,18 @@ static constexpr auto TileX = 8;
 static constexpr auto TileY = 8;
 } // namespace constants
 
-template <int width, int height, int samples, int depth> class render_kernel {
- public:
-  render_kernel(sycl::accessor<color, 1, sycl::access::mode::write,
-                               sycl::access::target::global_buffer>
-                    frame_ptr,
-                sycl::accessor<hittable_t, 1, sycl::access::mode::read,
-                               sycl::access::target::global_buffer>
-                    hitable_ptr,
-                int num_hittables, camera& cam)
-      : m_frame_ptr { frame_ptr }
-      , m_hitable_ptr { hitable_ptr }
-      , num_hittables { num_hittables }
-      , m_camera { cam } {}
-
-#ifdef USE_SINGLE_TASK
-  void operator()() const
-#else
-  void operator()(sycl::nd_item<2> item) const
-#endif
-  {
-#ifdef USE_SINGLE_TASK
-    for (int x_coord = 0; x_coord != width; ++x_coord)
-      for (int y_coord = 0; y_coord != height; ++y_coord) {
-#else
-    // Get our Ids
-    const auto x_coord = item.get_global_id(0);
-    const auto y_coord = item.get_global_id(1);
-#endif
-        // map the 2D indices to a single linear, 1D index
-        const auto pixel_index = y_coord * width + x_coord;
-
-        // Color sampling for antialiasing
-        color final_color(0.0f, 0.0f, 0.0f);
-        for (auto i = 0; i < samples; i++) {
-          const auto u = (x_coord + random_float()) / width;
-          const auto v = (y_coord + random_float()) / height;
-          // u and v are points on the viewport
-          ray r = m_camera.get_ray(u, v);
-          final_color += get_color(r, m_hitable_ptr.get_pointer(), depth);
-        }
-        final_color /= static_cast<real_t>(samples);
-
-        // Write final color to the frame buffer global memory
-        m_frame_ptr[pixel_index] = final_color;
-#ifdef USE_SINGLE_TASK
-      }
-#endif
-  }
-
- private:
-  mutable point origin;
-  mutable point lower_left_corner;
-  mutable vec horizontal;
-  mutable vec vertical;
-
-  // Check if ray hits anything in the world
-  bool hit_world(const ray& r, real_t min, real_t max, hit_record& rec,
-                 hittable_t* hittables, material_t& material_type) const {
+template <int width, int height, int samples, int depth>
+auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
+                                   sycl::access::target::global_buffer>
+                        frame_ptr,
+                    sycl::accessor<hittable_t, 1, sycl::access::mode::read,
+                                   sycl::access::target::global_buffer>
+                        hitable_ptr,
+                    int num_hittables, camera& cam) {
+  auto hit_world = [hitable_ptr, num_hittables](
+                       const ray& r, real_t min, real_t max, hit_record& rec,
+                       material_t& material_type) -> bool {
+    // Check if ray hits anything in the world
     hit_record temp_rec;
     material_t temp_material_type;
     auto hit_anything = false;
@@ -89,7 +46,7 @@ template <int width, int height, int samples, int depth> class render_kernel {
                 return arg.hit(r, min, closest_so_far, temp_rec,
                                temp_material_type);
               },
-              hittables[i])) {
+              hitable_ptr.get_pointer()[i])) {
         hit_anything = true;
         closest_so_far = temp_rec.t;
         rec = temp_rec;
@@ -97,19 +54,17 @@ template <int width, int height, int samples, int depth> class render_kernel {
       }
     }
     return hit_anything;
-  }
+  };
 
-  /// Compute the color of the ray
-  color get_color(const ray& r, hittable_t* hittables, int max_depth) const {
+  auto get_color = [=](const ray& r) -> color {
     ray cur_ray = r;
     color cur_attenuation { 1.0f, 1.0f, 1.0f };
     ray scattered;
     color emitted;
     material_t material_type;
-    for (auto i = 0; i < max_depth; i++) {
+    for (auto i = 0; i < depth; i++) {
       hit_record rec;
-      if (hit_world(cur_ray, real_t { 0.001f }, infinity, rec, hittables,
-                    material_type)) {
+      if (hit_world(cur_ray, real_t { 0.001f }, infinity, rec, material_type)) {
         emitted = dev_visit([&](auto&& arg) { return arg.emitted(rec); },
                             material_type);
         if (dev_visit(
@@ -140,18 +95,50 @@ template <int width, int height, int samples, int depth> class render_kernel {
     }
     // If not returned within max_depth return black
     return color { 0.0f, 0.0f, 0.0f };
-  }
+  };
 
-  // Accessor objects
-  sycl::accessor<color, 1, sycl::access::mode::write,
-                 sycl::access::target::global_buffer>
-      m_frame_ptr;
-  sycl::accessor<hittable_t, 1, sycl::access::mode::read,
-                 sycl::access::target::global_buffer>
-      m_hitable_ptr;
-  int num_hittables;
-  camera m_camera;
-};
+  return [=](int x_coord, int y_coord) -> void {
+    // map the 2D indices to a single linear, 1D index
+    const auto pixel_index = y_coord * width + x_coord;
+
+    // Color sampling for antialiasing
+    color final_color(0.0f, 0.0f, 0.0f);
+    for (auto i = 0; i < samples; i++) {
+      const auto u = (x_coord + random_float()) / width;
+      const auto v = (y_coord + random_float()) / height;
+      // u and v are points on the viewport
+      ray r = cam.get_ray(u, v);
+      final_color += get_color(r);
+    }
+    final_color /= static_cast<real_t>(samples);
+
+    // Write final color to the frame buffer global memory
+    frame_ptr[pixel_index] = final_color;
+  };
+}
+
+template <int width, int height, typename T>
+void executor(trisycl::handler& cgh, T render_kernel) {
+  if constexpr (buildparams::use_single_task) {
+    cgh.single_task([render_kernel]() -> void {
+      for (int x_coord = 0; x_coord != width; ++x_coord)
+        for (int y_coord = 0; y_coord != height; ++y_coord) {
+          render_kernel(x_coord, y_coord);
+        }
+    });
+  } else {
+    const auto global = sycl::range<2>(width, height);
+    const auto local = sycl::range<2>(constants::TileX, constants::TileY);
+    const auto index_space = sycl::nd_range<2>(global, local);
+    // Launch 1 work-item per pixel in parallel
+    cgh.parallel_for(index_space,
+                     [render_kernel](sycl::nd_item<2> item) -> void {
+                       const auto x_coord = item.get_global_id(0);
+                       const auto y_coord = item.get_global_id(1);
+                       render_kernel(x_coord, y_coord);
+                     });
+  }
+}
 
 // Render function to call the render kernel
 template <int width, int height, int samples>
@@ -169,20 +156,9 @@ void render(sycl::queue queue, color* fb_data, const hittable_t* hittables,
     auto hittables_ptr =
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
     // Construct kernel functor
-    render_kernel<width, height, samples, depth> render_func = {
-      frame_ptr, hittables_ptr, num_hittables, cam
-    };
-    // Execute kernel
-#ifdef USE_SINGLE_TASK
-    // Use a single task iterating on all pixels
-    cgh.single_task(render_func);
-#else
-    // Setup kernel index space
-    const auto global = sycl::range<2>(width, height);
-    const auto local = sycl::range<2>(constants::TileX, constants::TileY);
-    const auto index_space = sycl::nd_range<2>(global, local);
-    // Launch 1 work-item per pixel in parallel
-    cgh.parallel_for(index_space, render_func);
-#endif
+
+    auto render_kernel = pixel_renderer<width, height, samples, depth>(
+        frame_ptr, hittables_ptr, num_hittables, cam);
+    executor<width, height>(cgh, render_kernel);
   });
 }
