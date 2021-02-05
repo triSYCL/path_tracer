@@ -110,33 +110,6 @@ inline auto render_pixel(int x_coord,
 	fb_acc[y_coord][x_coord] = final_color;
 }
 
-template <int width, int height, int samples, int depth>
-inline void render_executor(sycl::queue& queue, sycl::buffer<hittable_t, 1>& hittable_handle,  sycl::buffer<color, 2> & fb_handle, camera& cam) {
-	queue.submit([&](sycl::handler& cgh){
-		auto fb_acc = fb_handle.get_access<sycl::access::mode::discard_write>(cgh);
-		auto hittables_acc = hittable_handle.get_access<sycl::access::mode::read>(cgh);
-		if constexpr (buildparams::use_single_task) {
-		  cgh.single_task([=](){
-			for (int x_coord = 0; x_coord != width; ++x_coord)
-			  for (int y_coord = 0; y_coord != height; ++y_coord) {
-				render_pixel<width, height, samples, depth>(x_coord, y_coord, cam, hittables_acc, fb_acc);
-			  }
-		  });
-		} else {
-		  const auto global = sycl::range<2>(width, height);
-		  const auto local = sycl::range<2>(constants::TileX, constants::TileY);
-		  cgh.parallel_for_work_group(global, local, [=](sycl::group<2> g) {
-			  g.parallel_for_work_item([&](sycl::h_item<2> item){
-				  auto gid = item.get_global_id();
-				  const auto x_coord = gid[0];
-				  const auto y_coord = gid[1];
-				  render_pixel<width, height, samples, depth>(x_coord, y_coord, cam, hittables_acc, fb_acc);
-			  });
-		  });
-		}
-	});
-
-}
 
 // Render function to call the render kernel
 template <int width, int height, int samples>
@@ -146,5 +119,27 @@ void render(sycl::queue& queue, std::array<color, width*height>& fb, std::vector
   auto hittables_buf =
 	  sycl::buffer<hittable_t, 1>(hittables.data(), sycl::range<1>(hittables.size()));
   // Submit command group on device
-  render_executor<width, height, samples, depth>(queue, hittables_buf, frame_buf, cam);
+  queue.submit([&](sycl::handler& cgh){
+	  auto fb_acc = frame_buf.get_access<sycl::access::mode::discard_write>(cgh);
+	  auto hittables_acc = hittables_buf.get_access<sycl::access::mode::read>(cgh);
+	  if constexpr (buildparams::use_single_task) {
+		cgh.single_task([=](){
+		  for (int x_coord = 0; x_coord != width; ++x_coord)
+			for (int y_coord = 0; y_coord != height; ++y_coord) {
+			  render_pixel<width, height, samples, depth>(x_coord, y_coord, cam, hittables_acc, fb_acc);
+			}
+		});
+	  } else {
+		const auto global = sycl::range<2>(width, height);
+		const auto local = sycl::range<2>(constants::TileX, constants::TileY);
+		cgh.parallel_for_work_group(global, local, [=](sycl::group<2> g) {
+			g.parallel_for_work_item([&](sycl::h_item<2> item){
+				auto gid = item.get_global_id();
+				const auto x_coord = gid[0];
+				const auto y_coord = gid[1];
+				render_pixel<width, height, samples, depth>(x_coord, y_coord, cam, hittables_acc, fb_acc);
+			});
+		});
+	  }
+  });
 }
