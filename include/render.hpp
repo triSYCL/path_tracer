@@ -26,12 +26,9 @@ static constexpr auto TileY = 8;
 } // namespace constants
 
 template <int width, int height, int samples, int depth>
-inline auto render_pixel(
-    int x_coord, int y_coord, camera const& cam,
-    sycl::accessor<hittable_t, 1, sycl::access::mode::read,
-                   sycl::access::target::global_buffer> const& hittable_acc,
-    sycl::accessor<color, 2, sycl::access::mode::discard_write,
-                   sycl::access::target::global_buffer> const& fb_acc) {
+inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
+                         hittable_t const* hittable_ptr, int nb_hittable,
+                         color* fb_ptr) {
   auto get_color = [&](const ray& r) {
     auto hit_world = [&](const ray& r, hit_record& rec,
                          material_t& material_type) {
@@ -40,13 +37,13 @@ inline auto render_pixel(
       auto hit_anything = false;
       auto closest_so_far = infinity;
       // Checking if the ray hits any of the spheres
-      for (auto i = 0; i < hittable_acc.get_count(); i++) {
+      for (auto i = 0; i < nb_hittable; i++) {
         if (dev_visit(
                 [&](auto&& arg) {
                   return arg.hit(r, 0.001f, closest_so_far, temp_rec,
                                  temp_material_type);
                 },
-                hittable_acc[i])) {
+                hittable_ptr[i])) {
           hit_anything = true;
           closest_so_far = temp_rec.t;
           rec = temp_rec;
@@ -107,7 +104,7 @@ inline auto render_pixel(
   final_color /= static_cast<real_t>(samples);
 
   // Write final color to the frame buffer global memory
-  fb_acc[y_coord][x_coord] = final_color;
+  fb_ptr[y_coord * width + x_coord] = final_color;
 }
 
 // Render function to call the render kernel
@@ -115,21 +112,24 @@ template <int width, int height, int samples>
 void render(sycl::queue& queue, std::array<color, width * height>& fb,
             std::vector<hittable_t>& hittables, camera& cam) {
   auto constexpr depth = 50;
+  const auto nb_hittable = hittables.size();
   auto frame_buf =
       sycl::buffer<color, 2>(fb.data(), sycl::range<2>(height, width));
-  auto hittables_buf = sycl::buffer<hittable_t, 1>(
-      hittables.data(), sycl::range<1>(hittables.size()));
+  auto hittables_buf = sycl::buffer<hittable_t, 1>(hittables.data(),
+                                                   sycl::range<1>(nb_hittable));
   // Submit command group on device
   queue.submit([&](sycl::handler& cgh) {
     auto fb_acc = frame_buf.get_access<sycl::access::mode::discard_write>(cgh);
     auto hittables_acc =
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
+    hittable_t const* hittable_ptr = hittables_acc.get_pointer();
+    color* fb_ptr = fb_acc.get_pointer();
     if constexpr (buildparams::use_single_task) {
       cgh.single_task([=]() {
         for (int x_coord = 0; x_coord != width; ++x_coord)
           for (int y_coord = 0; y_coord != height; ++y_coord) {
-            render_pixel<width, height, samples, depth>(x_coord, y_coord, cam,
-                                                        hittables_acc, fb_acc);
+            render_pixel<width, height, samples, depth>(
+                x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr);
           }
       });
     } else {
@@ -140,8 +140,8 @@ void render(sycl::queue& queue, std::array<color, width * height>& fb,
           auto gid = item.get_global_id();
           const auto x_coord = gid[0];
           const auto y_coord = gid[1];
-          render_pixel<width, height, samples, depth>(x_coord, y_coord, cam,
-                                                      hittables_acc, fb_acc);
+          render_pixel<width, height, samples, depth>(
+              x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr);
         });
       });
     }
