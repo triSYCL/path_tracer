@@ -11,7 +11,7 @@
 #include "render.hpp"
 
 // Function to save image data in ppm format
-template <int width, int height> void save_image(color* fb_data) {
+template <int width, int height> void save_image(std::array<color, (width * height)> fb_data) {
   std::cout << "P3\n" << width << " " << height << "\n255\n";
   for (int y = height - 1; y >= 0; y--) {
 	for (int x = 0; x < width; x++) {
@@ -159,7 +159,7 @@ int main() {
   render<width, height, samples>(myQueue, fb, hittables, cam);
 
   // Save image to file
-  save_image<width, height>(fb.data());
+  save_image<width, height>(fb);
 
   return 0;
 }
