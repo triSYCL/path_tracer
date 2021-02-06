@@ -158,6 +158,5 @@ void render(sycl::queue& queue, std::array<color, width * height>& fb,
 
     executor<width, height, samples, depth>(cgh, cam, hittable_ptr, nb_hittable,
                                             fb_ptr);
-
   });
 }
