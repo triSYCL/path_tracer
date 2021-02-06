@@ -90,13 +90,13 @@ class camera {
           viewport local coordinates (s,t) based on viewport
           width, height and focus distance
   */
-  ray get_ray(real_t s, real_t t) const {
-    vec rd = lens_radius * random_in_unit_disk();
+  ray get_ray(real_t s, real_t t, LocalPseudoRNG& rng) const {
+    vec rd = lens_radius * random_in_unit_disk(rng);
     vec offset = u * rd.x() + v * rd.y();
     return { origin + offset,
              lower_left_corner + s * horizontal + t * vertical - origin -
                  offset,
-             random_float(time0, time1) };
+             random_float(time0, time1, rng) };
   }
 };
 

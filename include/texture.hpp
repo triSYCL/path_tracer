@@ -16,7 +16,7 @@ struct solid_texture {
   solid_texture(float red, float green, float blue)
       : solid_texture { color { red, green, blue } } {}
   // For solid texture, the color is same throughout the sphere
-  color value(const hit_record& rec) const { return color_value; }
+  color value(const hit_record&) const { return color_value; }
 
  private:
   color color_value;
@@ -61,10 +61,10 @@ struct image_texture {
 
   /** Create a texture from an image file
 
-    \param[in] file_name is the path name to the image file
+        \param[in] file_name is the path name to the image file
 
-    \param[in] cyclic_frequency is an optional repetition rate of
-    the image in the texture
+        \param[in] cyclic_frequency is an optional repetition rate of
+        the image in the texture
 */
   image_texture(const char* file_name, float cyclic_frequency = 1)
       : cyclic_frequency { cyclic_frequency } {

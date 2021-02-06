@@ -27,7 +27,7 @@ class box {
 
   /// Compute ray interaction with the box
   bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
+           material_t& hit_material_type, LocalPseudoRNG& rng) const {
     hit_record temp_rec;
     material_t temp_material_type;
     auto hit_anything = false;
@@ -37,7 +37,7 @@ class box {
       if (dev_visit(
               [&](auto&& arg) {
                 return arg.hit(r, min, closest_so_far, temp_rec,
-                               temp_material_type);
+                               temp_material_type, rng);
               },
               side)) {
         hit_anything = true;

@@ -29,7 +29,7 @@ class xy_rect {
 
   /// Compute ray interaction with rectangle
   bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
+           material_t& hit_material_type, LocalPseudoRNG&) const {
     hit_material_type = material_type;
 
     auto t = (k - r.origin().z()) / r.direction().z();
@@ -67,7 +67,7 @@ class xz_rect {
 
   /// Compute ray interaction with rectangle
   bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
+           material_t& hit_material_type, LocalPseudoRNG&) const {
     hit_material_type = material_type;
 
     auto t = (k - r.origin().y()) / r.direction().y();
@@ -105,7 +105,7 @@ class yz_rect {
 
   /// Compute ray interaction with rectangle
   bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
+           material_t& hit_material_type, LocalPseudoRNG&) const {
     hit_material_type = material_type;
 
     auto t = (k - r.origin().x()) / r.direction().x();

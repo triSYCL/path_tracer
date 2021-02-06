@@ -18,5 +18,4 @@ constexpr int output_width = OUTPUT_WIDTH;
 constexpr int output_height = OUTPUT_HEIGHT;
 } // namespace buildparams
 
-
 #endif // BUILD_PARAMETERS_HPP

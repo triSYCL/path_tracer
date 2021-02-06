@@ -45,28 +45,31 @@ int main() {
   hittables.emplace_back(sphere(point { 0, -1000, 0 }, 1000, m));
   t = checker_texture(color { 0.9f, 0.9f, 0.9f }, color { 0.4f, 0.2f, 0.1f });
 
+  LocalPseudoRNG rng;
+
   for (int a = -11; a < 11; a++) {
     for (int b = -11; b < 11; b++) {
       // Based on a random variable , the material type is chosen
-      auto choose_mat = random_float();
+      auto choose_mat = random_float(rng);
       // Spheres are placed at a point randomly displaced from a,b
-      point center(a + 0.9f * random_float(), 0.2f, b + 0.9f * random_float());
+      point center(a + 0.9f * random_float(rng), 0.2f,
+                   b + 0.9f * random_float(rng));
       if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
         if (choose_mat < 0.4f) {
           // Lambertian
-          auto albedo = randomvec() * randomvec();
+          auto albedo = randomvec(rng) * randomvec(rng);
           hittables.emplace_back(
               sphere(center, 0.2f, lambertian_material(albedo)));
         } else if (choose_mat < 0.8f) {
           // Lambertian movig spheres
-          auto albedo = randomvec() * randomvec();
-          auto center2 = center + point { 0, random_float(0, 0.25f), 0 };
+          auto albedo = randomvec(rng) * randomvec(rng);
+          auto center2 = center + point { 0, random_float(0, 0.25f, rng), 0 };
           hittables.emplace_back(sphere(center, center2, 0.0f, 1.0f, 0.2f,
                                         lambertian_material(albedo)));
         } else if (choose_mat < 0.95f) {
           // metal
-          auto albedo = randomvec(0.5f, 1);
-          auto fuzz = random_float(0, 0.5f);
+          auto albedo = randomvec(0.5f, 1, rng);
+          auto fuzz = random_float(0, 0.5f, rng);
           hittables.emplace_back(
               sphere(center, 0.2f, metal_material(albedo, fuzz)));
         } else {

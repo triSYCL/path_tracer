@@ -28,7 +28,7 @@ static constexpr auto TileY = 8;
 template <int width, int height, int samples, int depth>
 inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
                          hittable_t const* hittable_ptr, int nb_hittable,
-                         color* fb_ptr) {
+                         color* fb_ptr, LocalPseudoRNG& rng) {
   auto get_color = [&](const ray& r) {
     auto hit_world = [&](const ray& r, hit_record& rec,
                          material_t& material_type) {
@@ -41,7 +41,7 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
         if (dev_visit(
                 [&](auto&& arg) {
                   return arg.hit(r, 0.001f, closest_so_far, temp_rec,
-                                 temp_material_type);
+                                 temp_material_type, rng);
                 },
                 hittable_ptr[i])) {
           hit_anything = true;
@@ -65,7 +65,8 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
                             material_type);
         if (dev_visit(
                 [&](auto&& arg) {
-                  return arg.scatter(cur_ray, rec, cur_attenuation, scattered);
+                  return arg.scatter(cur_ray, rec, cur_attenuation, scattered,
+                                     rng);
                 },
                 material_type)) {
           // On hitting the object, the ray gets scattered
@@ -95,10 +96,10 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
 
   color final_color(0.0f, 0.0f, 0.0f);
   for (auto i = 0; i < samples; i++) {
-    const auto u = (x_coord + random_float()) / width;
-    const auto v = (y_coord + random_float()) / height;
+    const auto u = (x_coord + random_float(rng)) / width;
+    const auto v = (y_coord + random_float(rng)) / height;
     // u and v are points on the viewport
-    ray r = cam.get_ray(u, v);
+    ray r = cam.get_ray(u, v, rng);
     final_color += get_color(r);
   }
   final_color /= static_cast<real_t>(samples);
@@ -113,10 +114,11 @@ inline void executor(sycl::handler& cgh, camera const& cam,
                      color* fb_ptr) {
   if constexpr (buildparams::use_single_task) {
     cgh.single_task([=]() {
+      LocalPseudoRNG rng;
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
           render_pixel<width, height, samples, depth>(
-              x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr);
+              x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr, rng);
         }
     });
   } else {
@@ -126,8 +128,9 @@ inline void executor(sycl::handler& cgh, camera const& cam,
       auto gid = item.get_id();
       const auto x_coord = gid[1];
       const auto y_coord = gid[0];
+      LocalPseudoRNG rng;
       render_pixel<width, height, samples, depth>(
-          x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr);
+          x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr, rng);
     });
   }
 }

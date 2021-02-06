@@ -19,11 +19,13 @@ float length_squared(const vec& v) {
                    sycl::fma(v.y(), v.y(), fma(v.z(), v.z(), 0.0f)));
 }
 
-vec randomvec() { return vec(random_float(), random_float(), random_float()); }
+vec randomvec(LocalPseudoRNG& rng) {
+  return vec(random_float(rng), random_float(rng), random_float(rng));
+}
 
-vec randomvec(float min, float max) {
-  return vec(random_float(min, max), random_float(min, max),
-             random_float(min, max));
+vec randomvec(float min, float max, LocalPseudoRNG& rng) {
+  return vec(random_float(min, max, rng), random_float(min, max, rng),
+             random_float(min, max, rng));
 }
 
 inline std::ostream& operator<<(std::ostream& out, const vec& v) {
@@ -37,17 +39,17 @@ vec operator-(const vec& u) { return vec(-u.x(), -u.y(), -u.z()); }
 inline vec unit_vector(const vec& v) { return v / sycl::length(v); }
 
 // Make a random unit vector
-vec random_unit_vector() {
-  auto a = random_float(0, 2 * pi);
-  auto z = random_float(-1, 1);
+vec random_unit_vector(LocalPseudoRNG& rng) {
+  auto a = random_float(0, 2 * pi, rng);
+  auto z = random_float(-1, 1, rng);
   auto r = sycl::sqrt(1 - z * z);
   return vec(r * sycl::cos(a), r * sycl::sin(a), z);
 }
 
 // Compute a random point inside a unit sphere at origin
-vec random_in_unit_sphere() {
+vec random_in_unit_sphere(LocalPseudoRNG& rng) {
   while (true) {
-    auto p = randomvec(-1, 1);
+    auto p = randomvec(-1, 1, rng);
     if (length_squared(p) >= 1)
       continue;
     return p;
@@ -58,9 +60,9 @@ vec random_in_unit_sphere() {
 vec reflect(const vec& v, const vec& n) { return v - 2 * sycl::dot(v, n) * n; }
 
 // Compute random point in a unit disk
-vec random_in_unit_disk() {
+vec random_in_unit_disk(LocalPseudoRNG& rng) {
   while (true) {
-    auto p = vec(random_float(-1, 1), random_float(-1, 1), 0);
+    auto p = vec(random_float(-1, 1, rng), random_float(-1, 1, rng), 0);
     if (length_squared(p) >= 1)
       continue;
     return p;
