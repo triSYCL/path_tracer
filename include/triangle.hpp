@@ -11,9 +11,10 @@ struct _triangle_coord {
   point v0, v1, v2;
 };
 
-auto badouel_ray_triangle_intersec = [](const ray& r,
-										_triangle_coord const& tri, real_t min,
-										real_t max, hit_record& rec) -> bool {
+inline bool badouel_ray_triangle_intersec(const ray& r,
+                                          _triangle_coord const& tri,
+                                          real_t min, real_t max,
+                                          hit_record& rec) {
   // Get triangle edge vectors and plane normal
   auto u = tri.v1 - tri.v0;
   auto v = tri.v2 - tri.v0;
@@ -25,14 +26,14 @@ auto badouel_ray_triangle_intersec = [](const ray& r,
 
   // ray is parallel to triangle plane
   if (sycl::fabs(b) < 0.000001f)
-	return false;
+    return false;
 
   // intersection point of ray with triangle
   real_t length = a / b;
   if (length < 0)
-	return false;
+    return false;
   else if (length < min || length > max)
-	return false;
+    return false;
 
   vec hit_pt = r.at(length);
   auto uu = sycl::dot(u, u);
@@ -46,7 +47,7 @@ auto badouel_ray_triangle_intersec = [](const ray& r,
   auto s = (uv * wv - vv * wu) / D;
   auto t = (uv * wu - uu * wv) / D;
   if (s < 0.0f || s > 1.0f || t < 0.0f || (s + t) > 1.0f)
-	return false;
+    return false;
 
   rec.set_face_normal(r, outward_normal);
   rec.t = length;
@@ -54,9 +55,10 @@ auto badouel_ray_triangle_intersec = [](const ray& r,
   return true;
 };
 
-auto moller_trumbore_triangle_intersec =
-	[](const ray& r, _triangle_coord const& tri, real_t min, real_t max,
-	   hit_record& rec) -> bool {
+inline bool moller_trumbore_triangle_intersec(const ray& r,
+                                              _triangle_coord const& tri,
+                                              real_t min, real_t max,
+                                              hit_record& rec) {
   constexpr auto epsilon = 0.0000001f;
 
   // Get triangle edge vectors and plane normal
@@ -67,7 +69,7 @@ auto moller_trumbore_triangle_intersec =
   auto a_abs = sycl::fabs(a);
 
   if (a_abs < epsilon)
-	return false; // This ray is parallel to this triangle
+    return false; // This ray is parallel to this triangle
 
   auto a_pos = a > 0.f;
 
@@ -76,18 +78,18 @@ auto moller_trumbore_triangle_intersec =
   auto u_pos = u > 0.f;
 
   if ((u_pos xor a_pos) || sycl::fabs(u) > a_abs)
-	return false;
+    return false;
 
   auto q = sycl::cross(s, edge1);
   auto v = sycl::dot(r.direction(), q);
   auto v_pos = v > 0.f;
   if ((v_pos xor a_pos) || (sycl::fabs(u + v) > a_abs))
-	return false;
+    return false;
 
   auto length = sycl::dot(edge2, q) / a;
 
   if (length < min || length > max)
-	return false;
+    return false;
 
   vec hit_pt = r.at(length);
 
@@ -103,15 +105,15 @@ class _triangle : public _triangle_coord {
  public:
   _triangle() = default;
   _triangle(const point& _v0, const point& _v1, const point& _v2,
-			const material_t& mat_type)
-	  : _triangle_coord { _v0, _v1, _v2 }
-	  , material_type { mat_type } {}
+            const material_t& mat_type)
+      : _triangle_coord { _v0, _v1, _v2 }
+      , material_type { mat_type } {}
 
   /// Compute ray interaction with triangle
   bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-		   material_t& hit_material_type) const {
-	hit_material_type = material_type;
-	return IntersectionStrategy(r, *this, min, max, rec);
+           material_t& hit_material_type) const {
+    hit_material_type = material_type;
+    return IntersectionStrategy(r, *this, min, max, rec);
   }
 
   material_t material_type;

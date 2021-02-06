@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
-option(USE_SINGLE_TASK "Use a SYCL executor based on .single_task() instead of .parallel_for(), better for FPGA" OFF)
+option(USE_SINGLE_TASK "Use a SYCL executor that loops over pixel in one task instead of using a parallel_for(), better for FPGA" OFF)
+option(SANITIZE_THREADS "Activate thread sanitizer" OFF)
 set(SYCL_CXX_COMPILER "" CACHE STRING "Path to the SYCL compiler. Defaults to using triSYCL CPU implementation" )
 # Use SYCL host device by default
 set(SYCL_DEVICE_TRIPLE "" CACHE STRING "Device triple to be used. only used with SYCL_CXX_COMPILER")
@@ -52,13 +53,15 @@ endif()
 # Use C+20
 target_compile_features(sycl-rt PRIVATE cxx_std_20)
 
+if (SANITIZE_THREADS)
+target_compile_options(sycl-rt PRIVATE
+                       -fno-omit-frame-pointer -fsanitize=thread)
+target_link_options(sycl-rt PRIVATE -fsanitize=thread)
+endif()
 # To use various code sanitizer:
 #target_compile_options(sycl-rt PRIVATE
 #                       -fno-omit-frame-pointer -fsanitize=address)
 #target_link_options(sycl-rt PRIVATE -fsanitize=address)
-#target_compile_options(sycl-rt PRIVATE
-#                       -fno-omit-frame-pointer -fsanitize=thread)
-#target_link_options(sycl-rt PRIVATE -fsanitize=thread)
 #target_compile_options(sycl-rt PRIVATE
 #                       -fno-omit-frame-pointer -fsanitize=undefined)
 #target_link_options(sycl-rt PRIVATE -fsanitize=undefined)
@@ -75,3 +78,4 @@ if(USE_SINGLE_TASK)
 endif()
 
 message(STATUS "path_tracer USE_SINGLE_TASK:      ${USE_SINGLE_TASK}")
+message(STATUS "path_tracer SANITIZE_THREADS:      ${SANITIZE_THREADS}")
