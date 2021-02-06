@@ -29,8 +29,8 @@ void save_image(int width, int height, auto& fb_data) {
 
 int main() {
   // Frame buffer dimensions
-  constexpr auto width = 800;
-  constexpr auto height = 480;
+  constexpr auto width = buildparams::output_width;
+  constexpr auto height = buildparams::output_height;
 
   // Allocate frame buffer on host
   std::array<color, (width * height)> fb;
