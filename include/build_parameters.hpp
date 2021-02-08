@@ -8,12 +8,11 @@ constexpr bool use_single_task = true;
 constexpr bool use_single_task = false;
 #endif
 
-#if USE_SYCL_COMPILER
-constexpr bool use_sycl_compiler = true;
+#ifdef USE_SYCL_COMPILER
+constexpr bool use_sycl_compiler = USE_SYCL_COMPILER;
 #else
 constexpr bool use_sycl_compiler = false;
 #endif
-}
-
+} // namespace buildparams
 
 #endif // BUILD_PARAMETERS_HPP

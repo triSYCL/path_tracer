@@ -21,8 +21,8 @@ if ("${SYCL_CXX_COMPILER}" STREQUAL "")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -Xsycl-target-frontend -fno-exceptions")
   if (NOT "${SYCL_DEVICE_TRIPLE}" STREQUAL "")
-	message(STATUS "targeting: ${SYCL_DEVICE_TRIPLE}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl-targets=${SYCL_DEVICE_TRIPLE}")
+    message(STATUS "targeting: ${SYCL_DEVICE_TRIPLE}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl-targets=${SYCL_DEVICE_TRIPLE}")
   endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_SYCL_COMPILER")
 endif()
@@ -32,9 +32,9 @@ endif()
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to Release as none was specified.")
   set(CMAKE_BUILD_TYPE "Release" CACHE
-	  STRING "Choose the type of build." FORCE)
+    STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
 
@@ -73,8 +73,8 @@ endif()
 if(USE_SINGLE_TASK)
   # On FPGA use a loop on image pixels instead of a parallel_for
   set_property(TARGET sycl-rt
-	APPEND PROPERTY
-	COMPILE_DEFINITIONS USE_SINGLE_TASK=)
+  APPEND PROPERTY
+  COMPILE_DEFINITIONS USE_SINGLE_TASK=)
 endif()
 
 message(STATUS "path_tracer USE_SINGLE_TASK:      ${USE_SINGLE_TASK}")

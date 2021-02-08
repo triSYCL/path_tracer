@@ -16,15 +16,14 @@ using vec = sycl::float3;
 // vec Utility Functions
 float length_squared(const vec& v) {
   return sycl::fma(v.x(), v.x(),
-				   sycl::fma(v.y(), v.y(), fma(v.z(), v.z(), 0.0f)));
+                   sycl::fma(v.y(), v.y(), fma(v.z(), v.z(), 0.0f)));
 }
 
 vec randomvec() { return vec(random_float(), random_float(), random_float()); }
 
-
 vec randomvec(float min, float max) {
   return vec(random_float(min, max), random_float(min, max),
-			 random_float(min, max));
+             random_float(min, max));
 }
 
 inline std::ostream& operator<<(std::ostream& out, const vec& v) {
@@ -48,10 +47,10 @@ vec random_unit_vector() {
 // Compute a random point inside a unit sphere at origin
 vec random_in_unit_sphere() {
   while (true) {
-	auto p = randomvec(-1, 1);
-	if (length_squared(p) >= 1)
-	  continue;
-	return p;
+    auto p = randomvec(-1, 1);
+    if (length_squared(p) >= 1)
+      continue;
+    return p;
   }
 }
 
@@ -61,10 +60,10 @@ vec reflect(const vec& v, const vec& n) { return v - 2 * sycl::dot(v, n) * n; }
 // Compute random point in a unit disk
 vec random_in_unit_disk() {
   while (true) {
-	auto p = vec(random_float(-1, 1), random_float(-1, 1), 0);
-	if (length_squared(p) >= 1)
-	  continue;
-	return p;
+    auto p = vec(random_float(-1, 1), random_float(-1, 1), 0);
+    if (length_squared(p) >= 1)
+      continue;
+    return p;
   }
 }
 
@@ -73,7 +72,7 @@ vec refract(const vec& uv, const vec& n, float etai_over_etat) {
   auto cos_theta = sycl::fmin(-sycl::dot(uv, n), 1.0f);
   vec r_out_perp = etai_over_etat * (uv + cos_theta * n);
   vec r_out_parallel =
-	  -sycl::sqrt(sycl::fabs(1.0f - length_squared(r_out_perp))) * n;
+      -sycl::sqrt(sycl::fabs(1.0f - length_squared(r_out_perp))) * n;
   return r_out_perp + r_out_parallel;
 }
 
