@@ -35,7 +35,6 @@ class LocalPseudoRNG {
   inline LocalPseudoRNG(std::uint32_t init_state = trisycl::vendor::trisycl::random::xorshift<>::initial_state)
       : generator{init_state} {}
 
-
   // Returns a random float in 0., 1.
   inline float float_t() {
     constexpr float scale = 1./ (uint64_t{1} << 32);
