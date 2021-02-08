@@ -17,7 +17,7 @@ struct lambertian_material {
 
   bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
                ray& scattered, LocalPseudoRNG& rng) const {
-    vec scatter_direction = rec.normal + random_unit_vector(rng);
+    vec scatter_direction = rec.normal + rng.unit_vec();
     scattered = ray(rec.p, scatter_direction, r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
@@ -38,8 +38,7 @@ struct metal_material {
   bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
                ray& scattered, LocalPseudoRNG& rng) const {
     vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-    scattered =
-        ray(rec.p, reflected + fuzz * random_in_unit_sphere(rng), r_in.time());
+    scattered = ray(rec.p, reflected + fuzz * rng.in_unit_ball(), r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
     attenuation *= albedo;
@@ -76,7 +75,7 @@ struct dielectric_material {
     bool cannot_refract = refraction_ratio * sin_theta > 1.0f;
     vec direction;
     if (cannot_refract ||
-        reflectance(cos_theta, refraction_ratio) > random_float(rng))
+        reflectance(cos_theta, refraction_ratio) > rng.float_t())
       direction = reflect(unit_direction, rec.normal);
     else
       direction = refract(unit_direction, rec.normal, refraction_ratio);
@@ -116,7 +115,7 @@ struct isotropic_material {
 
   bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
                ray& scattered, LocalPseudoRNG& rng) const {
-    scattered = ray(rec.p, random_in_unit_sphere(rng), r_in.time());
+    scattered = ray(rec.p, rng.in_unit_ball(), r_in.time());
     attenuation *=
         dev_visit([&](auto&& arg) { return arg.value(rec); }, albedo);
     return true;

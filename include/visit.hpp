@@ -15,7 +15,7 @@ template <typename... Tys> struct variant_trait<std::variant<Tys...>> {
 
 template <typename ret_type, typename Func, typename Var>
 [[noreturn]] inline ret_type
-visit_single_impl(Func&& f, std::integer_sequence<size_t>, Var&& var) {
+visit_single_impl(Func&&, std::integer_sequence<size_t>, Var&&) {
   assert(false && "unreachable");
   __builtin_unreachable();
 }

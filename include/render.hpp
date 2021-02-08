@@ -96,8 +96,8 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
 
   color final_color(0.0f, 0.0f, 0.0f);
   for (auto i = 0; i < samples; i++) {
-    const auto u = (x_coord + random_float(rng)) / width;
-    const auto v = (y_coord + random_float(rng)) / height;
+    const auto u = (x_coord + rng.float_t()) / width;
+    const auto v = (y_coord + rng.float_t()) / height;
     // u and v are points on the viewport
     ray r = cam.get_ray(u, v, rng);
     final_color += get_color(r);
@@ -128,7 +128,8 @@ inline void executor(sycl::handler& cgh, camera const& cam,
       auto gid = item.get_id();
       const auto x_coord = gid[1];
       const auto y_coord = gid[0];
-      LocalPseudoRNG rng;
+      auto init_generator_state = ((x_coord + 1) << 16) | y_coord;
+      LocalPseudoRNG rng(init_generator_state);
       render_pixel<width, height, samples, depth>(
           x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr, rng);
     });
