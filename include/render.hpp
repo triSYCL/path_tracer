@@ -107,13 +107,29 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
   fb_ptr[y_coord * width + x_coord] = final_color;
 }
 
-// Find the greatest divider of width which is lower or equal to val
-template <int width> int find_immediate_least_divider(int val) {
-  for (int i = val; i > 0; --i) {
-    if ((val % i) == 0)
-      return i;
+template <int width, int height, int samples, int depth>
+inline void executor(sycl::handler& cgh, camera const& cam,
+                     hittable_t const* hittable_ptr, size_t nb_hittable,
+                     color* fb_ptr) {
+  if constexpr (buildparams::use_single_task) {
+    cgh.single_task([=]() {
+      for (int x_coord = 0; x_coord != width; ++x_coord)
+        for (int y_coord = 0; y_coord != height; ++y_coord) {
+          render_pixel<width, height, samples, depth>(
+              x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr);
+        }
+    });
+  } else {
+    const auto global = sycl::range<2>(height, width);
+
+    cgh.parallel_for(global, [=](sycl::item<2> item) {
+      auto gid = item.get_id();
+      const auto x_coord = gid[1];
+      const auto y_coord = gid[0];
+      render_pixel<width, height, samples, depth>(
+          x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr);
+    });
   }
-  return 0;
 }
 
 // Render function to call the render kernel
@@ -127,35 +143,6 @@ void render(sycl::queue& queue, std::array<color, width * height>& fb,
   auto hittables_buf = sycl::buffer<hittable_t, 1>(hittables.data(),
                                                    sycl::range<1>(nb_hittable));
 
-  // Compute "ideal" work distribution :
-  // Trying to create as many work_group as possible, with as many work_item as
-  // possible Each item is responsible for an image slice of size pg_width *
-  // pg_height
-  const auto& dev = queue.get_device();
-  const auto comp_unit =
-      (buildparams::use_single_task)
-          ? 1
-          : dev.get_info<sycl::info::device::max_compute_units>();
-  const auto wg_size =
-      (buildparams::use_single_task)
-          ? 1
-          : dev.get_info<sycl::info::device::max_work_group_size>();
-
-  const auto parallel_exec = comp_unit * wg_size;
-
-  const auto total_work = width * height;
-
-  const auto ideal_pg_height = height / parallel_exec;
-  const auto pg_height = (ideal_pg_height == 0) ? 1 : ideal_pg_height;
-  const auto pg_width =
-      (ideal_pg_height == 0)
-          ? find_immediate_least_divider<width>(total_work / parallel_exec)
-          : width;
-  const auto nb_pg_line = width / pg_width;
-  const auto required_pg_line =
-      height / ideal_pg_height + ((height % ideal_pg_height) ? 1 : 0);
-  const auto required_pg = required_pg_line * nb_pg_line;
-
   // Submit command group on device
   queue.submit([=, &hittables_buf, &frame_buf, &cam](sycl::handler& cgh) {
     auto fb_acc = frame_buf.get_access<sycl::access::mode::discard_write>(cgh);
@@ -163,24 +150,7 @@ void render(sycl::queue& queue, std::array<color, width * height>& fb,
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
     hittable_t const* hittable_ptr = hittables_acc.get_pointer();
     color* fb_ptr = fb_acc.get_pointer();
-    const auto global_range = sycl::range<1>(required_pg);
-    const auto local_range = sycl::range<1>(wg_size);
-    cgh.parallel_for(
-        sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) {
-          auto gid = it.get_global_id(0);
-          const auto grid_x = gid % nb_pg_line;
-          const auto grid_y = gid / nb_pg_line;
-          const auto start_x = grid_x * pg_width;
-          const auto start_y = grid_y * pg_height;
-          const auto max_x = start_x + pg_width;
-          const auto th_max_y = start_y + pg_height;
-          const auto max_y = (th_max_y > height) ? height : th_max_y;
-          for (auto y = start_y; y < max_y; ++y) {
-            for (auto x = start_x; x < max_x; ++x) {
-              render_pixel<width, height, samples, depth>(
-                  x, y, cam, hittable_ptr, nb_hittable, fb_ptr);
-            }
-          }
-        });
+    executor<width, height, samples, depth>(cgh, cam, hittable_ptr, nb_hittable,
+                                            fb_ptr);
   });
 }
