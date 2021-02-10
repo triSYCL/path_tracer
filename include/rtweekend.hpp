@@ -12,9 +12,9 @@
 #include <vector>
 
 #include <sycl.hpp>
-#include <triSYCL/vendor/triSYCL/random/xorshift.hpp>
 
 #include <build_parameters.hpp>
+#include <xorshift.hpp>
 
 // Constants
 
@@ -32,7 +32,7 @@ inline float degrees_to_radians(float degrees) { return degrees * pi / 180.0f; }
 
 class LocalPseudoRNG {
  public:
-  inline LocalPseudoRNG(std::uint32_t init_state = trisycl::vendor::trisycl::random::xorshift<>::initial_state)
+  inline LocalPseudoRNG(std::uint32_t init_state = xorshift<>::initial_state)
       : generator{init_state} {}
 
   // Returns a random float in 0., 1.
@@ -88,7 +88,7 @@ class LocalPseudoRNG {
   }
 
  private:
-  trisycl::vendor::trisycl::random::xorshift<> generator;
+  xorshift<> generator;
 };
 
 // Common Headers
