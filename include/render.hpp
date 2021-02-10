@@ -108,12 +108,14 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
   fb_ptr[y_coord * width + x_coord] = final_color;
 }
 
+struct PixelRender;
+
 template <int width, int height, int samples, int depth>
 inline void executor(sycl::handler& cgh, camera const& cam_ptr,
                      hittable_t const* hittable_ptr, size_t nb_hittable,
                      color* fb_ptr) {
   if constexpr (buildparams::use_single_task) {
-    cgh.single_task([=] {
+    cgh.single_task<PixelRender>([=] {
       LocalPseudoRNG rng;
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
@@ -124,7 +126,7 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
   } else {
     const auto global = sycl::range<2>(height, width);
 
-    cgh.parallel_for(global, [=](sycl::item<2> item) {
+    cgh.parallel_for<PixelRender>(global, [=](sycl::item<2> item) {
       auto gid = item.get_id();
       const auto x_coord = gid[1];
       const auto y_coord = gid[0];
@@ -135,6 +137,7 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
     });
   }
 }
+
 
 // Render function to call the render kernel
 template <int width, int height, int samples>
