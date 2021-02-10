@@ -33,12 +33,14 @@ inline float degrees_to_radians(float degrees) { return degrees * pi / 180.0f; }
 class LocalPseudoRNG {
  public:
   inline LocalPseudoRNG(std::uint32_t init_state = trisycl::vendor::trisycl::random::xorshift<>::initial_state)
-      : generator{init_state}, distribution(0., 1.0) {}
-
+      : generator{init_state} {}
 
 
   // Returns a random float in 0., 1.
-  inline float float_t() { return distribution(generator); }
+  inline float float_t() {
+    constexpr float scale = 1./ (uint64_t{1} << 32);
+    return generator() * scale;
+  }
 
   // Returns a random float in min, max
   inline float float_t(float min, float max) {
@@ -88,7 +90,6 @@ class LocalPseudoRNG {
 
  private:
   trisycl::vendor::trisycl::random::xorshift<> generator;
-  std::uniform_real_distribution<float> distribution;
 };
 
 // Common Headers

@@ -109,7 +109,7 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
 }
 
 template <int width, int height, int samples, int depth>
-inline void executor(sycl::handler& cgh, camera const& cam,
+inline void executor(sycl::handler& cgh, camera const& cam_ptr,
                      hittable_t const* hittable_ptr, size_t nb_hittable,
                      color* fb_ptr) {
   if constexpr (buildparams::use_single_task) {
@@ -118,7 +118,7 @@ inline void executor(sycl::handler& cgh, camera const& cam,
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
           render_pixel<width, height, samples, depth>(
-              x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr, rng);
+              x_coord, y_coord, cam_ptr, hittable_ptr, nb_hittable, fb_ptr, rng);
         }
     });
   } else {
@@ -128,10 +128,10 @@ inline void executor(sycl::handler& cgh, camera const& cam,
       auto gid = item.get_id();
       const auto x_coord = gid[1];
       const auto y_coord = gid[0];
-      auto init_generator_state = ((x_coord + 1) << 16) | y_coord;
+      auto init_generator_state = std::hash<std::size_t>{}(item.get_linear_id());
       LocalPseudoRNG rng(init_generator_state);
       render_pixel<width, height, samples, depth>(
-          x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr, rng);
+          x_coord, y_coord, cam_ptr, hittable_ptr, nb_hittable, fb_ptr, rng);
     });
   }
 }
@@ -148,13 +148,16 @@ void render(sycl::queue& queue, std::array<color, width * height>& fb,
                                                    sycl::range<1>(nb_hittable));
 
   // Submit command group on device
-  queue.submit([=, &hittables_buf, &frame_buf, &cam](sycl::handler& cgh) {
+  queue.submit([&](sycl::handler& cgh) {
     auto fb_acc = frame_buf.get_access<sycl::access::mode::discard_write>(cgh);
     auto hittables_acc =
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
+
     hittable_t const* hittable_ptr = hittables_acc.get_pointer();
     color* fb_ptr = fb_acc.get_pointer();
+
     executor<width, height, samples, depth>(cgh, cam, hittable_ptr, nb_hittable,
                                             fb_ptr);
+
   });
 }
