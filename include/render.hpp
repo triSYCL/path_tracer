@@ -113,7 +113,7 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
                      hittable_t const* hittable_ptr, size_t nb_hittable,
                      color* fb_ptr) {
   if constexpr (buildparams::use_single_task) {
-    cgh.single_task([=]() {
+    cgh.single_task([=] {
       LocalPseudoRNG rng;
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
