@@ -99,10 +99,7 @@ struct lightsource_material {
   lightsource_material(const color& a)
       : emit { solid_texture { a } } {}
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
-               ray& scattered) const {
-    return false;
-  }
+  template <typename... T> bool scatter(T&...) const { return false; }
 
   color emitted(const hit_record& rec) {
     return dev_visit([&](auto&& arg) { return arg.value(rec); }, emit);

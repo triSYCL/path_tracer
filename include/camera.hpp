@@ -8,12 +8,13 @@
 
 /** Camera model
 
-    This implements:
+        This implements:
 
-    -
+        -
    https://raytracing.github.io/books/RayTracingInOneWeekend.html#positionablecamera
 
-    - https://raytracing.github.io/books/RayTracingInOneWeekend.html#defocusblur
+        -
+   https://raytracing.github.io/books/RayTracingInOneWeekend.html#defocusblur
 */
 class camera {
 
@@ -47,21 +48,21 @@ class camera {
  public:
   /** Create a parameterized camera
 
-      \param[in] look_from is the position of the camera
+          \param[in] look_from is the position of the camera
 
-      \param[in] look_at is a point the camera is looking at
+          \param[in] look_at is a point the camera is looking at
 
-      \param[in] vup is the “view up” orientation for the
-      camera. {0,1,0} means the usual vertical orientation
+          \param[in] vup is the “view up” orientation for the
+          camera. {0,1,0} means the usual vertical orientation
 
-      \param[in] degree_vfov is the vertical field-of-view in degrees
+          \param[in] degree_vfov is the vertical field-of-view in degrees
 
-      \param[in] aspect_ratio is the ratio between the camera image
-      width and the camera image height
+          \param[in] aspect_ratio is the ratio between the camera image
+          width and the camera image height
 
-      \param[in] aperture is the lens aperture of the camera
+          \param[in] aperture is the lens aperture of the camera
 
-      \param[in] focus_dist is the focus distance
+          \param[in] focus_dist is the focus distance
   */
   camera(const point& look_from, const point& look_at, const vec& vup,
          real_t degree_vfov, real_t aspect_ratio, real_t aperture,
@@ -86,8 +87,8 @@ class camera {
   }
 
   /** Computes ray from camera passing through
-      viewport local coordinates (s,t) based on viewport
-      width, height and focus distance
+          viewport local coordinates (s,t) based on viewport
+          width, height and focus distance
   */
   ray get_ray(real_t s, real_t t) const {
     vec rd = lens_radius * random_in_unit_disk();

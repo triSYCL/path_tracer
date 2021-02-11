@@ -11,9 +11,10 @@ struct _triangle_coord {
   point v0, v1, v2;
 };
 
-auto badouel_ray_triangle_intersec = [](const ray& r,
-                                        _triangle_coord const& tri, real_t min,
-                                        real_t max, hit_record& rec) -> bool {
+inline bool badouel_ray_triangle_intersec(const ray& r,
+                                          _triangle_coord const& tri,
+                                          real_t min, real_t max,
+                                          hit_record& rec) {
   // Get triangle edge vectors and plane normal
   auto u = tri.v1 - tri.v0;
   auto v = tri.v2 - tri.v0;
@@ -54,9 +55,10 @@ auto badouel_ray_triangle_intersec = [](const ray& r,
   return true;
 };
 
-auto moller_trumbore_triangle_intersec =
-    [](const ray& r, _triangle_coord const& tri, real_t min, real_t max,
-       hit_record& rec) -> bool {
+inline bool moller_trumbore_triangle_intersec(const ray& r,
+                                              _triangle_coord const& tri,
+                                              real_t min, real_t max,
+                                              hit_record& rec) {
   constexpr auto epsilon = 0.0000001f;
 
   // Get triangle edge vectors and plane normal

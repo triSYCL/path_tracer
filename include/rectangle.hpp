@@ -9,7 +9,7 @@
 
 /** The Following classes implement:
 
-    -
+        -
    https://raytracing.github.io/books/RayTracingTheNextWeek.html#rectanglesandlights/creatingrectangleobjectsa
 */
 

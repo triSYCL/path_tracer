@@ -1,4 +1,6 @@
+#include <array>
 #include <type_traits>
+#include <vector>
 
 #include "box.hpp"
 #include "build_parameters.hpp"
@@ -24,39 +26,33 @@ static constexpr auto TileY = 8;
 } // namespace constants
 
 template <int width, int height, int samples, int depth>
-auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
-                                   sycl::access::target::global_buffer>
-                        frame_ptr,
-                    sycl::accessor<hittable_t, 1, sycl::access::mode::read,
-                                   sycl::access::target::global_buffer>
-                        hitable_ptr,
-                    int num_hittables, camera& cam) {
-  auto hit_world = [num_hittables](const ray& r, real_t min, real_t max,
-                                   hit_record& rec, hittable_t* hittables,
-                                   material_t& material_type) -> bool {
-    // Check if ray hits anything in the world
-    hit_record temp_rec;
-    material_t temp_material_type;
-    auto hit_anything = false;
-    auto closest_so_far = max;
-    // Checking if the ray hits any of the spheres
-    for (auto i = 0; i < num_hittables; i++) {
-      if (dev_visit(
-              [&](auto&& arg) {
-                return arg.hit(r, min, closest_so_far, temp_rec,
-                               temp_material_type);
-              },
-              hittables[i])) {
-        hit_anything = true;
-        closest_so_far = temp_rec.t;
-        rec = temp_rec;
-        material_type = temp_material_type;
+inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
+                         hittable_t const* hittable_ptr, int nb_hittable,
+                         color* fb_ptr) {
+  auto get_color = [&](const ray& r) {
+    auto hit_world = [&](const ray& r, hit_record& rec,
+                         material_t& material_type) {
+      hit_record temp_rec;
+      material_t temp_material_type;
+      auto hit_anything = false;
+      auto closest_so_far = infinity;
+      // Checking if the ray hits any of the spheres
+      for (auto i = 0; i < nb_hittable; i++) {
+        if (dev_visit(
+                [&](auto&& arg) {
+                  return arg.hit(r, 0.001f, closest_so_far, temp_rec,
+                                 temp_material_type);
+                },
+                hittable_ptr[i])) {
+          hit_anything = true;
+          closest_so_far = temp_rec.t;
+          rec = temp_rec;
+          material_type = temp_material_type;
+        }
       }
-    }
-    return hit_anything;
-  };
+      return hit_anything;
+    };
 
-  auto get_color = [hit_world](const ray& r, hittable_t* hittables) -> color {
     ray cur_ray = r;
     color cur_attenuation { 1.0f, 1.0f, 1.0f };
     ray scattered;
@@ -64,8 +60,7 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
     material_t material_type;
     for (auto i = 0; i < depth; i++) {
       hit_record rec;
-      if (hit_world(cur_ray, real_t { 0.001f }, infinity, rec, hittables,
-                    material_type)) {
+      if (hit_world(cur_ray, rec, material_type)) {
         emitted = dev_visit([&](auto&& arg) { return arg.emitted(rec); },
                             material_type);
         if (dev_visit(
@@ -98,69 +93,64 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
     return color { 0.0f, 0.0f, 0.0f };
   };
 
-  return [&cam, hitable_ptr, frame_ptr, get_color](int x_coord,
-                                                   int y_coord) -> void {
-    // map the 2D indices to a single linear, 1D index
-    const auto pixel_index = y_coord * width + x_coord;
+  color final_color(0.0f, 0.0f, 0.0f);
+  for (auto i = 0; i < samples; i++) {
+    const auto u = (x_coord + random_float()) / width;
+    const auto v = (y_coord + random_float()) / height;
+    // u and v are points on the viewport
+    ray r = cam.get_ray(u, v);
+    final_color += get_color(r);
+  }
+  final_color /= static_cast<real_t>(samples);
 
-    // Color sampling for antialiasing
-    color final_color(0.0f, 0.0f, 0.0f);
-    for (auto i = 0; i < samples; i++) {
-      const auto u = (x_coord + random_float()) / width;
-      const auto v = (y_coord + random_float()) / height;
-      // u and v are points on the viewport
-      ray r = cam.get_ray(u, v);
-      final_color += get_color(r, hitable_ptr.get_pointer());
-    }
-    final_color /= static_cast<real_t>(samples);
-
-    // Write final color to the frame buffer global memory
-    frame_ptr[pixel_index] = final_color;
-  };
+  // Write final color to the frame buffer global memory
+  fb_ptr[y_coord * width + x_coord] = final_color;
 }
 
-template <int width, int height, typename T>
-void executor(trisycl::handler& cgh, T render_kernel) {
+template <int width, int height, int samples, int depth>
+inline void executor(sycl::handler& cgh, camera const& cam,
+                     hittable_t const* hittable_ptr, size_t nb_hittable,
+                     color* fb_ptr) {
   if constexpr (buildparams::use_single_task) {
-    cgh.single_task([render_kernel]() -> void {
+    cgh.single_task([=]() {
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
-          render_kernel(x_coord, y_coord);
+          render_pixel<width, height, samples, depth>(
+              x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr);
         }
     });
   } else {
-    const auto global = sycl::range<2>(width, height);
-    const auto local = sycl::range<2>(constants::TileX, constants::TileY);
-    const auto index_space = sycl::nd_range<2>(global, local);
-    // Launch 1 work-item per pixel in parallel
-    cgh.parallel_for(index_space,
-                     [render_kernel](sycl::nd_item<2> item) -> void {
-                       const auto x_coord = item.get_global_id(0);
-                       const auto y_coord = item.get_global_id(1);
-                       render_kernel(x_coord, y_coord);
-                     });
+    const auto global = sycl::range<2>(height, width);
+
+    cgh.parallel_for(global, [=](sycl::item<2> item) {
+      auto gid = item.get_id();
+      const auto x_coord = gid[1];
+      const auto y_coord = gid[0];
+      render_pixel<width, height, samples, depth>(
+          x_coord, y_coord, cam, hittable_ptr, nb_hittable, fb_ptr);
+    });
   }
 }
 
 // Render function to call the render kernel
 template <int width, int height, int samples>
-void render(sycl::queue queue, color* fb_data, const hittable_t* hittables,
-            int num_hittables, camera& cam) {
-  constexpr auto num_pixels = width * height;
-  auto const depth = 50;
-  auto frame_buf = sycl::buffer<color, 1>(fb_data, sycl::range<1>(num_pixels));
-  auto hittables_buf =
-      sycl::buffer<hittable_t, 1>(hittables, sycl::range<1>(num_hittables));
-  // Submit command group on device
-  queue.submit([&](sycl::handler& cgh) {
-    // Get memory access
-    auto frame_ptr = frame_buf.get_access<sycl::access::mode::write>(cgh);
-    auto hittables_ptr =
-        hittables_buf.get_access<sycl::access::mode::read>(cgh);
-    // Construct kernel functor
+void render(sycl::queue& queue, std::array<color, width * height>& fb,
+            std::vector<hittable_t>& hittables, camera& cam) {
+  auto constexpr depth = 50;
+  const auto nb_hittable = hittables.size();
+  auto frame_buf =
+      sycl::buffer<color, 2>(fb.data(), sycl::range<2>(height, width));
+  auto hittables_buf = sycl::buffer<hittable_t, 1>(hittables.data(),
+                                                   sycl::range<1>(nb_hittable));
 
-    auto render_kernel = pixel_renderer<width, height, samples, depth>(
-        frame_ptr, hittables_ptr, num_hittables, cam);
-    executor<width, height>(cgh, render_kernel);
+  // Submit command group on device
+  queue.submit([=, &hittables_buf, &frame_buf, &cam](sycl::handler& cgh) {
+    auto fb_acc = frame_buf.get_access<sycl::access::mode::discard_write>(cgh);
+    auto hittables_acc =
+        hittables_buf.get_access<sycl::access::mode::read>(cgh);
+    hittable_t const* hittable_ptr = hittables_acc.get_pointer();
+    color* fb_ptr = fb_acc.get_pointer();
+    executor<width, height, samples, depth>(cgh, cam, hittable_ptr, nb_hittable,
+                                            fb_ptr);
   });
 }
