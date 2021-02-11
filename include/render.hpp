@@ -31,9 +31,9 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
                                    sycl::access::target::global_buffer>
                         hitable_ptr,
                     int num_hittables, camera& cam) {
-  auto hit_world = [hitable_ptr, num_hittables](
-                       const ray& r, real_t min, real_t max, hit_record& rec,
-                       material_t& material_type) -> bool {
+  auto hit_world = [num_hittables](const ray& r, real_t min, real_t max,
+                                   hit_record& rec, hittable_t* hittables,
+                                   material_t& material_type) -> bool {
     // Check if ray hits anything in the world
     hit_record temp_rec;
     material_t temp_material_type;
@@ -46,7 +46,7 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
                 return arg.hit(r, min, closest_so_far, temp_rec,
                                temp_material_type);
               },
-              hitable_ptr.get_pointer()[i])) {
+              hittables[i])) {
         hit_anything = true;
         closest_so_far = temp_rec.t;
         rec = temp_rec;
@@ -56,7 +56,7 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
     return hit_anything;
   };
 
-  auto get_color = [=](const ray& r) -> color {
+  auto get_color = [hit_world](const ray& r, hittable_t* hittables) -> color {
     ray cur_ray = r;
     color cur_attenuation { 1.0f, 1.0f, 1.0f };
     ray scattered;
@@ -64,7 +64,8 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
     material_t material_type;
     for (auto i = 0; i < depth; i++) {
       hit_record rec;
-      if (hit_world(cur_ray, real_t { 0.001f }, infinity, rec, material_type)) {
+      if (hit_world(cur_ray, real_t { 0.001f }, infinity, rec, hittables,
+                    material_type)) {
         emitted = dev_visit([&](auto&& arg) { return arg.emitted(rec); },
                             material_type);
         if (dev_visit(
@@ -97,7 +98,8 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
     return color { 0.0f, 0.0f, 0.0f };
   };
 
-  return [=](int x_coord, int y_coord) -> void {
+  return [&cam, hitable_ptr, frame_ptr, get_color](int x_coord,
+                                                   int y_coord) -> void {
     // map the 2D indices to a single linear, 1D index
     const auto pixel_index = y_coord * width + x_coord;
 
@@ -108,7 +110,7 @@ auto pixel_renderer(sycl::accessor<color, 1, sycl::access::mode::write,
       const auto v = (y_coord + random_float()) / height;
       // u and v are points on the viewport
       ray r = cam.get_ray(u, v);
-      final_color += get_color(r);
+      final_color += get_color(r, hitable_ptr.get_pointer());
     }
     final_color /= static_cast<real_t>(samples);
 
