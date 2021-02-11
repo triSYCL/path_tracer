@@ -111,7 +111,7 @@ class _triangle : public _triangle_coord {
 
   /// Compute ray interaction with triangle
   bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
+           material_t& hit_material_type, LocalPseudoRNG&) const {
     hit_material_type = material_type;
     return IntersectionStrategy(r, *this, min, max, rec);
   }

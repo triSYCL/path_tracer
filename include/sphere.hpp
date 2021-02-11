@@ -57,7 +57,7 @@ class sphere {
 
   /// Compute ray interaction with sphere
   bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
+           material_t& hit_material_type, LocalPseudoRNG&) const {
     hit_material_type = material_type;
 
     /*(P(t)-C).(P(t)-C)=r^2
