@@ -82,8 +82,7 @@ int main() {
       // Based on a random variable , the material type is chosen
       auto choose_mat = rng.float_t();
       // Spheres are placed at a point randomly displaced from a,b
-      point center(a + 0.9f * rng.float_t(), 0.2f,
-                   b + 0.9f * rng.float_t());
+      point center(a + 0.9f * rng.float_t(), 0.2f, b + 0.9f * rng.float_t());
       if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
         if (choose_mat < 0.4f) {
           // Lambertian

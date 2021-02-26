@@ -20,7 +20,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include(FindtriSYCL)
 
 if (NOT "${SYCL_CXX_COMPILER}" STREQUAL "")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -Xsycl-target-frontend -fno-exceptions")
   if (NOT "${SYCL_DEVICE_TRIPLE}" STREQUAL "")
     message(STATUS "targeting: ${SYCL_DEVICE_TRIPLE}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl-targets=${SYCL_DEVICE_TRIPLE}")

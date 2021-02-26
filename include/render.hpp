@@ -27,8 +27,7 @@ static constexpr auto TileY = 8;
 
 template <int width, int height, int samples, int depth>
 inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
-                         hittable_t const* hittable_ptr, int nb_hittable,
-                         color* fb_ptr, LocalPseudoRNG& rng) {
+                         auto& hittable_acc, auto fb_acc, LocalPseudoRNG& rng) {
   auto get_color = [&](const ray& r) {
     auto hit_world = [&](const ray& r, hit_record& rec,
                          material_t& material_type) {
@@ -37,13 +36,13 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
       auto hit_anything = false;
       auto closest_so_far = infinity;
       // Checking if the ray hits any of the spheres
-      for (auto i = 0; i < nb_hittable; i++) {
+      for (auto i = 0; i < hittable_acc.get_count(); i++) {
         if (dev_visit(
                 [&](auto&& arg) {
                   return arg.hit(r, 0.001f, closest_so_far, temp_rec,
                                  temp_material_type, rng);
                 },
-                hittable_ptr[i])) {
+                hittable_acc[i])) {
           hit_anything = true;
           closest_so_far = temp_rec.t;
           rec = temp_rec;
@@ -105,22 +104,21 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
   final_color /= static_cast<real_t>(samples);
 
   // Write final color to the frame buffer global memory
-  fb_ptr[y_coord * width + x_coord] = final_color;
+  fb_acc[y_coord][x_coord] = final_color;
 }
 
 struct PixelRender;
 
 template <int width, int height, int samples, int depth>
 inline void executor(sycl::handler& cgh, camera const& cam_ptr,
-                     hittable_t const* hittable_ptr, size_t nb_hittable,
-                     color* fb_ptr) {
+                     auto& hittable_acc, auto& fb_acc) {
   if constexpr (buildparams::use_single_task) {
     cgh.single_task<PixelRender>([=] {
       LocalPseudoRNG rng;
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
           render_pixel<width, height, samples, depth>(
-              x_coord, y_coord, cam_ptr, hittable_ptr, nb_hittable, fb_ptr, rng);
+              x_coord, y_coord, cam_ptr, hittable_acc, fb_acc, rng);
         }
     });
   } else {
@@ -130,14 +128,14 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
       auto gid = item.get_id();
       const auto x_coord = gid[1];
       const auto y_coord = gid[0];
-      auto init_generator_state = std::hash<std::size_t>{}(item.get_linear_id());
+      auto init_generator_state =
+          std::hash<std::size_t> {}(item.get_linear_id());
       LocalPseudoRNG rng(init_generator_state);
-      render_pixel<width, height, samples, depth>(
-          x_coord, y_coord, cam_ptr, hittable_ptr, nb_hittable, fb_ptr, rng);
+      render_pixel<width, height, samples, depth>(x_coord, y_coord, cam_ptr,
+                                                  hittable_acc, fb_acc, rng);
     });
   }
 }
-
 
 // Render function to call the render kernel
 template <int width, int height, int samples>
@@ -156,10 +154,6 @@ void render(sycl::queue& queue, std::array<color, width * height>& fb,
     auto hittables_acc =
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
 
-    hittable_t const* hittable_ptr = hittables_acc.get_pointer();
-    color* fb_ptr = fb_acc.get_pointer();
-
-    executor<width, height, samples, depth>(cgh, cam, hittable_ptr, nb_hittable,
-                                            fb_ptr);
+    executor<width, height, samples, depth>(cgh, cam, hittables_acc, fb_acc);
   });
 }
