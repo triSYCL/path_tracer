@@ -87,7 +87,7 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
         auto hit_pt = 0.5f * (unit_direction.y() + 1.0f);
         color c = (1.0f - hit_pt) * color { 1.0f, 1.0f, 1.0f } +
                   hit_pt * color { 0.5f, 0.7f, 1.0f };
-        return emitted + cur_attenuation * c;
+        return cur_attenuation * c;
       }
     }
     // If not returned within max_depth return black
