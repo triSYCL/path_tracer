@@ -113,7 +113,7 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
   if constexpr (buildparams::use_single_task) {
     cgh.single_task<PixelRender>([=] {
       LocalPseudoRNG rng;
-      auto ctx = make_context(rng, texture_acc);
+      task_context ctx {rng, texture_acc.get_pointer()};
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
           render_pixel<width, height, samples, depth>(
@@ -130,7 +130,7 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
       auto init_generator_state =
           std::hash<std::size_t> {}(item.get_linear_id());
       LocalPseudoRNG rng(init_generator_state);
-      auto ctx = make_context(rng, texture_acc);
+      task_context ctx {rng, texture_acc.get_pointer()};
       render_pixel<width, height, samples, depth>(x_coord, y_coord, cam_ptr,
                                                   hittable_acc, fb_acc, ctx);
     });

@@ -101,9 +101,9 @@ struct image_texture {
     std::size_t pix_idx = local_offset + offset;
     auto scale = 1.f / 255;
     auto& texture_data = ctx.texture_data;
-    return { texture_data[pix_idx][0] * scale,
-             texture_data[pix_idx][1] * scale,
-             texture_data[pix_idx][2] * scale };
+    return { texture_data[pix_idx * 3] * scale,
+             texture_data[pix_idx * 3 + 1] * scale,
+             texture_data[pix_idx * 3 + 2] * scale };
   }
 
  private:
@@ -127,6 +127,7 @@ struct image_texture {
 
 using texture_t = std::variant<checker_texture, solid_texture, image_texture>;
 
+// Start filled with the fallback texture (solid blue) for texture load error
 std::vector<uint8_t> image_texture::texture_data { 0, 0, 1 };
 bool image_texture::frozen = false;
 #endif

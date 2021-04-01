@@ -91,17 +91,10 @@ class LocalPseudoRNG {
   xorshift<> generator;
 };
 
-template<typename T>
 struct task_context {
   LocalPseudoRNG rng;
-  T texture_data;
+  sycl::global_ptr<uint8_t> texture_data;
 };
-
-template<typename T>
-task_context<T> make_context(LocalPseudoRNG& rng, T& texture_data) {
-  return {rng, texture_data};
-}
-
 
 // Common Headers
 #include "ray.hpp"
