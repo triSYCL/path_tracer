@@ -26,14 +26,15 @@ class constant_medium {
       , phase_function { isotropic_material { a } } {}
 
   bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type, LocalPseudoRNG& rng) const {
+           material_t& hit_material_type, auto& ctx) const {
+    auto& rng = ctx.rng;
     hit_material_type = phase_function;
     material_t temp_material_type;
     hit_record rec1, rec2;
     if (!dev_visit(
             [&](auto&& arg) {
               return arg.hit(r, -infinity, infinity, rec1, temp_material_type,
-                             rng);
+                             ctx);
             },
             boundary)) {
       return false;
@@ -42,7 +43,7 @@ class constant_medium {
     if (!dev_visit(
             [&](auto&& arg) {
               return arg.hit(r, rec1.t + 0.0001f, infinity, rec2,
-                             temp_material_type, rng);
+                             temp_material_type, ctx);
             },
             boundary)) {
       return false;
