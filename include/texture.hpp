@@ -22,7 +22,7 @@ struct solid_texture {
   solid_texture(float red, float green, float blue)
       : solid_texture { color { red, green, blue } } {}
   // For solid texture, the color is same throughout the sphere
-  color value(const hit_record&, auto&) const { return color_value; }
+  color value(auto&, const hit_record&) const { return color_value; }
 
  private:
   color color_value;
@@ -39,13 +39,13 @@ struct checker_texture {
       : odd { solid_texture { c1 } }
       , even { solid_texture { c2 } } {}
   // Color value is different based on normalised spherical coordinates
-  color value(const hit_record& rec, auto& ctx) const {
+  color value(auto& ctx, const hit_record& rec) const {
     auto sines =
         sin(10 * rec.p.x()) * sin(10 * rec.p.y()) * sin(10 * rec.p.z());
     if (sines < 0)
-      return odd.value(rec, ctx);
+      return odd.value(ctx, rec);
     else
-      return even.value(rec, ctx);
+      return even.value(ctx, rec);
   }
   solid_texture odd;
   solid_texture even;
@@ -91,7 +91,7 @@ struct image_texture {
 
   /// Get the color for the texture at the given place
   /// \todo rename this value() to color() everywhere?
-  color value(const hit_record& rec, auto& ctx) const {
+  color value(auto& ctx, const hit_record& rec) const {
     // If texture data is unavailable, return solid cyan
     // The image is repeated by the repetition factor
     std::size_t i = std::fmod(rec.u * cyclic_frequency, 1) * (width - 1);

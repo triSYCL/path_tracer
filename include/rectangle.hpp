@@ -28,8 +28,8 @@ class xy_rect {
       , material_type { mat_type } {}
 
   /// Compute ray interaction with rectangle
-  bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type, auto&) const {
+  bool hit(auto&, const ray& r, real_t min, real_t max, hit_record& rec,
+           material_t& hit_material_type) const {
     hit_material_type = material_type;
 
     auto t = (k - r.origin().z()) / r.direction().z();
@@ -66,8 +66,8 @@ class xz_rect {
       , material_type { mat_type } {}
 
   /// Compute ray interaction with rectangle
-  bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type, auto&) const {
+  bool hit(auto&, const ray& r, real_t min, real_t max, hit_record& rec,
+           material_t& hit_material_type) const {
     hit_material_type = material_type;
 
     auto t = (k - r.origin().y()) / r.direction().y();
@@ -104,8 +104,8 @@ class yz_rect {
       , material_type { mat_type } {}
 
   /// Compute ray interaction with rectangle
-  bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type, auto&) const {
+  bool hit(auto&, const ray& r, real_t min, real_t max, hit_record& rec,
+           material_t& hit_material_type) const {
     hit_material_type = material_type;
 
     auto t = (k - r.origin().x()) / r.direction().x();

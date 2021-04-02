@@ -110,8 +110,8 @@ class _triangle : public _triangle_coord {
       , material_type { mat_type } {}
 
   /// Compute ray interaction with triangle
-  bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type, auto&) const {
+  bool hit(auto&, const ray& r, real_t min, real_t max, hit_record& rec,
+           material_t& hit_material_type) const {
     hit_material_type = material_type;
     return IntersectionStrategy(r, *this, min, max, rec);
   }
