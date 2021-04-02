@@ -146,7 +146,7 @@ int main() {
 
   t = image_texture::image_texture_factory("../images/SYCL.png", 5);
 
-  // Add a sphere with a SYCL logo in the background
+  // // Add a sphere with a SYCL logo in the background
   hittables.emplace_back(
       sphere { point { -60, 3, 5 }, 4, lambertian_material { t } });
 

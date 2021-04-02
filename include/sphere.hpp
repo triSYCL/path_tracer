@@ -12,9 +12,9 @@ corresponds to a vector passing through the centre of the a sphere
 and the hipoint on the surface of the sphere */
 std::pair<float, float> mercator_coordinates(const vec& p) {
   // phi is the angle around the axis
-  auto phi = atan2(p.z(), p.x());
+  auto phi = sycl::atan2(p.z(), p.x());
   // theta is the angle down from the pole
-  auto theta = asin(p.y());
+  auto theta = sycl::asin(p.y());
   // theta and phi together constitute the spherical coordinates
   // phi is between -pi and pi , u is between 0 and 1
   auto u = 1 - (phi + pi) / (2 * pi);

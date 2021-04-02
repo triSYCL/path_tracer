@@ -69,7 +69,7 @@ class camera {
          real_t focus_dist, real_t _time0 = 0, real_t _time1 = 0)
       : origin { look_from } {
     auto theta = degrees_to_radians(degree_vfov);
-    auto h = std::tan(theta / 2);
+    auto h = sycl::tan(theta / 2);
     auto viewport_height = 2.0f * h;
     auto viewport_width = aspect_ratio * viewport_height;
 

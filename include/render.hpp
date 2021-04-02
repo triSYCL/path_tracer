@@ -159,4 +159,14 @@ void render(sycl::queue& queue, std::array<color, width * height>& fb,
     executor<width, height, samples, depth>(cgh, cam, hittables_acc, fb_acc,
                                             texture_acc);
   });
+
+  /// Workaround a sycl runtime bug. were write back doesn't occur on multi
+  /// dimension buffers.
+  {
+    auto fb_acc = frame_buf.get_access<sycl::access::mode::read>();
+    int idx = 0;
+    for (int y_coord = 0; y_coord != height; ++y_coord)
+      for (int x_coord = 0; x_coord != width; ++x_coord)
+        fb[idx++] = fb_acc[y_coord][x_coord];
+  }
 }
