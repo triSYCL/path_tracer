@@ -41,7 +41,7 @@ struct checker_texture {
   // Color value is different based on normalised spherical coordinates
   color value(auto& ctx, const hit_record& rec) const {
     auto sines =
-        sin(10 * rec.p.x()) * sin(10 * rec.p.y()) * sin(10 * rec.p.z());
+        sycl::sin(10 * rec.p.x()) * sycl::sin(10 * rec.p.y()) * sycl::sin(10 * rec.p.z());
     if (sines < 0)
       return odd.value(ctx, rec);
     else
@@ -94,9 +94,9 @@ struct image_texture {
   color value(auto& ctx, const hit_record& rec) const {
     // If texture data is unavailable, return solid cyan
     // The image is repeated by the repetition factor
-    std::size_t i = std::fmod(rec.u * cyclic_frequency, 1) * (width - 1);
+    std::size_t i = sycl::fmod(rec.u * cyclic_frequency, (float)1) * (width - 1);
     // The image frame buffer is going downwards, so flip the y axis
-    std::size_t j = (1 - std::fmod(rec.v * cyclic_frequency, 1)) * (height - 1);
+    std::size_t j = (1 - sycl::fmod(rec.v * cyclic_frequency, (float)1)) * (height - 1);
     std::size_t local_offset = j * width + i;
     std::size_t pix_idx = local_offset + offset;
     auto scale = 1.f / 255;

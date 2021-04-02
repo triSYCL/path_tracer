@@ -62,7 +62,7 @@ class constant_medium {
     /// Distance between the two hitpoints affect of probability
     /// of the ray hitting a smoke particle
     const auto distance_inside_boundary = (rec2.t - rec1.t) * ray_length;
-    const auto hit_distance = neg_inv_density * log(rng.float_t());
+    const auto hit_distance = neg_inv_density * sycl::log(rng.float_t());
 
     /// With lower density, hit_distance has higher probabilty
     /// of being greater than distance_inside_boundary

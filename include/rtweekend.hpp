@@ -35,9 +35,9 @@ class LocalPseudoRNG {
   inline LocalPseudoRNG(std::uint32_t init_state = xorshift<>::initial_state)
       : generator { init_state } {}
 
-  // Returns a random float in 0., 1.
+  // Returns a random float in 0.f 1.
   inline float float_t() {
-    constexpr float scale = 1. / (uint64_t { 1 } << 32);
+    constexpr float scale = 1.f/ (uint64_t { 1 } << 32);
     return generator() * scale;
   }
 
@@ -47,7 +47,7 @@ class LocalPseudoRNG {
     return min + (max - min) * float_t();
   }
 
-  // Returns a random vector with coordinates in 0., 1.
+  // Returns a random vector with coordinates in 0.f 1.
   inline vec vec_t() { return { float_t(), float_t(), float_t() }; }
 
   // Returns a random vec with coordinates in min, max
@@ -58,7 +58,7 @@ class LocalPseudoRNG {
 
   // Returns a random unit vector
   inline vec unit_vec() {
-    auto x = float_t(-1., 1.);
+    auto x = float_t(-1.f, 1.f);
     auto maxy = sycl::sqrt(1 - x * x);
     auto y = float_t(-maxy, maxy);
     auto absz = sycl::sqrt(maxy * maxy - y * y);
@@ -81,10 +81,10 @@ class LocalPseudoRNG {
 
   // Return a random vector in the unit disk of usual norm in plane x, y
   inline vec in_unit_disk() {
-    auto x = float_t(-1., 1.);
+    auto x = float_t(-1.f, 1.f);
     auto maxy = sycl::sqrt(1 - x * x);
     auto y = float_t(-maxy, maxy);
-    return { x, y, 0. };
+    return { x, y, 0.f};
   }
 
  private:
