@@ -23,8 +23,8 @@ using hittable_t =
     std::variant<sphere, xy_rect, triangle, box, constant_medium>;
 
 template <int width, int height, int samples, int depth>
-inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
-                         auto& hittable_acc, auto fb_acc, auto& ctx) {
+inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
+                         auto& hittable_acc, auto fb_acc) {
   auto& rng = ctx.rng;
   auto get_color = [&](const ray& r) {
     auto hit_world = [&](const ray& r, hit_record& rec,
@@ -37,8 +37,8 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
       for (auto i = 0; i < hittable_acc.get_count(); i++) {
         if (dev_visit(
                 [&](auto&& arg) {
-                  return arg.hit(r, 0.001f, closest_so_far, temp_rec,
-                                 temp_material_type, ctx);
+                  return arg.hit(ctx, r, 0.001f, closest_so_far, temp_rec,
+                                 temp_material_type);
                 },
                 hittable_acc[i])) {
           hit_anything = true;
@@ -58,12 +58,12 @@ inline auto render_pixel(int x_coord, int y_coord, camera const& cam,
     for (auto i = 0; i < depth; i++) {
       hit_record rec;
       if (hit_world(cur_ray, rec, material_type)) {
-        emitted = dev_visit([&](auto&& arg) { return arg.emitted(rec, ctx); },
+        emitted = dev_visit([&](auto&& arg) { return arg.emitted(ctx, rec); },
                             material_type);
         if (dev_visit(
                 [&](auto&& arg) {
-                  return arg.scatter(cur_ray, rec, cur_attenuation, scattered,
-                                     ctx);
+                  return arg.scatter(ctx, cur_ray, rec, cur_attenuation,
+                                     scattered);
                 },
                 material_type)) {
           // On hitting the object, the ray gets scattered
@@ -113,11 +113,11 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
   if constexpr (buildparams::use_single_task) {
     cgh.single_task<PixelRender>([=] {
       LocalPseudoRNG rng;
-      task_context ctx {rng, texture_acc.get_pointer()};
+      task_context ctx { rng, texture_acc.get_pointer() };
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
           render_pixel<width, height, samples, depth>(
-              x_coord, y_coord, cam_ptr, hittable_acc, fb_acc, ctx);
+              ctx, x_coord, y_coord, cam_ptr, hittable_acc, fb_acc);
         }
     });
   } else {
@@ -130,9 +130,9 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
       auto init_generator_state =
           std::hash<std::size_t> {}(item.get_linear_id());
       LocalPseudoRNG rng(init_generator_state);
-      task_context ctx {rng, texture_acc.get_pointer()};
-      render_pixel<width, height, samples, depth>(x_coord, y_coord, cam_ptr,
-                                                  hittable_acc, fb_acc, ctx);
+      task_context ctx { rng, texture_acc.get_pointer() };
+      render_pixel<width, height, samples, depth>(
+          ctx, x_coord, y_coord, cam_ptr, hittable_acc, fb_acc);
     });
   }
 }
