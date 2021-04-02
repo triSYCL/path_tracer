@@ -93,8 +93,8 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
 
   color final_color(0.0f, 0.0f, 0.0f);
   for (auto i = 0; i < samples; i++) {
-    const auto u = (x_coord) / width;
-    const auto v = (y_coord) / height;
+    const auto u = (x_coord + rng.float_t()) / width;
+    const auto v = (y_coord + rng.float_t()) / height;
     // u and v are points on the viewport
     ray r = cam.get_ray(u, v, rng);
     final_color += get_color(r);
@@ -159,8 +159,9 @@ void render(sycl::queue& queue, std::array<color, width * height>& fb,
     executor<width, height, samples, depth>(cgh, cam, hittables_acc, fb_acc,
                                             texture_acc);
   });
-  
-  /// Workaround a sycl runtime bug. were write back doesn't occur on multi dimension buffers.
+
+  /// Workaround a sycl runtime bug. were write back doesn't occur on multi
+  /// dimension buffers.
   {
     auto fb_acc = frame_buf.get_access<sycl::access::mode::read>();
     int idx = 0;
