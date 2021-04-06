@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <limits>
 
+// Xorshift implementation from [triSYCL](https://github.com/triSYCL/triSYCL)
 template <int Nbits = 32> struct xorshift {
   /// Bit size of the random generator data type
   static auto constexpr bit_size = Nbits;

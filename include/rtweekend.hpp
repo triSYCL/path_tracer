@@ -35,10 +35,9 @@ class LocalPseudoRNG {
   inline LocalPseudoRNG(std::uint32_t init_state = xorshift<>::initial_state)
       : generator { init_state } {}
 
-
   // Returns a random float in 0.f 1.
   inline float float_t() {
-    constexpr float scale = 1.f/ (uint64_t { 1 } << 32);
+    constexpr float scale = 1.f / (uint64_t { 1 } << 32);
     return generator() * scale;
   }
 
@@ -85,15 +84,22 @@ class LocalPseudoRNG {
     auto x = float_t(-1.f, 1.f);
     auto maxy = sycl::sqrt(1 - x * x);
     auto y = float_t(-maxy, maxy);
-    return { x, y, 0.f};
+    return { x, y, 0.f };
   }
 
  private:
   xorshift<> generator;
 };
 
+/**
+ * @brief Used as a poorman's cooperative ersatz of device global variable
+ *
+ * The task context is (manually) passed through the call stack to all kernel
+ * callees
+ */
 struct task_context {
   LocalPseudoRNG rng;
+  // See image_texture in texture.hpp for more details
   sycl::global_ptr<uint8_t> texture_data;
 };
 
