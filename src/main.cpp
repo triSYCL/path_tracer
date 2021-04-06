@@ -41,11 +41,11 @@ void save_image_png(int width, int height, auto &fb_data) {
     for (int i = 0; i < width; ++i) {
       auto input_index = j * width + i;
       int r = static_cast<int>(
-          256 * std::clamp(sycl::sqrt(fb_data[input_index].x()), 0.0f, 0.999f));
+          256 * std::clamp(sycl::sqrt(fb_data[j][i].x()), 0.0f, 0.999f));
       int g = static_cast<int>(
-          256 * std::clamp(sycl::sqrt(fb_data[input_index].y()), 0.0f, 0.999f));
+          256 * std::clamp(sycl::sqrt(fb_data[j][i].y()), 0.0f, 0.999f));
       int b = static_cast<int>(
-          256 * std::clamp(sycl::sqrt(fb_data[input_index].z()), 0.0f, 0.999f));
+          256 * std::clamp(sycl::sqrt(fb_data[j][i].z()), 0.0f, 0.999f));
 
       pixels[index++] = r;
       pixels[index++] = g;
@@ -61,9 +61,6 @@ int main() {
   // Frame buffer dimensions
   constexpr auto width = buildparams::output_width;
   constexpr auto height = buildparams::output_height;
-
-  // Allocate frame buffer on host
-  std::array<color, (width * height)> fb;
 
   /// Graphical objects
   std::vector<hittable_t> hittables;
@@ -188,10 +185,13 @@ int main() {
   constexpr auto samples = 100;
 
   // SYCL render kernel
+
+  sycl::buffer<color, 2> fb(sycl::range<2>(height, width));
   render<width, height, samples>(myQueue, fb, hittables, cam);
 
+  auto fb_access = fb.get_access<sycl::access::mode::read>();
   // Save image to file
-  save_image_png(width, height, fb);
+  save_image_png(width, height, fb_access);
 
   return 0;
 }
