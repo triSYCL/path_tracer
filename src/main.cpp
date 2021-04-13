@@ -78,9 +78,9 @@ int main() {
   for (int a = -11; a < 11; a++) {
     for (int b = -11; b < 11; b++) {
       // Based on a random variable , the material type is chosen
-      auto choose_mat = rng.float_t();
+      auto choose_mat = rng.real();
       // Spheres are placed at a point randomly displaced from a,b
-      point center(a + 0.9f * rng.float_t(), 0.2f, b + 0.9f * rng.float_t());
+      point center(a + 0.9f * rng.real(), 0.2f, b + 0.9f * rng.real());
       if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
         if (choose_mat < 0.4f) {
           // Lambertian
@@ -90,13 +90,13 @@ int main() {
         } else if (choose_mat < 0.8f) {
           // Lambertian movig spheres
           auto albedo = rng.vec_t() * rng.vec_t();
-          auto center2 = center + point { 0, rng.float_t(0, 0.25f), 0 };
+          auto center2 = center + point { 0, rng.real(0, 0.25f), 0 };
           hittables.emplace_back(sphere(center, center2, 0.0f, 1.0f, 0.2f,
                                         lambertian_material(albedo)));
         } else if (choose_mat < 0.95f) {
           // metal
           auto albedo = rng.vec_t(0.5f, 1);
-          auto fuzz = rng.float_t(0, 0.5f);
+          auto fuzz = rng.real(0, 0.5f);
           hittables.emplace_back(
               sphere(center, 0.2f, metal_material(albedo, fuzz)));
         } else {

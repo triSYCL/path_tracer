@@ -93,8 +93,8 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
 
   color final_color(0.0f, 0.0f, 0.0f);
   for (auto i = 0; i < samples; i++) {
-    const auto u = (x_coord + rng.float_t()) / width;
-    const auto v = (y_coord + rng.float_t()) / height;
+    const auto u = (x_coord + rng.real()) / width;
+    const auto v = (y_coord + rng.real()) / height;
     // u and v are points on the viewport
     ray r = cam.get_ray(u, v, rng);
     final_color += get_color(r);

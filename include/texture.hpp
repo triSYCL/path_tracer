@@ -19,7 +19,7 @@ struct solid_texture {
   solid_texture() = default;
   solid_texture(const color& c)
       : color_value { c } {}
-  solid_texture(float red, float green, float blue)
+  solid_texture(real_t red, real_t green, real_t blue)
       : solid_texture { color { red, green, blue } } {}
   // For solid texture, the color is same throughout the sphere
   color value(auto&, const hit_record&) const { return color_value; }
@@ -77,10 +77,10 @@ struct image_texture {
   std::size_t offset;
 
   /// The repetition rate of the image
-  float cyclic_frequency { 1.f };
+  real_t cyclic_frequency { 1.f };
 
   image_texture(std::size_t _width, std::size_t _height, std::size_t _offset,
-                float _cyclic_frequency)
+                real_t _cyclic_frequency)
       : width { _width }
       , height { _height }
       , offset { _offset }
@@ -95,7 +95,7 @@ struct image_texture {
          the image in the texture
  */
   static image_texture image_texture_factory(const char* file_name,
-                                             float _cyclic_frequency = 1) {
+                                             real_t _cyclic_frequency = 1) {
     assert(!frozen);
     auto components_per_pixel = bytes_per_pixel;
     uint8_t* _data;
@@ -137,10 +137,10 @@ struct image_texture {
     // The image is repeated by the repetition factor
 
     std::size_t i =
-        sycl::fmod(rec.u * cyclic_frequency, (float)1) * (width - 1);
+        sycl::fmod(rec.u * cyclic_frequency, (real_t)1) * (width - 1);
     // The image frame buffer is going downwards, so flip the y axis
     std::size_t j =
-        (1 - sycl::fmod(rec.v * cyclic_frequency, (float)1)) * (height - 1);
+        (1 - sycl::fmod(rec.v * cyclic_frequency, (real_t)1)) * (height - 1);
     std::size_t local_offset = j * width + i;
     std::size_t pix_idx = local_offset + offset;
     auto scale = 1.f / 255;

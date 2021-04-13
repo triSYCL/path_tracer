@@ -18,7 +18,7 @@ class ray {
 
   // returns point along the ray at distance t from ray's origin
   // the ray P(t) = Origin + t*direction
-  point at(float t) const { return orig + t * dir; }
+  point at(real_t t) const { return orig + t * dir; }
 
  public:
   // To store the origin and direction of the ray

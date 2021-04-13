@@ -32,7 +32,7 @@ struct lambertian_material {
 
 struct metal_material {
   metal_material() = default;
-  metal_material(const color& a, float f)
+  metal_material(const color& a, real_t f)
       : albedo { a }
       , fuzz { std::clamp(f, 0.0f, 1.0f) } {}
 
@@ -49,7 +49,7 @@ struct metal_material {
 
   color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
   color albedo;
-  float fuzz;
+  real_t fuzz;
 };
 
 struct dielectric_material {
@@ -71,14 +71,14 @@ struct dielectric_material {
     // at hit point
     auto& rng = ctx.rng;
     attenuation *= albedo;
-    float refraction_ratio = rec.front_face ? (1.0f / ref_idx) : ref_idx;
+    real_t refraction_ratio = rec.front_face ? (1.0f / ref_idx) : ref_idx;
     vec unit_direction = unit_vector(r_in.direction());
-    float cos_theta = sycl::fmin(-sycl::dot(unit_direction, rec.normal), 1.0f);
-    float sin_theta = sycl::sqrt(1.0f - cos_theta * cos_theta);
+    real_t cos_theta = sycl::fmin(-sycl::dot(unit_direction, rec.normal), 1.0f);
+    real_t sin_theta = sycl::sqrt(1.0f - cos_theta * cos_theta);
     bool cannot_refract = refraction_ratio * sin_theta > 1.0f;
     vec direction;
     if (cannot_refract ||
-        reflectance(cos_theta, refraction_ratio) > rng.float_t())
+        reflectance(cos_theta, refraction_ratio) > rng.real())
       direction = reflect(unit_direction, rec.normal);
     else
       direction = refract(unit_direction, rec.normal, refraction_ratio);
