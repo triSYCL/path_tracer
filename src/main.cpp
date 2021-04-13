@@ -30,8 +30,9 @@ void dump_image_ppm(int width, int height, auto& fb_data) {
   }
 }
 
-void save_image_png(int width, int height, auto &fb_data) {
+void save_image_png(int width, int height, sycl::buffer<color, 2> &fb) {
   constexpr unsigned num_channels = 3;
+  auto fb_data = fb.get_access<sycl::access::mode::read>();
 
   std::vector<uint8_t> pixels;
   pixels.resize(width * height * num_channels);
@@ -41,11 +42,11 @@ void save_image_png(int width, int height, auto &fb_data) {
     for (int i = 0; i < width; ++i) {
       auto input_index = j * width + i;
       int r = static_cast<int>(
-          256 * std::clamp(sycl::sqrt(fb_data[input_index].x()), 0.0f, 0.999f));
+          256 * std::clamp(sycl::sqrt(fb_data[j][i].x()), 0.0f, 0.999f));
       int g = static_cast<int>(
-          256 * std::clamp(sycl::sqrt(fb_data[input_index].y()), 0.0f, 0.999f));
+          256 * std::clamp(sycl::sqrt(fb_data[j][i].y()), 0.0f, 0.999f));
       int b = static_cast<int>(
-          256 * std::clamp(sycl::sqrt(fb_data[input_index].z()), 0.0f, 0.999f));
+          256 * std::clamp(sycl::sqrt(fb_data[j][i].z()), 0.0f, 0.999f));
 
       pixels[index++] = r;
       pixels[index++] = g;
@@ -61,9 +62,6 @@ int main() {
   // Frame buffer dimensions
   constexpr auto width = buildparams::output_width;
   constexpr auto height = buildparams::output_height;
-
-  // Allocate frame buffer on host
-  std::array<color, (width * height)> fb;
 
   /// Graphical objects
   std::vector<hittable_t> hittables;
@@ -82,8 +80,7 @@ int main() {
       // Based on a random variable , the material type is chosen
       auto choose_mat = rng.float_t();
       // Spheres are placed at a point randomly displaced from a,b
-      point center(a + 0.9f * rng.float_t(), 0.2f,
-                   b + 0.9f * rng.float_t());
+      point center(a + 0.9f * rng.float_t(), 0.2f, b + 0.9f * rng.float_t());
       if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
         if (choose_mat < 0.4f) {
           // Lambertian
@@ -133,7 +130,7 @@ int main() {
       sphere(point { 4, 1, 0 }, 0.2f, lightsource_material(color(10, 0, 10))));
 
   // Four large spheres of metal, dielectric and Lambertian material types
-  t = image_texture("../images/Xilinx.jpg");
+  t = image_texture::image_texture_factory("../images/Xilinx.jpg");
   hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
   hittables.emplace_back(
       sphere(point { 4, 1, 2.25f }, 1, lambertian_material(t)));
@@ -145,9 +142,9 @@ int main() {
   hittables.emplace_back(sphere(point { 0, 1, -2.25f }, 1,
                                 metal_material(color(0.7f, 0.6f, 0.5f), 0.0f)));
 
-  t = image_texture { "../images/SYCL.png", 5 };
+  t = image_texture::image_texture_factory("../images/SYCL.png", 5);
 
-  // Add a sphere with a SYCL logo in the background
+  // // Add a sphere with a SYCL logo in the background
   hittables.emplace_back(
       sphere { point { -60, 3, 5 }, 4, lambertian_material { t } });
 
@@ -189,6 +186,8 @@ int main() {
   constexpr auto samples = 100;
 
   // SYCL render kernel
+
+  sycl::buffer<color, 2> fb(sycl::range<2>(height, width));
   render<width, height, samples>(myQueue, fb, hittables, cam);
 
   // Save image to file

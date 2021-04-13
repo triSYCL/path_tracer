@@ -12,9 +12,9 @@
 #include <vector>
 
 #include <sycl.hpp>
-#include <triSYCL/vendor/triSYCL/random/xorshift.hpp>
 
 #include <build_parameters.hpp>
+#include <xorshift.hpp>
 
 // Constants
 
@@ -32,13 +32,12 @@ inline float degrees_to_radians(float degrees) { return degrees * pi / 180.0f; }
 
 class LocalPseudoRNG {
  public:
-  inline LocalPseudoRNG(std::uint32_t init_state = trisycl::vendor::trisycl::random::xorshift<>::initial_state)
-      : generator{init_state} {}
+  inline LocalPseudoRNG(std::uint32_t init_state = xorshift<>::initial_state)
+      : generator { init_state } {}
 
-
-  // Returns a random float in 0., 1.
+  // Returns a random float in 0.f 1.
   inline float float_t() {
-    constexpr float scale = 1./ (uint64_t{1} << 32);
+    constexpr float scale = 1.f / (uint64_t { 1 } << 32);
     return generator() * scale;
   }
 
@@ -48,7 +47,7 @@ class LocalPseudoRNG {
     return min + (max - min) * float_t();
   }
 
-  // Returns a random vector with coordinates in 0., 1.
+  // Returns a random vector with coordinates in 0.f 1.
   inline vec vec_t() { return { float_t(), float_t(), float_t() }; }
 
   // Returns a random vec with coordinates in min, max
@@ -59,7 +58,7 @@ class LocalPseudoRNG {
 
   // Returns a random unit vector
   inline vec unit_vec() {
-    auto x = float_t(-1., 1.);
+    auto x = float_t(-1.f, 1.f);
     auto maxy = sycl::sqrt(1 - x * x);
     auto y = float_t(-maxy, maxy);
     auto absz = sycl::sqrt(maxy * maxy - y * y);
@@ -82,14 +81,25 @@ class LocalPseudoRNG {
 
   // Return a random vector in the unit disk of usual norm in plane x, y
   inline vec in_unit_disk() {
-    auto x = float_t(-1., 1.);
+    auto x = float_t(-1.f, 1.f);
     auto maxy = sycl::sqrt(1 - x * x);
     auto y = float_t(-maxy, maxy);
-    return { x, y, 0. };
+    return { x, y, 0.f };
   }
 
  private:
-  trisycl::vendor::trisycl::random::xorshift<> generator;
+  xorshift<> generator;
+};
+
+/**
+ @brief Used as a poorman's cooperative ersatz of device global variable
+        The task context is (manually) passed through the call stack to all
+        kernel callees
+ */
+struct task_context {
+  LocalPseudoRNG rng;
+  // See image_texture in texture.hpp for more details
+  sycl::global_ptr<uint8_t> texture_data;
 };
 
 // Common Headers

@@ -15,17 +15,18 @@ struct lambertian_material {
   lambertian_material(const texture_t& a)
       : albedo { a } {}
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
-               ray& scattered, LocalPseudoRNG& rng) const {
+  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
+               color& attenuation, ray& scattered) const {
+    auto& rng = ctx.rng;
     vec scatter_direction = rec.normal + rng.unit_vec();
     scattered = ray(rec.p, scatter_direction, r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
     attenuation *=
-        dev_visit([&](auto&& arg) { return arg.value(rec); }, albedo);
+        dev_visit([&](auto&& arg) { return arg.value(ctx, rec); }, albedo);
     return true;
   }
-  color emitted(const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
   texture_t albedo;
 };
 
@@ -35,8 +36,9 @@ struct metal_material {
       : albedo { a }
       , fuzz { std::clamp(f, 0.0f, 1.0f) } {}
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
-               ray& scattered, LocalPseudoRNG& rng) const {
+  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
+               color& attenuation, ray& scattered) const {
+    auto& rng = ctx.rng;
     vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
     scattered = ray(rec.p, reflected + fuzz * rng.in_unit_ball(), r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
@@ -45,7 +47,7 @@ struct metal_material {
     return (dot(scattered.direction(), rec.normal) > 0);
   }
 
-  color emitted(const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
   color albedo;
   float fuzz;
 };
@@ -63,10 +65,11 @@ struct dielectric_material {
     return r0 + (1 - r0) * sycl::pow((1 - cosine), 5.0f);
   }
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
-               ray& scattered, LocalPseudoRNG& rng) const {
+  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
+               color& attenuation, ray& scattered) const {
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
+    auto& rng = ctx.rng;
     attenuation *= albedo;
     float refraction_ratio = rec.front_face ? (1.0f / ref_idx) : ref_idx;
     vec unit_direction = unit_vector(r_in.direction());
@@ -84,7 +87,7 @@ struct dielectric_material {
     return true;
   }
 
-  color emitted(const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
   // Refractive index of the glass
   real_t ref_idx;
   // Color of the glass
@@ -100,8 +103,8 @@ struct lightsource_material {
 
   template <typename... T> bool scatter(T&...) const { return false; }
 
-  color emitted(const hit_record& rec) {
-    return dev_visit([&](auto&& arg) { return arg.value(rec); }, emit);
+  color emitted(auto& ctx, const hit_record& rec) {
+    return dev_visit([&](auto&& arg) { return arg.value(ctx, rec); }, emit);
   }
 
   texture_t emit;
@@ -113,15 +116,16 @@ struct isotropic_material {
   isotropic_material(texture_t& a)
       : albedo { a } {}
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
-               ray& scattered, LocalPseudoRNG& rng) const {
+  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
+               color& attenuation, ray& scattered) const {
+    auto& rng = ctx.rng;
     scattered = ray(rec.p, rng.in_unit_ball(), r_in.time());
     attenuation *=
-        dev_visit([&](auto&& arg) { return arg.value(rec); }, albedo);
+        dev_visit([&](auto&& arg) { return arg.value(ctx, rec); }, albedo);
     return true;
   }
 
-  color emitted(const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
 
   texture_t albedo;
 };
