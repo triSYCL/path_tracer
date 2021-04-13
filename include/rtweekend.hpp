@@ -92,10 +92,9 @@ class LocalPseudoRNG {
 };
 
 /**
- * @brief Used as a poorman's cooperative ersatz of device global variable
- *
- * The task context is (manually) passed through the call stack to all kernel
- * callees
+ @brief Used as a poorman's cooperative ersatz of device global variable
+        The task context is (manually) passed through the call stack to all
+        kernel callees
  */
 struct task_context {
   LocalPseudoRNG rng;

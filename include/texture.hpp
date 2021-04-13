@@ -52,17 +52,17 @@ struct checker_texture {
 };
 
 /**
- * @brief A texture based on an image
- *
- * In order to be able to get the bitmap on the device without embedding it in
- * the object, all image_texture textures are serialized in one vector.
- *
- * The offset of the texture in the vector is stored in the image_texture
- * instance.
- *
- * When all the textures have been loaded, the freeze() method can be called to
- * get a sycl::buffer that store this data.
- *
+  @brief A texture based on an image
+
+  In order to be able to get the bitmap on the device without embedding it in
+  the object, all image_texture textures are serialized in one vector.
+
+  The offset of the texture in the vector is stored in the image_texture
+  instance.
+
+  When all the textures have been loaded, the freeze() method can be called to
+  get a sycl::buffer that store this data.
+
  */
 struct image_texture {
  private:
@@ -117,11 +117,11 @@ struct image_texture {
   }
 
   /**
-   * @brief Get a sycl::buffer containing texture data.
-   *
-   * image_texture_factory should not be called after having called freeze
-   *
-   * @return sycl::buffer<uint8_t, 2>
+    @brief Get a sycl::buffer containing texture data.
+
+    image_texture_factory should not be called after having called freeze
+
+    @return sycl::buffer<uint8_t, 2>
    */
   static sycl::buffer<uint8_t, 2> freeze() {
     assert(!frozen);

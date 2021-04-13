@@ -74,11 +74,11 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
         }
       } else {
         /**
-         * If ray doesn't hit anything during iteration linearly blend white and
-         * blue color depending on the height of the y coordinate after scaling
-         * the ray direction to unit length. While -1.0f < y < 1.0f, hit_pt is
-         * between 0 and 1. This produces a blue to white gradient in the
-         * background
+         If ray doesn't hit anything during iteration linearly blend white and
+         blue color depending on the height of the y coordinate after scaling
+         the ray direction to unit length. While -1.0f < y < 1.0f, hit_pt is
+         between 0 and 1. This produces a blue to white gradient in the
+         background
          */
         vec unit_direction = unit_vector(cur_ray.direction());
         auto hit_pt = 0.5f * (unit_direction.y() + 1.0f);
@@ -139,7 +139,7 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
 
 // Render function to call the render kernel
 template <int width, int height, int samples>
-void render(sycl::queue& queue, sycl::buffer<color, 2> frame_buf,
+void render(sycl::queue& queue, sycl::buffer<color, 2>& frame_buf,
             std::vector<hittable_t>& hittables, camera& cam) {
   auto constexpr depth = 50;
   const auto nb_hittable = hittables.size();

@@ -30,8 +30,9 @@ void dump_image_ppm(int width, int height, auto& fb_data) {
   }
 }
 
-void save_image_png(int width, int height, auto &fb_data) {
+void save_image_png(int width, int height, sycl::buffer<color, 2> &fb) {
   constexpr unsigned num_channels = 3;
+  auto fb_data = fb.get_access<sycl::access::mode::read>();
 
   std::vector<uint8_t> pixels;
   pixels.resize(width * height * num_channels);
@@ -189,9 +190,8 @@ int main() {
   sycl::buffer<color, 2> fb(sycl::range<2>(height, width));
   render<width, height, samples>(myQueue, fb, hittables, cam);
 
-  auto fb_access = fb.get_access<sycl::access::mode::read>();
   // Save image to file
-  save_image_png(width, height, fb_access);
+  save_image_png(width, height, fb);
 
   return 0;
 }
