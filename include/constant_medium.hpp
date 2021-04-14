@@ -7,7 +7,7 @@
 #include "texture.hpp"
 #include "visit.hpp"
 
-using hittableVolume_t = std::variant<sphere, box>;
+using hittableVolume_t = std::variant<std::monostate, sphere, box>;
 
 /**
  * A ray going through the volume can either make it all the way through
@@ -31,20 +31,14 @@ class constant_medium {
     hit_material_type = phase_function;
     material_t temp_material_type;
     hit_record rec1, rec2;
-    if (!dev_visit(
-            [&](auto&& arg) {
-              return arg.hit(ctx, r, -infinity, infinity, rec1,
-                             temp_material_type);
-            },
-            boundary)) {
+    if (!dev_visit(hittable_hit_visitor(ctx, r, -infinity, infinity, rec1,
+                                        temp_material_type),
+                   boundary)) {
       return false;
     }
 
-    if (!dev_visit(
-            [&](auto&& arg) {
-              return arg.hit(ctx, r, rec1.t + 0.0001f, infinity, rec2,
-                             temp_material_type);
-            },
+    if (!dev_visit(hittable_hit_visitor(ctx, r, rec1.t + 0.0001f, infinity, rec2,
+                             temp_material_type),
             boundary)) {
       return false;
     }

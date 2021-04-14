@@ -3,24 +3,16 @@
 #include <variant>
 #include <vector>
 
-#include "box.hpp"
 #include "build_parameters.hpp"
 #include "camera.hpp"
-#include "constant_medium.hpp"
 #include "hitable.hpp"
 #include "material.hpp"
 #include "ray.hpp"
-#include "rectangle.hpp"
 #include "rtweekend.hpp"
-#include "sphere.hpp"
 #include "sycl.hpp"
 #include "texture.hpp"
-#include "triangle.hpp"
 #include "vec.hpp"
 #include "visit.hpp"
-
-using hittable_t =
-    std::variant<sphere, xy_rect, triangle, box, constant_medium>;
 
 template <int width, int height, int samples, int depth>
 inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
@@ -35,12 +27,9 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
       auto closest_so_far = infinity;
       // Checking if the ray hits any of the spheres
       for (auto i = 0; i < hittable_acc.get_count(); i++) {
-        if (dev_visit(
-                [&](auto&& arg) {
-                  return arg.hit(ctx, r, 0.001f, closest_so_far, temp_rec,
-                                 temp_material_type);
-                },
-                hittable_acc[i])) {
+        if (dev_visit(hittable_hit_visitor(ctx, r, 0.001f, closest_so_far,
+                                           temp_rec, temp_material_type),
+                      hittable_acc[i])) {
           hit_anything = true;
           closest_so_far = temp_rec.t;
           rec = temp_rec;
@@ -58,14 +47,10 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
     for (auto i = 0; i < depth; i++) {
       hit_record rec;
       if (hit_world(cur_ray, rec, material_type)) {
-        emitted = dev_visit([&](auto&& arg) { return arg.emitted(ctx, rec); },
-                            material_type);
-        if (dev_visit(
-                [&](auto&& arg) {
-                  return arg.scatter(ctx, cur_ray, rec, cur_attenuation,
-                                     scattered);
-                },
-                material_type)) {
+        emitted = dev_visit(material_emitted_visitor(ctx, rec), material_type);
+        if (dev_visit(material_scatter_visitor(ctx, cur_ray, rec,
+                                               cur_attenuation, scattered),
+                      material_type)) {
           // On hitting the object, the ray gets scattered
           cur_ray = scattered;
         } else {

@@ -1,26 +1,49 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
-#include "ray.hpp"
+#include <variant>
+
+#include "hit_record.hpp"
+#include "material.hpp"
 #include "rtweekend.hpp"
 #include "vec.hpp"
 
-class hit_record {
- public:
-  real_t t;         //
-  point p;         // hit point
-  vec normal;      // normal at hit point
-  bool front_face; // to check if hit point is on the outer surface
-  /*local coordinates for rectangles
-  and mercator coordintes for spheres */
-  real_t u;
-  real_t v;
+struct hittable_hit_visitor {
+ private:
+  task_context& ctx;
+  const ray& r;
+  real_t min;
+  real_t max;
+  hit_record& rec;
+  material_t& hit_material_type;
 
-  // To set if the hit point is on the front face
-  void set_face_normal(const ray& r, const vec& outward_normal) {
-    front_face = dot(r.direction(), outward_normal) < 0;
-    normal = front_face ? outward_normal : vec {} - outward_normal;
+ public:
+  hittable_hit_visitor(task_context& ctx, const ray& r, real_t min, real_t max,
+                       hit_record& rec, material_t& hit_material_type)
+      : ctx { ctx }
+      , r { r }
+      , min { min }
+      , max { max }
+      , rec { rec }
+      , hit_material_type { hit_material_type } {}
+
+  template <typename H> bool operator()(H&& hittable) {
+    return hittable.hit(ctx, r, min, max, rec, hit_material_type);
+  }
+
+  bool operator()(std::monostate) {
+    assert(fase && "unreachable");
+    return false;
   }
 };
 
+#include "box.hpp"
+#include "constant_medium.hpp"
+#include "ray.hpp"
+#include "rectangle.hpp"
+#include "sphere.hpp"
+#include "triangle.hpp"
+
+using hittable_t = std::variant<std::monostate, sphere, xy_rect, triangle, box,
+                                constant_medium>;
 #endif
