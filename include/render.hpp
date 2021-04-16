@@ -6,28 +6,31 @@
 #include "build_parameters.hpp"
 #include "camera.hpp"
 #include "hitable.hpp"
+#include "hitable_visitor.hpp"
 #include "material.hpp"
+#include "material_visitor.hpp"
+#include "primitives.hpp"
 #include "ray.hpp"
-#include "rtweekend.hpp"
 #include "sycl.hpp"
+#include "task_context.hpp"
 #include "texture.hpp"
-#include "vec.hpp"
 #include "visit.hpp"
 
+namespace raytracer {
 template <int width, int height, int samples, int depth>
 inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
                          auto& hittable_acc, auto fb_acc) {
   auto& rng = ctx.rng;
   auto get_color = [&](const ray& r) {
-    auto hit_world = [&](const ray& r, hit_record& rec,
-                         material_t& material_type) {
-      hit_record temp_rec;
-      material_t temp_material_type;
+    auto hit_world = [&](const ray& r, visitor::hit_record& rec,
+                         scene::material_t& material_type) {
+      visitor::hit_record temp_rec;
+      scene::material_t temp_material_type;
       auto hit_anything = false;
       auto closest_so_far = infinity;
       // Checking if the ray hits any of the spheres
       for (auto i = 0; i < hittable_acc.get_count(); i++) {
-        if (dev_visit(hittable_hit_visitor(ctx, r, 0.001f, closest_so_far,
+        if (dev_visit(visitor::hitable_hit(ctx, r, 0.001f, closest_so_far,
                                            temp_rec, temp_material_type),
                       hittable_acc[i])) {
           hit_anything = true;
@@ -43,12 +46,12 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
     color cur_attenuation { 1.0f, 1.0f, 1.0f };
     ray scattered;
     color emitted;
-    material_t material_type;
+    scene::material_t material_type;
     for (auto i = 0; i < depth; i++) {
-      hit_record rec;
+      visitor::hit_record rec;
       if (hit_world(cur_ray, rec, material_type)) {
-        emitted = dev_visit(material_emitted_visitor(ctx, rec), material_type);
-        if (dev_visit(material_scatter_visitor(ctx, cur_ray, rec,
+        emitted = dev_visit(visitor::material_emitted(ctx, rec), material_type);
+        if (dev_visit(visitor::material_scatter(ctx, cur_ray, rec,
                                                cur_attenuation, scattered),
                       material_type)) {
           // On hitting the object, the ray gets scattered
@@ -97,8 +100,8 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
                      auto& hittable_acc, auto& fb_acc, auto& texture_acc) {
   if constexpr (buildparams::use_single_task) {
     cgh.single_task<PixelRender>([=] {
-      LocalPseudoRNG rng;
-      task_context ctx { rng, texture_acc.get_pointer() };
+      random::LocalPseudoRNG rng;
+      visitor::task_context ctx { rng, texture_acc.get_pointer() };
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
           render_pixel<width, height, samples, depth>(
@@ -114,8 +117,8 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
       const auto y_coord = gid[0];
       auto init_generator_state =
           std::hash<std::size_t> {}(item.get_linear_id());
-      LocalPseudoRNG rng(init_generator_state);
-      task_context ctx { rng, texture_acc.get_pointer() };
+      random::LocalPseudoRNG rng(init_generator_state);
+      visitor::task_context ctx { rng, texture_acc.get_pointer() };
       render_pixel<width, height, samples, depth>(
           ctx, x_coord, y_coord, cam_ptr, hittable_acc, fb_acc);
     });
@@ -125,12 +128,12 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
 // Render function to call the render kernel
 template <int width, int height, int samples>
 void render(sycl::queue& queue, sycl::buffer<color, 2>& frame_buf,
-            std::vector<hittable_t>& hittables, camera& cam) {
+            std::vector<scene::hittable_t>& hittables, camera& cam) {
   auto constexpr depth = 50;
   const auto nb_hittable = hittables.size();
-  auto hittables_buf = sycl::buffer<hittable_t, 1>(hittables.data(),
+  auto hittables_buf = sycl::buffer<scene::hittable_t, 1>(hittables.data(),
                                                    sycl::range<1>(nb_hittable));
-  auto texture_buf = image_texture::freeze();
+  auto texture_buf = scene::image_texture::freeze();
 
   // Submit command group on device
   queue.submit([&](sycl::handler& cgh) {
@@ -143,3 +146,4 @@ void render(sycl::queue& queue, sycl::buffer<color, 2>& frame_buf,
                                             texture_acc);
   });
 }
+} // namespace raytracer

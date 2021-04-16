@@ -1,16 +1,17 @@
 #ifndef HIT_RECORD_HPP
 #define HIT_RECORD_HPP
 
-#include "rtweekend.hpp"
+#include "primitives.hpp"
 
+namespace raytracer::visitor {
 class hit_record {
  public:
-  real_t t;         //
+  real_t t;
   point p;         // hit point
   vec normal;      // normal at hit point
   bool front_face; // to check if hit point is on the outer surface
   /*local coordinates for rectangles
-  and mercator coordintes for spheres */
+  and mercator coordinates for spheres */
   real_t u;
   real_t v;
 
@@ -20,4 +21,5 @@ class hit_record {
     normal = front_face ? outward_normal : vec {} - outward_normal;
   }
 };
+} // namespace raytracer::visitor
 #endif

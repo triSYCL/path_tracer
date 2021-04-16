@@ -1,8 +1,9 @@
 #ifndef RT_SYCL_RAY_HPP
 #define RT_SYCL_RAY_HPP
 
-#include "vec.hpp"
+#include "primitives.hpp"
 
+namespace raytracer {
 class ray {
  public:
   ray() = default;
@@ -26,5 +27,5 @@ class ray {
   vec dir;
   real_t tm;
 };
-
+} // namespace raytracer
 #endif

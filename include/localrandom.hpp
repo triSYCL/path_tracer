@@ -1,39 +1,11 @@
-#ifndef RT_SYCL_RTWEEKEND_HPP
-#define RT_SYCL_RTWEEKEND_HPP
+#ifndef LOCALRANDOM_HPP
+#define LOCALRANDOM_HPP
 
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <limits>
-#include <memory>
-#include <random>
-#include <type_traits>
-#include <variant>
-#include <vector>
-
-#include <sycl.hpp>
-
-#include <build_parameters.hpp>
 #include <xorshift.hpp>
 
-using real_t = float;
+#include "primitives.hpp"
 
-// Constants
-
-constexpr real_t infinity = std::numeric_limits<real_t>::infinity();
-constexpr real_t pi = 3.1415926535897932385f;
-
-// type aliases for float3 - vec, point and color
-using real_vec = sycl::float3;
-
-using point = real_vec;
-using color = real_vec;
-using vec = real_vec;
-
-// Utility Functions
-
-inline real_t degrees_to_radians(real_t degrees) { return degrees * pi / 180.0f; }
-
+namespace raytracer::random {
 class LocalPseudoRNG {
  public:
   inline LocalPseudoRNG(std::uint32_t init_state = xorshift<>::initial_state)
@@ -46,7 +18,7 @@ class LocalPseudoRNG {
   }
 
   // Returns a random float in min, max
-  inline real_t real(real_t  min, real_t max) {
+  inline real_t real(real_t min, real_t max) {
     // TODO use FMA ?
     return min + (max - min) * real();
   }
@@ -94,20 +66,6 @@ class LocalPseudoRNG {
  private:
   xorshift<> generator;
 };
-
-/**
- @brief Used as a poorman's cooperative ersatz of device global variable
-        The task context is (manually) passed through the call stack to all
-        kernel callees
- */
-struct task_context {
-  LocalPseudoRNG rng;
-  // See image_texture in texture.hpp for more details
-  sycl::global_ptr<uint8_t> texture_data;
-};
-
-// Common Headers
-#include "ray.hpp"
-#include "vec.hpp"
+} // namespace raytracer::random
 
 #endif

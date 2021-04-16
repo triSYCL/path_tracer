@@ -2,131 +2,76 @@
 #define RECT_HPP
 
 #include "material.hpp"
-#include "ray.hpp"
-#include "rtweekend.hpp"
-#include "texture.hpp"
-#include "vec.hpp"
+#include "primitives.hpp"
 
 /** The Following classes implement:
 
         -
    https://raytracing.github.io/books/RayTracingTheNextWeek.html#rectanglesandlights/creatingrectangleobjectsa
 */
+namespace raytracer::scene {
 
-class xy_rect {
+template <bool on_x_plane, bool on_y_plane, bool on_z_plane> class rect {
+  static_assert((on_x_plane && !on_y_plane && !on_z_plane) ||
+                    (!on_x_plane && on_y_plane && !on_z_plane) ||
+                    (!on_x_plane && !on_y_plane && on_z_plane),
+                "Only one parameter should be set to true");
+
  public:
-  xy_rect() = default;
-
-  /// x0 <= x1 and y0 <= y1
-  xy_rect(real_t _x0, real_t _x1, real_t _y0, real_t _y1, real_t _k,
-          const material_t& mat_type)
-      : x0 { _x0 }
-      , x1 { _x1 }
-      , y0 { _y0 }
-      , y1 { _y1 }
-      , k { _k }
-      , material_type { mat_type } {}
-
-  /// Compute ray interaction with rectangle
-  bool hit(auto&, const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
-    hit_material_type = material_type;
-
-    auto t = (k - r.origin().z()) / r.direction().z();
-    if (t < min || t > max)
-      return false;
-    auto x = r.origin().x() + t * r.direction().x();
-    auto y = r.origin().y() + t * r.direction().y();
-    if (x < x0 || x > x1 || y < y0 || y > y1)
-      return false;
-    rec.u = (x - x0) / (x1 - x0);
-    rec.v = (y - y0) / (y1 - y0);
-    rec.t = t;
-    rec.p = r.at(rec.t);
-    vec outward_normal = vec(0, 0, 1);
-    rec.set_face_normal(r, outward_normal);
-    return true;
-  }
-  real_t x0, x1, y0, y1, k;
+  real_t a0, a1, b0, b1, k;
   material_t material_type;
+  rect(real_t _a0, real_t _a1, real_t _b0, real_t _b1, real_t _k,
+       const material_t& _mat_type)
+      : a0 { _a0 }
+      , a1 { _a1 }
+      , b0 { _b0 }
+      , b1 { _b1 }
+      , k { _k }
+      , material_type { _mat_type } {}
+    
+  rect() = default;
+
+  static inline real_t first_planar_coord(vec const& values) {
+    if constexpr (on_x_plane) {
+      return values.y();
+    } else if constexpr (on_y_plane) {
+      return values.z();
+    } else {
+      return values.x();
+    }
+  }
+
+  static inline real_t second_planar_coord(vec const& values) {
+    if constexpr (on_x_plane) {
+      return values.z();
+    } else if constexpr (on_y_plane) {
+      return values.x();
+    } else {
+      return values.y();
+    }
+  }
+
+  static inline real_t normal_coord(vec const& values) {
+    if constexpr (on_x_plane) {
+      return values.x();
+    } else if constexpr (on_y_plane) {
+      return values.y();
+    } else {
+      return values.z();
+    }
+  }
+
+  static inline vec plan_basis(vec const& values) {
+    return { first_planar_coord(values), second_planar_coord(values),
+             normal_coord(values) };
+  }
 };
 
-class xz_rect {
- public:
-  xz_rect() = default;
-
-  /// x0 <= x1 and z0 <= z1
-  xz_rect(real_t _x0, real_t _x1, real_t _z0, real_t _z1, real_t _k,
-          const material_t& mat_type)
-      : x0 { _x0 }
-      , x1 { _x1 }
-      , z0 { _z0 }
-      , z1 { _z1 }
-      , k { _k }
-      , material_type { mat_type } {}
-
-  /// Compute ray interaction with rectangle
-  bool hit(auto&, const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
-    hit_material_type = material_type;
-
-    auto t = (k - r.origin().y()) / r.direction().y();
-    if (t < min || t > max)
-      return false;
-    auto x = r.origin().x() + t * r.direction().x();
-    auto z = r.origin().z() + t * r.direction().z();
-    if (x < x0 || x > x1 || z < z0 || z > z1)
-      return false;
-    rec.u = (x - x0) / (x1 - x0);
-    rec.v = (z - z0) / (z1 - z0);
-    rec.t = t;
-    rec.p = r.at(rec.t);
-    vec outward_normal = vec(0, 1, 0);
-    rec.set_face_normal(r, outward_normal);
-    return true;
-  }
-  real_t x0, x1, z0, z1, k;
-  material_t material_type;
-};
-
-class yz_rect {
- public:
-  yz_rect() = default;
-
-  /// y0 <= y1 and z0 <= z1
-  yz_rect(real_t _y0, real_t _y1, real_t _z0, real_t _z1, real_t _k,
-          const material_t& mat_type)
-      : y0 { _y0 }
-      , y1 { _y1 }
-      , z0 { _z0 }
-      , z1 { _z1 }
-      , k { _k }
-      , material_type { mat_type } {}
-
-  /// Compute ray interaction with rectangle
-  bool hit(auto&, const ray& r, real_t min, real_t max, hit_record& rec,
-           material_t& hit_material_type) const {
-    hit_material_type = material_type;
-
-    auto t = (k - r.origin().x()) / r.direction().x();
-    if (t < min || t > max)
-      return false;
-    auto y = r.origin().y() + t * r.direction().y();
-    auto z = r.origin().z() + t * r.direction().z();
-    if (y < y0 || y > y1 || z < z0 || z > z1)
-      return false;
-    rec.u = (y - y0) / (y1 - y0);
-    rec.v = (z - z0) / (z1 - z0);
-    rec.t = t;
-    rec.p = r.at(rec.t);
-    vec outward_normal = vec(1, 0, 0);
-    rec.set_face_normal(r, outward_normal);
-    return true;
-  }
-  real_t y0, y1, z0, z1, k;
-  material_t material_type;
-};
+using xy_rect = rect<false, false, true>;
+using xz_rect = rect<false, true, false>;
+using yz_rect = rect<true, false, false>;
 
 using rectangle_t = std::variant<xy_rect, xz_rect, yz_rect>;
+} // namespace raytracer::scene
 
 #endif

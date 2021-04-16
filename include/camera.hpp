@@ -3,9 +3,11 @@
 
 #include <cmath>
 
+#include "localrandom.hpp"
+#include "primitives.hpp"
 #include "ray.hpp"
-#include "rtweekend.hpp"
 
+namespace raytracer {
 /** Camera model
 
         This implements:
@@ -90,7 +92,7 @@ class camera {
           viewport local coordinates (s,t) based on viewport
           width, height and focus distance
   */
-  ray get_ray(real_t s, real_t t, LocalPseudoRNG& rng) const {
+  ray get_ray(real_t s, real_t t, random::LocalPseudoRNG& rng) const {
     vec rd = lens_radius * rng.in_unit_disk();
     vec offset = u * rd.x() + v * rd.y();
     return { origin + offset,
@@ -99,5 +101,5 @@ class camera {
              rng.real(time0, time1) };
   }
 };
-
+} // namespace raytracer
 #endif

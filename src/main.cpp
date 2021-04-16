@@ -11,7 +11,11 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb/stb_image_write.h>
 
+#include "build_parameters.hpp"
 #include "render.hpp"
+
+using namespace raytracer::scene;
+using namespace raytracer;
 
 // Function to save image data in ppm format
 void dump_image_ppm(int width, int height, auto& fb_data) {
@@ -30,7 +34,7 @@ void dump_image_ppm(int width, int height, auto& fb_data) {
   }
 }
 
-void save_image_png(int width, int height, sycl::buffer<color, 2> &fb) {
+void save_image_png(int width, int height, sycl::buffer<color, 2>& fb) {
   constexpr unsigned num_channels = 3;
   auto fb_data = fb.get_access<sycl::access::mode::read>();
 
@@ -40,7 +44,6 @@ void save_image_png(int width, int height, sycl::buffer<color, 2> &fb) {
   int index = 0;
   for (int j = height - 1; j >= 0; --j) {
     for (int i = 0; i < width; ++i) {
-      auto input_index = j * width + i;
       int r = static_cast<int>(
           256 * std::clamp(sycl::sqrt(fb_data[j][i].x()), 0.0f, 0.999f));
       int g = static_cast<int>(
@@ -73,7 +76,7 @@ int main() {
   hittables.emplace_back(sphere(point { 0, -1000, 0 }, 1000, m));
   t = checker_texture(color { 0.9f, 0.9f, 0.9f }, color { 0.4f, 0.2f, 0.1f });
 
-  LocalPseudoRNG rng;
+  random::LocalPseudoRNG rng;
 
   for (int a = -11; a < 11; a++) {
     for (int b = -11; b < 11; b++) {
