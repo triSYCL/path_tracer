@@ -16,6 +16,7 @@ constexpr bool use_sycl_compiler = false;
 
 constexpr int output_width = OUTPUT_WIDTH;
 constexpr int output_height = OUTPUT_HEIGHT;
+constexpr int samples = SAMPLES;
 } // namespace buildparams
 
 #endif // BUILD_PARAMETERS_HPP

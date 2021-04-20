@@ -30,7 +30,7 @@ void dump_image_ppm(int width, int height, auto& fb_data) {
   }
 }
 
-void save_image_png(int width, int height, sycl::buffer<color, 2> &fb) {
+void save_image_png(int width, int height, sycl::buffer<color, 2>& fb) {
   constexpr unsigned num_channels = 3;
   auto fb_data = fb.get_access<sycl::access::mode::read>();
 
@@ -77,38 +77,18 @@ int main() {
 
   for (int a = -11; a < 11; a++) {
     for (int b = -11; b < 11; b++) {
-      // Based on a random variable , the material type is chosen
-      auto choose_mat = rng.real();
       // Spheres are placed at a point randomly displaced from a,b
       point center(a + 0.9f * rng.real(), 0.2f, b + 0.9f * rng.real());
       if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
-        if (choose_mat < 0.4f) {
-          // Lambertian
-          auto albedo = rng.vec_t() * rng.vec_t();
-          hittables.emplace_back(
-              sphere(center, 0.2f, lambertian_material(albedo)));
-        } else if (choose_mat < 0.8f) {
-          // Lambertian movig spheres
-          auto albedo = rng.vec_t() * rng.vec_t();
-          auto center2 = center + point { 0, rng.real(0, 0.25f), 0 };
-          hittables.emplace_back(sphere(center, center2, 0.0f, 1.0f, 0.2f,
-                                        lambertian_material(albedo)));
-        } else if (choose_mat < 0.95f) {
-          // metal
-          auto albedo = rng.vec_t(0.5f, 1);
-          auto fuzz = rng.real(0, 0.5f);
-          hittables.emplace_back(
-              sphere(center, 0.2f, metal_material(albedo, fuzz)));
-        } else {
-          // glass
-          hittables.emplace_back(
-              sphere(center, 0.2f,
-                     dielectric_material(1.5f, color { 1.0f, 1.0f, 1.0f })));
-        }
+        // Lambertian
+        auto albedo = rng.vec_t() * rng.vec_t();
+        hittables.emplace_back(
+            sphere(center, 0.2f, lambertian_material(albedo)));
       }
     }
   }
 
+  /*
   // Pyramid
   hittables.emplace_back(
       triangle(point { 6.5f, 0.0f, 1.30f }, point { 6.25f, 0.50f, 1.05f },
@@ -159,9 +139,9 @@ int main() {
                lambertian_material { color { 0.75f, 0.75f, 0.75f } } };
   hittables.emplace_back(
       constant_medium { smoke_sphere, 1, color { 1, 1, 1 } });
-
-  // SYCL queue
-  sycl::queue myQueue;
+  */
+      // SYCL queue
+      sycl::queue myQueue;
 
   // Camera setup
   /// Position of the camera
@@ -183,7 +163,7 @@ int main() {
   };
 
   // Sample per pixel
-  constexpr auto samples = 100;
+  constexpr auto samples = buildparams::samples;
 
   // SYCL render kernel
 

@@ -53,6 +53,12 @@ if(NOT OUTPUT_HEIGHT)
 	  STRING "Image height in pixel" FORCE)
 endif()
 
+if(NOT SAMPLES)
+  message(STATUS "Setting samples to 32 as none was specified.")
+  set(SAMPLES "32" CACHE
+	  STRING "Number of ray that are casted for each pixel" FORCE)
+endif()
+
 
 set(SYCL_RT_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SYCL_RT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -62,6 +68,7 @@ add_executable(sycl-rt ${SYCL_RT_SRC_DIR}/main.cpp)
 target_include_directories(sycl-rt PRIVATE ${SYCL_RT_INCLUDE_DIR})
 target_compile_definitions(sycl-rt PRIVATE OUTPUT_WIDTH=${OUTPUT_WIDTH})
 target_compile_definitions(sycl-rt PRIVATE OUTPUT_HEIGHT=${OUTPUT_HEIGHT})
+target_compile_definitions(sycl-rt PRIVATE SAMPLES=${SAMPLES})
 
 # This is a SYCL program
 if ("${SYCL_CXX_COMPILER}" STREQUAL "")

@@ -102,8 +102,6 @@ class LocalPseudoRNG {
  */
 struct task_context {
   LocalPseudoRNG rng;
-  // See image_texture in texture.hpp for more details
-  sycl::global_ptr<uint8_t> texture_data;
 };
 
 // Common Headers

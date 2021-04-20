@@ -106,11 +106,11 @@ struct PixelRender;
 
 template <int width, int height, int samples, int depth>
 inline void executor(sycl::handler& cgh, camera const& cam_ptr,
-                     auto& hittable_acc, auto& fb_acc, auto& texture_acc) {
+                     auto& hittable_acc, auto& fb_acc) {
   if constexpr (buildparams::use_single_task) {
     cgh.single_task<PixelRender>([=] {
       LocalPseudoRNG rng;
-      task_context ctx { rng, texture_acc.get_pointer() };
+      task_context ctx { rng };
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
           render_pixel<width, height, samples, depth>(
@@ -127,7 +127,7 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
       auto init_generator_state =
           std::hash<std::size_t> {}(item.get_linear_id());
       LocalPseudoRNG rng(init_generator_state);
-      task_context ctx { rng, texture_acc.get_pointer() };
+      task_context ctx { rng };
       render_pixel<width, height, samples, depth>(
           ctx, x_coord, y_coord, cam_ptr, hittable_acc, fb_acc);
     });
@@ -142,16 +142,12 @@ void render(sycl::queue& queue, sycl::buffer<color, 2>& frame_buf,
   const auto nb_hittable = hittables.size();
   auto hittables_buf = sycl::buffer<hittable_t, 1>(hittables.data(),
                                                    sycl::range<1>(nb_hittable));
-  auto texture_buf = image_texture::freeze();
 
   // Submit command group on device
   queue.submit([&](sycl::handler& cgh) {
     auto fb_acc = frame_buf.get_access<sycl::access::mode::discard_write>(cgh);
     auto hittables_acc =
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
-    auto texture_acc = texture_buf.get_access<sycl::access::mode::read>(cgh);
-
-    executor<width, height, samples, depth>(cgh, cam, hittables_acc, fb_acc,
-                                            texture_acc);
+    executor<width, height, samples, depth>(cgh, cam, hittables_acc, fb_acc);
   });
 }
