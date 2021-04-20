@@ -153,24 +153,6 @@ struct image_texture {
 
 using texture_t = std::variant<std::monostate, checker_texture, solid_texture, image_texture>;
 
-struct texture_value_visitor {
-  private:
-    task_context& ctx;
-    const hit_record& rec;
-
-  public:
-    texture_value_visitor(task_context& ctx, const hit_record& rec):ctx{ctx}, rec{rec}{}
-    template<typename T>
-    color operator()(T&& texture) {
-      return texture.value(ctx, rec);
-    }
-
-    color operator()(std::monostate) {
-      assert(false && "unreachable");
-      return {0.f,0.f,0.f};
-    }
-};
-
 // Start filled with the fallback texture (solid blue) for texture load error
 std::vector<uint8_t> image_texture::texture_data { 0, 0, 1 };
 bool image_texture::frozen = false;

@@ -31,15 +31,23 @@ class constant_medium {
     hit_material_type = phase_function;
     material_t temp_material_type;
     hit_record rec1, rec2;
-    if (!dev_visit(hittable_hit_visitor(ctx, r, -infinity, infinity, rec1,
-                                        temp_material_type),
+    if (!dev_visit(monostate_dispatch(
+                       [&](auto&& object) {
+                         return object.hit(ctx, r, -infinity, infinity, rec1,
+                                           temp_material_type);
+                       },
+                       false),
                    boundary)) {
       return false;
     }
 
-    if (!dev_visit(hittable_hit_visitor(ctx, r, rec1.t + 0.0001f, infinity, rec2,
-                             temp_material_type),
-            boundary)) {
+    if (!dev_visit(monostate_dispatch(
+                       [&](auto&& object) {
+                         return object.hit(ctx, r, rec1.t + 0.0001f, infinity,
+                                           rec2, temp_material_type);
+                       },
+                       false),
+                   boundary)) {
       return false;
     }
 

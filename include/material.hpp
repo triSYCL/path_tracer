@@ -22,10 +22,13 @@ struct lambertian_material {
     scattered = ray(rec.p, scatter_direction, r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
-    attenuation *= dev_visit(texture_value_visitor(ctx, rec), albedo);
+    attenuation *= dev_visit(
+        monostate_dispatch([&](auto&& t) { return t.value(ctx, rec); },
+                            color { 0.f, 0.f, 0.f }),
+        albedo);
     return true;
   }
-  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0.f, 0.f, 0.f); }
   texture_t albedo;
 };
 
@@ -46,7 +49,7 @@ struct metal_material {
     return (dot(scattered.direction(), rec.normal) > 0);
   }
 
-  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0.f, 0.f, 0.f); }
   color albedo;
   real_t fuzz;
 };
@@ -102,7 +105,10 @@ struct lightsource_material {
   template <typename... T> bool scatter(T&...) const { return false; }
 
   color emitted(auto& ctx, const hit_record& rec) {
-    return dev_visit(texture_value_visitor(ctx, rec), emit);
+    return dev_visit(
+        monostate_dispatch([&](auto&& t) { return t.value(ctx, rec); },
+                           color { 0.f, 0.f, 0.f }),
+        emit);
   }
 
   texture_t emit;
@@ -118,7 +124,10 @@ struct isotropic_material {
                color& attenuation, ray& scattered) const {
     auto& rng = ctx.rng;
     scattered = ray(rec.p, rng.in_unit_ball(), r_in.time());
-    attenuation *= dev_visit(texture_value_visitor(ctx, rec), albedo);
+    attenuation *=
+        dev_visit(monostate_dispatch([&](auto&& t) { return t.value(ctx, rec); },
+                                     color { 0.f, 0.f, 0.f }),
+                  albedo);
     return true;
   }
 
@@ -130,52 +139,4 @@ struct isotropic_material {
 using material_t =
     std::variant<std::monostate, lambertian_material, metal_material,
                  dielectric_material, lightsource_material, isotropic_material>;
-
-struct material_emitted_visitor {
- private:
-  task_context& ctx;
-  const hit_record& rec;
-
- public:
-  material_emitted_visitor(task_context& ctx, hit_record& rec)
-      : ctx { ctx }
-      , rec { rec } {}
-
-  template <typename M> color operator()(M&& material) {
-    return material.emitted(ctx, rec);
-  }
-
-  color operator()(std::monostate) {
-    assert(false && "unreachable");
-    return { 0.f, 0.f, 0.f };
-  }
-};
-
-struct material_scatter_visitor {
- private:
-  task_context& ctx;
-  const ray& r_in;
-  const hit_record& rec;
-  color& attenuation;
-  ray& scattered;
-
- public:
-  material_scatter_visitor(auto& ctx, const ray& r_in, const hit_record& rec,
-                           color& attenuation, ray& scattered)
-      : ctx { ctx }
-      , r_in { r_in }
-      , rec { rec }
-      , attenuation { attenuation }
-      , scattered { scattered } {}
-
-  template <typename M> bool operator()(M&& material) {
-    return material.scatter(ctx, r_in, rec, attenuation, scattered);
-  }
-
-  bool operator()(std::monostate) {
-    assert(false && "unreachable");
-    return false;
-  }
-};
-
 #endif
