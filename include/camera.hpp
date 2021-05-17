@@ -96,7 +96,7 @@ class camera {
     return { origin + offset,
              lower_left_corner + s * horizontal + t * vertical - origin -
                  offset,
-             rng.real(time0, time1) };
+             time0 };
   }
 };
 

@@ -15,23 +15,22 @@ struct lambertian_material {
   lambertian_material(const texture_t& a)
       : albedo { a } {}
 
-  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
+  bool scatter(const ray& r_in, const hit_record& rec,
                color& attenuation, ray& scattered) const {
-    auto& rng = ctx.rng;
+    auto rng = LocalPseudoRNG { toseed(rec.normal) };
     vec scatter_direction = rec.normal + rng.unit_vec();
     scattered = ray(rec.p, scatter_direction, r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
     attenuation *= dev_visit(
-        monostate_dispatch([&](auto&& t) { return t.value(ctx, rec); },
-                            color { 0.f, 0.f, 0.f }),
+        monostate_dispatch([&](auto&& t) { return t.value(rec); },
+                           color { 0.f, 0.f, 0.f }),
         albedo);
     return true;
   }
-  color emitted(auto&, const hit_record& rec) { return color(0.f, 0.f, 0.f); }
+  color emitted(const hit_record& rec) { return color(0.f, 0.f, 0.f); }
   texture_t albedo;
 };
-
 
 struct lightsource_material {
   lightsource_material() = default;
@@ -42,9 +41,9 @@ struct lightsource_material {
 
   template <typename... T> bool scatter(T&...) const { return false; }
 
-  color emitted(auto& ctx, const hit_record& rec) {
+  color emitted(const hit_record& rec) {
     return dev_visit(
-        monostate_dispatch([&](auto&& t) { return t.value(ctx, rec); },
+        monostate_dispatch([&](auto&& t) { return t.value(rec); },
                            color { 0.f, 0.f, 0.f }),
         emit);
   }
@@ -58,22 +57,22 @@ struct isotropic_material {
   isotropic_material(texture_t& a)
       : albedo { a } {}
 
-  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
+  bool scatter(const ray& r_in, const hit_record& rec,
                color& attenuation, ray& scattered) const {
-    auto& rng = ctx.rng;
+    LocalPseudoRNG rng(toseed(r_in.direction()));
     scattered = ray(rec.p, rng.in_unit_ball(), r_in.time());
-    attenuation *=
-        dev_visit(monostate_dispatch([&](auto&& t) { return t.value(ctx, rec); },
-                                     color { 0.f, 0.f, 0.f }),
-                  albedo);
+    attenuation *= dev_visit(
+        monostate_dispatch([&](auto&& t) { return t.value(rec); },
+                           color { 0.f, 0.f, 0.f }),
+        albedo);
     return true;
   }
 
-  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(const hit_record& rec) { return color(0, 0, 0); }
 
   texture_t albedo;
 };
 
-using material_t =
-    std::variant<std::monostate, lambertian_material, lightsource_material, isotropic_material>;
+using material_t = std::variant<std::monostate, lambertian_material,
+                                lightsource_material, isotropic_material>;
 #endif

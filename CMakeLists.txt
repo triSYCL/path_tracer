@@ -41,24 +41,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-if(NOT OUTPUT_WIDTH)
-  message(STATUS "Setting output width to 800 as none was specified.")
-  set(OUTPUT_WIDTH "800" CACHE
-	  STRING "Image width in pixel" FORCE)
-endif()
-
-if(NOT OUTPUT_HEIGHT)
-  message(STATUS "Setting output height to 480 as none was specified.")
-  set(OUTPUT_HEIGHT "480" CACHE
-	  STRING "Image height in pixel" FORCE)
-endif()
-
-if(NOT SAMPLES)
-  message(STATUS "Setting samples to 32 as none was specified.")
-  set(SAMPLES "32" CACHE
-	  STRING "Number of ray that are casted for each pixel" FORCE)
-endif()
-
 
 set(SYCL_RT_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SYCL_RT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -66,9 +48,6 @@ set(SYCL_RT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(sycl-rt ${SYCL_RT_SRC_DIR}/main.cpp)
 
 target_include_directories(sycl-rt PRIVATE ${SYCL_RT_INCLUDE_DIR})
-target_compile_definitions(sycl-rt PRIVATE OUTPUT_WIDTH=${OUTPUT_WIDTH})
-target_compile_definitions(sycl-rt PRIVATE OUTPUT_HEIGHT=${OUTPUT_HEIGHT})
-target_compile_definitions(sycl-rt PRIVATE SAMPLES=${SAMPLES})
 
 # This is a SYCL program
 if ("${SYCL_CXX_COMPILER}" STREQUAL "")

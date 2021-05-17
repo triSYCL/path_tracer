@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <random>
@@ -33,6 +34,14 @@ using vec = real_vec;
 // Utility Functions
 
 inline real_t degrees_to_radians(real_t degrees) { return degrees * pi / 180.0f; }
+
+uint32_t toseed(vec const & val) {
+  uint32_t x, y, z;
+  std::memcpy(&x, &val.x(), sizeof(uint32_t));
+  std::memcpy(&y, &val.y(), sizeof(uint32_t));
+  std::memcpy(&z, &val.z(), sizeof(uint32_t));
+  return x*x*y*y*z*z;
+}
 
 class LocalPseudoRNG {
  public:

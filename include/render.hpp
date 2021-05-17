@@ -14,10 +14,8 @@
 #include "vec.hpp"
 #include "visit.hpp"
 
-template <int width, int height, int samples, int depth>
-inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
-                         auto& hittable_acc, auto fb_acc) {
-  auto& rng = ctx.rng;
+inline auto render_pixel(int width, int height, int depth, int samples, int x_coord, int y_coord,
+                         camera const& cam, auto& hittable_acc, auto fb_acc) {
   auto get_color = [&](const ray& r) {
     auto hit_world = [&](const ray& r, hit_record& rec,
                          material_t& material_type) {
@@ -29,7 +27,7 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
       for (auto i = 0; i < hittable_acc.get_count(); i++) {
         if (dev_visit(monostate_dispatch(
                           [&](auto&& object) {
-                            return object.hit(ctx, r, 0.001f, closest_so_far,
+                            return object.hit(r, 0.001f, closest_so_far,
                                               temp_rec, temp_material_type);
                           },
                           false),
@@ -51,15 +49,14 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
     for (auto i = 0; i < depth; i++) {
       hit_record rec;
       if (hit_world(cur_ray, rec, material_type)) {
-        emitted =
-            dev_visit(monostate_dispatch(
-                          [&](auto&& mat) { return mat.emitted(ctx, rec); },
-                          color { 0.f, 0.f, 0.f }),
-                      material_type);
+        emitted = dev_visit(
+            monostate_dispatch([&](auto&& mat) { return mat.emitted(rec); },
+                               color { 0.f, 0.f, 0.f }),
+            material_type);
         if (dev_visit(monostate_dispatch(
                           [&](auto&& mat) {
-                            return mat.scatter(ctx, cur_ray, rec,
-                                               cur_attenuation, scattered);
+                            return mat.scatter(cur_ray, rec, cur_attenuation,
+                                               scattered);
                           },
                           false),
                       material_type)) {
@@ -87,7 +84,8 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
     // If not returned within max_depth return black
     return color { 0.0f, 0.0f, 0.0f };
   };
-
+  uint32_t seed = std::hash<int> {}((x_coord << 16) | (y_coord & 0xFFFF));
+  LocalPseudoRNG rng(seed);
   color final_color(0.0f, 0.0f, 0.0f);
   for (auto i = 0; i < samples; i++) {
     const auto u = (x_coord + rng.real()) / width;
@@ -104,17 +102,14 @@ inline auto render_pixel(auto& ctx, int x_coord, int y_coord, camera const& cam,
 
 struct PixelRender;
 
-template <int width, int height, int samples, int depth>
-inline void executor(sycl::handler& cgh, camera const& cam_ptr,
-                     auto& hittable_acc, auto& fb_acc) {
+inline void executor(int width, int height, int depth, int samples, sycl::handler& cgh,
+                     camera const& cam_ptr, auto& hittable_acc, auto& fb_acc) {
   if constexpr (buildparams::use_single_task) {
     cgh.single_task<PixelRender>([=] {
-      LocalPseudoRNG rng;
-      task_context ctx { rng };
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
-          render_pixel<width, height, samples, depth>(
-              ctx, x_coord, y_coord, cam_ptr, hittable_acc, fb_acc);
+          render_pixel(width, height, depth, samples, x_coord, y_coord,
+                                       cam_ptr, hittable_acc, fb_acc);
         }
     });
   } else {
@@ -124,21 +119,16 @@ inline void executor(sycl::handler& cgh, camera const& cam_ptr,
       auto gid = item.get_id();
       const auto x_coord = gid[1];
       const auto y_coord = gid[0];
-      auto init_generator_state =
-          std::hash<std::size_t> {}(item.get_linear_id());
-      LocalPseudoRNG rng(init_generator_state);
-      task_context ctx { rng };
-      render_pixel<width, height, samples, depth>(
-          ctx, x_coord, y_coord, cam_ptr, hittable_acc, fb_acc);
+      render_pixel(width, height, depth, samples, x_coord, y_coord,
+                                   cam_ptr, hittable_acc, fb_acc);
     });
   }
 }
 
 // Render function to call the render kernel
-template <int width, int height, int samples>
-void render(sycl::queue& queue, sycl::buffer<color, 2>& frame_buf,
+void render(int width, int height, int depth, int samples, sycl::queue& queue,
+            sycl::buffer<color, 2>& frame_buf,
             std::vector<hittable_t>& hittables, camera& cam) {
-  auto constexpr depth = 50;
   const auto nb_hittable = hittables.size();
   auto hittables_buf = sycl::buffer<hittable_t, 1>(hittables.data(),
                                                    sycl::range<1>(nb_hittable));
@@ -148,6 +138,7 @@ void render(sycl::queue& queue, sycl::buffer<color, 2>& frame_buf,
     auto fb_acc = frame_buf.get_access<sycl::access::mode::discard_write>(cgh);
     auto hittables_acc =
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
-    executor<width, height, samples, depth>(cgh, cam, hittables_acc, fb_acc);
+    executor(width, height, depth, samples, cgh, cam, hittables_acc,
+                             fb_acc);
   });
 }

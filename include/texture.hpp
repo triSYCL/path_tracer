@@ -22,7 +22,7 @@ struct solid_texture {
   solid_texture(real_t red, real_t green, real_t blue)
       : solid_texture { color { red, green, blue } } {}
   // For solid texture, the color is same throughout the sphere
-  color value(auto&, const hit_record&) const { return color_value; }
+  color value(const hit_record&) const { return color_value; }
 
  private:
   color color_value;
@@ -39,13 +39,13 @@ struct checker_texture {
       : odd { solid_texture { c1 } }
       , even { solid_texture { c2 } } {}
   // Color value is different based on normalised spherical coordinates
-  color value(auto& ctx, const hit_record& rec) const {
+  color value(const hit_record& rec) const {
     auto sines = sycl::sin(10 * rec.p.x()) * sycl::sin(10 * rec.p.y()) *
                  sycl::sin(10 * rec.p.z());
     if (sines < 0)
-      return odd.value(ctx, rec);
+      return odd.value(rec);
     else
-      return even.value(ctx, rec);
+      return even.value(rec);
   }
   solid_texture odd;
   solid_texture even;

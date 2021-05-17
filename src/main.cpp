@@ -58,10 +58,16 @@ void save_image_png(int width, int height, sycl::buffer<color, 2>& fb) {
                  width * num_channels);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+  if (argc != 5) {
+    std::cerr << "Usage: sycl-rt OUT_WIDTH OUT_HEIGHT DEPTH SAMPLES" << std::endl;
+    return -1;
+  }
   // Frame buffer dimensions
-  constexpr auto width = buildparams::output_width;
-  constexpr auto height = buildparams::output_height;
+  auto width = std::stoi({ argv[1] });
+  auto height = std::stoi({ argv[2] });
+  auto depth = std::stoi({ argv[3] });
+  auto samples = std::stoi({ argv[4] });
 
   /// Graphical objects
   std::vector<hittable_t> hittables;
@@ -75,8 +81,8 @@ int main() {
 
   LocalPseudoRNG rng;
 
-  for (int a = -11; a < 11; a++) {
-    for (int b = -11; b < 11; b++) {
+  for (int a = -11; a < 11; a+=3) {
+    for (int b = -11; b < 11; b+=3) {
       // Spheres are placed at a point randomly displaced from a,b
       point center(a + 0.9f * rng.real(), 0.2f, b + 0.9f * rng.real());
       if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
@@ -162,13 +168,10 @@ int main() {
     aperture,  focus_dist, 0.0f, 1.0f
   };
 
-  // Sample per pixel
-  constexpr auto samples = buildparams::samples;
-
   // SYCL render kernel
 
   sycl::buffer<color, 2> fb(sycl::range<2>(height, width));
-  render<width, height, samples>(myQueue, fb, hittables, cam);
+  render(width, height, depth, samples, myQueue, fb, hittables, cam);
 
   // Save image to file
   save_image_png(width, height, fb);
