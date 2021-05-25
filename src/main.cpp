@@ -40,7 +40,6 @@ void save_image_png(int width, int height, sycl::buffer<color, 2>& fb) {
   int index = 0;
   for (int j = height - 1; j >= 0; --j) {
     for (int i = 0; i < width; ++i) {
-      auto input_index = j * width + i;
       int r = static_cast<int>(
           256 * std::clamp(sycl::sqrt(fb_data[j][i].x()), 0.0f, 0.999f));
       int g = static_cast<int>(
@@ -60,7 +59,8 @@ void save_image_png(int width, int height, sycl::buffer<color, 2>& fb) {
 
 int main(int argc, char* argv[]) {
   if (argc != 5) {
-    std::cerr << "Usage: sycl-rt OUT_WIDTH OUT_HEIGHT DEPTH SAMPLES" << std::endl;
+    std::cerr << "Usage: sycl-rt OUT_WIDTH OUT_HEIGHT DEPTH SAMPLES"
+              << std::endl;
     return -1;
   }
   // Frame buffer dimensions
@@ -81,8 +81,8 @@ int main(int argc, char* argv[]) {
 
   LocalPseudoRNG rng;
 
-  for (int a = -11; a < 11; a+=3) {
-    for (int b = -11; b < 11; b+=3) {
+  for (int a = -11; a < 11; a += 3) {
+    for (int b = -11; b < 11; b += 3) {
       // Spheres are placed at a point randomly displaced from a,b
       point center(a + 0.9f * rng.real(), 0.2f, b + 0.9f * rng.real());
       if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
@@ -94,7 +94,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  /*
   // Pyramid
   hittables.emplace_back(
       triangle(point { 6.5f, 0.0f, 1.30f }, point { 6.25f, 0.50f, 1.05f },
@@ -116,8 +115,8 @@ int main(int argc, char* argv[]) {
       sphere(point { 4, 1, 0 }, 0.2f, lightsource_material(color(10, 0, 10))));
 
   // Four large spheres of metal, dielectric and Lambertian material types
-  t = image_texture::image_texture_factory("../images/Xilinx.jpg");
-  hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
+  // t = image_texture::image_texture_factory("../images/Xilinx.jpg");
+  //hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
   hittables.emplace_back(
       sphere(point { 4, 1, 2.25f }, 1, lambertian_material(t)));
   hittables.emplace_back(
@@ -128,7 +127,7 @@ int main(int argc, char* argv[]) {
   hittables.emplace_back(sphere(point { 0, 1, -2.25f }, 1,
                                 metal_material(color(0.7f, 0.6f, 0.5f), 0.0f)));
 
-  t = image_texture::image_texture_factory("../images/SYCL.png", 5);
+  // t = image_texture::image_texture_factory("../images/SYCL.png", 5);
 
   // // Add a sphere with a SYCL logo in the background
   hittables.emplace_back(
@@ -145,9 +144,9 @@ int main(int argc, char* argv[]) {
                lambertian_material { color { 0.75f, 0.75f, 0.75f } } };
   hittables.emplace_back(
       constant_medium { smoke_sphere, 1, color { 1, 1, 1 } });
-  */
-      // SYCL queue
-      sycl::queue myQueue;
+
+  // SYCL queue
+  sycl::queue myQueue;
 
   // Camera setup
   /// Position of the camera
