@@ -7,5 +7,5 @@
 #include "box.hpp"
 #include "constant_medium.hpp"
 
-using hittable_t = std::variant<std::monostate, sphere, triangle, box, constant_medium>;
+using hittable_t = std::variant<sphere, triangle, constant_medium, box>;
 #endif

@@ -23,8 +23,7 @@ struct lambertian_material {
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
     attenuation *=
-        dev_visit(monostate_dispatch([&](auto&& t) { return t.value(rec); },
-                                     color { 0.f, 0.f, 0.f }),
+        dev_visit([&](auto&& t) { return t.value(rec); },
                   albedo);
     return true;
   }
@@ -105,9 +104,7 @@ struct lightsource_material {
   template <typename... T> bool scatter(T&...) const { return false; }
 
   color emitted(const hit_record& rec) {
-    return dev_visit(monostate_dispatch([&](auto&& t) { return t.value(rec); },
-                                        color { 0.f, 0.f, 0.f }),
-                     emit);
+    return dev_visit([&](auto&& t) { return t.value(rec); }, emit);
   }
 
   texture_t emit;
@@ -123,10 +120,7 @@ struct isotropic_material {
                ray& scattered) const {
     LocalPseudoRNG rng(toseed(r_in.direction()));
     scattered = ray(rec.p, rng.in_unit_ball(), r_in.time());
-    attenuation *=
-        dev_visit(monostate_dispatch([&](auto&& t) { return t.value(rec); },
-                                     color { 0.f, 0.f, 0.f }),
-                  albedo);
+    attenuation *= dev_visit([&](auto&& t) { return t.value(rec); }, albedo);
     return true;
   }
 
@@ -136,6 +130,6 @@ struct isotropic_material {
 };
 
 using material_t =
-    std::variant<std::monostate, lambertian_material, metal_material,
+    std::variant<lambertian_material, metal_material,
                  dielectric_material, lightsource_material, isotropic_material>;
 #endif

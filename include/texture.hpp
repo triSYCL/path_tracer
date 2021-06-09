@@ -51,6 +51,6 @@ struct checker_texture {
   solid_texture even;
 };
 
-using texture_t = std::variant<std::monostate, checker_texture, solid_texture>;
+using texture_t = std::variant<checker_texture, solid_texture>;
 
 #endif

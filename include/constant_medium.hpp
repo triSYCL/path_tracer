@@ -38,7 +38,6 @@ class constant_medium {
             boundary)) {
       return false;
     }
-
     if (!dev_visit(
             [&](auto&& arg) {
               return arg.hit(r, rec1.t + 0.0001f, infinity, rec2,

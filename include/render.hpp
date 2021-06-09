@@ -25,13 +25,12 @@ inline auto render_pixel(int width, int height, int depth, int samples, int x_co
       auto closest_so_far = infinity;
       // Checking if the ray hits any of the spheres
       for (auto i = 0; i < hittable_acc.get_count(); i++) {
-        if (dev_visit(monostate_dispatch(
-                          [&](auto&& object) {
-                            return object.hit(r, 0.001f, closest_so_far,
-                                              temp_rec, temp_material_type);
-                          },
-                          false),
-                      hittable_acc[i])) {
+        if (dev_visit(
+                [&](auto&& object) {
+                  return object.hit(r, 0.001f, closest_so_far, temp_rec,
+                                    temp_material_type);
+                },
+                hittable_acc[i])) {
           hit_anything = true;
           closest_so_far = temp_rec.t;
           rec = temp_rec;
@@ -49,17 +48,13 @@ inline auto render_pixel(int width, int height, int depth, int samples, int x_co
     for (auto i = 0; i < depth; i++) {
       hit_record rec;
       if (hit_world(cur_ray, rec, material_type)) {
-        emitted = dev_visit(
-            monostate_dispatch([&](auto&& mat) { return mat.emitted(rec); },
-                               color { 0.f, 0.f, 0.f }),
-            material_type);
-        if (dev_visit(monostate_dispatch(
-                          [&](auto&& mat) {
-                            return mat.scatter(cur_ray, rec, cur_attenuation,
-                                               scattered);
-                          },
-                          false),
-                      material_type)) {
+        emitted = dev_visit([&](auto&& mat) { return mat.emitted(rec); },
+                            material_type);
+        if (dev_visit(
+                [&](auto&& mat) {
+                  return mat.scatter(cur_ray, rec, cur_attenuation, scattered);
+                },
+                material_type)) {
           // On hitting the object, the ray gets scattered
           cur_ray = scattered;
         } else {

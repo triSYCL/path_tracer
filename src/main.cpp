@@ -136,14 +136,14 @@ int main(int argc, char* argv[]) {
   // Add a metallic monolith
   hittables.emplace_back(
       box { point { 6.5f, 0, -1.5f }, point { 7.0f, 3.0f, -1.0f },
-            metal_material { color { 0.7f, 0.6f, 0.5f }, 0.25f } });
+            metal_material { color { 0.7f, 0.6f, 0.5f }, 0.25f } });/**/
 
   // Add a smoke ball
   sphere smoke_sphere =
       sphere { point { 5, 1, 3.5f }, 1,
                lambertian_material { color { 0.75f, 0.75f, 0.75f } } };
-  hittables.emplace_back(
-      constant_medium { smoke_sphere, 1, color { 1, 1, 1 } });
+  /*hittables.emplace_back(
+      constant_medium { smoke_sphere, 1, color { 1, 1, 1 } });*/
 
   // SYCL queue
   sycl::queue myQueue;
