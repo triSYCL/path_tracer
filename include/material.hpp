@@ -22,9 +22,7 @@ struct lambertian_material {
     scattered = ray(rec.p, scatter_direction, r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
-    attenuation *=
-        dev_visit([&](auto&& t) { return t.value(rec); },
-                  albedo);
+    attenuation *= dev_visit([&](auto&& t) { return t.value(rec); }, albedo);
     return true;
   }
   color emitted(const hit_record& rec) { return color(0.f, 0.f, 0.f); }
@@ -37,8 +35,8 @@ struct metal_material {
       : albedo { a }
       , fuzz { std::clamp(f, 0.0f, 1.0f) } {}
 
-  bool scatter(const ray& r_in, const hit_record& rec,
-               color& attenuation, ray& scattered) const {
+  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
+               ray& scattered) const {
     auto rng = LocalPseudoRNG { toseed(rec.normal) };
     vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
     scattered = ray(rec.p, reflected + fuzz * rng.in_unit_ball(), r_in.time());
@@ -66,8 +64,8 @@ struct dielectric_material {
     return r0 + (1 - r0) * sycl::pow((1 - cosine), 5.0f);
   }
 
-  bool scatter(const ray& r_in, const hit_record& rec,
-               color& attenuation, ray& scattered) const {
+  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
+               ray& scattered) const {
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
     auto rng = LocalPseudoRNG { toseed(rec.normal) };
@@ -130,6 +128,6 @@ struct isotropic_material {
 };
 
 using material_t =
-    std::variant<lambertian_material, metal_material,
-                 dielectric_material, lightsource_material, isotropic_material>;
+    std::variant<lambertian_material, metal_material, dielectric_material,
+                 lightsource_material, isotropic_material>;
 #endif

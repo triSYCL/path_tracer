@@ -47,7 +47,8 @@ decltype(auto) visit_single(Func&& f, Var&& var) {
 
 auto monostate_dispatch(auto&& dispatch, auto&& monostate_value) {
   return [&](auto&& arg) {
-    if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg)>, std::monostate>) {
+    if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg)>,
+                                 std::monostate>) {
       assert(false && "Try to dispatch to monostate value");
       return monostate_value;
     } else {

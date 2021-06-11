@@ -5,7 +5,7 @@
 
 class hit_record {
  public:
-  real_t t;         //
+  real_t t;        //
   point p;         // hit point
   vec normal;      // normal at hit point
   bool front_face; // to check if hit point is on the outer surface

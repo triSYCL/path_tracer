@@ -14,8 +14,9 @@
 #include "vec.hpp"
 #include "visit.hpp"
 
-inline auto render_pixel(int width, int height, int depth, int samples, int x_coord, int y_coord,
-                         camera const& cam, auto& hittable_acc, auto fb_acc) {
+inline auto render_pixel(int width, int height, int depth, int samples,
+                         int x_coord, int y_coord, camera const& cam,
+                         auto& hittable_acc, auto fb_acc) {
   auto get_color = [&](const ray& r) {
     auto hit_world = [&](const ray& r, hit_record& rec,
                          material_t& material_type) {
@@ -97,14 +98,15 @@ inline auto render_pixel(int width, int height, int depth, int samples, int x_co
 
 struct PixelRender;
 
-inline void executor(int width, int height, int depth, int samples, sycl::handler& cgh,
-                     camera const& cam_ptr, auto& hittable_acc, auto& fb_acc) {
+inline void executor(int width, int height, int depth, int samples,
+                     sycl::handler& cgh, camera const& cam_ptr,
+                     auto& hittable_acc, auto& fb_acc) {
   if constexpr (buildparams::use_single_task) {
     cgh.single_task<PixelRender>([=] {
       for (int x_coord = 0; x_coord != width; ++x_coord)
         for (int y_coord = 0; y_coord != height; ++y_coord) {
-          render_pixel(width, height, depth, samples, x_coord, y_coord,
-                                       cam_ptr, hittable_acc, fb_acc);
+          render_pixel(width, height, depth, samples, x_coord, y_coord, cam_ptr,
+                       hittable_acc, fb_acc);
         }
     });
   } else {
@@ -114,8 +116,8 @@ inline void executor(int width, int height, int depth, int samples, sycl::handle
       auto gid = item.get_id();
       const auto x_coord = gid[1];
       const auto y_coord = gid[0];
-      render_pixel(width, height, depth, samples, x_coord, y_coord,
-                                   cam_ptr, hittable_acc, fb_acc);
+      render_pixel(width, height, depth, samples, x_coord, y_coord, cam_ptr,
+                   hittable_acc, fb_acc);
     });
   }
 }
@@ -133,7 +135,6 @@ void render(int width, int height, int depth, int samples, sycl::queue& queue,
     auto fb_acc = frame_buf.get_access<sycl::access::mode::discard_write>(cgh);
     auto hittables_acc =
         hittables_buf.get_access<sycl::access::mode::read>(cgh);
-    executor(width, height, depth, samples, cgh, cam, hittables_acc,
-                             fb_acc);
+    executor(width, height, depth, samples, cgh, cam, hittables_acc, fb_acc);
   });
 }

@@ -32,8 +32,7 @@ class constant_medium {
     hit_record rec1, rec2;
     if (!dev_visit(
             [&](auto&& arg) {
-              return arg.hit(r, -infinity, infinity, rec1,
-                             temp_material_type);
+              return arg.hit(r, -infinity, infinity, rec1, temp_material_type);
             },
             boundary)) {
       return false;
