@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <ctime>
 #include <iostream>
 #include <iterator>
 #include <math.h>
@@ -79,17 +80,29 @@ int main(int argc, char* argv[]) {
   hittables.emplace_back(sphere(point { 0, -1000, 0 }, 1000, m));
   t = checker_texture(color { 0.9f, 0.9f, 0.9f }, color { 0.4f, 0.2f, 0.1f });
 
-  LocalPseudoRNG rng;
+  LocalPseudoRNG rng{static_cast<uint32_t>(std::time(nullptr))};
 
-  for (int a = -11; a < 11; a += 3) {
-    for (int b = -11; b < 11; b += 3) {
+  for (int a = -11; a < 11; a++) {
+    for (int b = -11; b < 11; b++) {
+      auto choose_mat = rng.real();
       // Spheres are placed at a point randomly displaced from a,b
       point center(a + 0.9f * rng.real(), 0.2f, b + 0.9f * rng.real());
-      if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
+      if (choose_mat < 0.70f) {
         // Lambertian
         auto albedo = rng.vec_t() * rng.vec_t();
         hittables.emplace_back(
             sphere(center, 0.2f, lambertian_material(albedo)));
+      } else if (choose_mat < 0.95f) {
+        // metal
+        auto albedo = rng.vec_t(0.5f, 1);
+        auto fuzz = rng.real(0, 0.5f);
+        hittables.emplace_back(
+            sphere(center, 0.2f, metal_material(albedo, fuzz)));
+      } else {
+        // glass
+        hittables.emplace_back(
+            sphere(center, 0.2f,
+                   dielectric_material(1.5f, color { 1.0f, 1.0f, 1.0f })));
       }
     }
   }
@@ -127,23 +140,20 @@ int main(int argc, char* argv[]) {
   hittables.emplace_back(sphere(point { 0, 1, -2.25f }, 1,
                                 metal_material(color(0.7f, 0.6f, 0.5f), 0.0f)));
 
-  // t = image_texture::image_texture_factory("../images/SYCL.png", 5);
-
-  // // Add a sphere with a SYCL logo in the background
   hittables.emplace_back(
       sphere { point { -60, 3, 5 }, 4, lambertian_material { t } });
 
   // Add a metallic monolith
   hittables.emplace_back(
       box { point { 6.5f, 0, -1.5f }, point { 7.0f, 3.0f, -1.0f },
-            metal_material { color { 0.7f, 0.6f, 0.5f }, 0.25f } });/**/
+            metal_material { color { 0.7f, 0.6f, 0.5f }, 0.25f } });
 
   // Add a smoke ball
   sphere smoke_sphere =
       sphere { point { 5, 1, 3.5f }, 1,
                lambertian_material { color { 0.75f, 0.75f, 0.75f } } };
-  /*hittables.emplace_back(
-      constant_medium { smoke_sphere, 1, color { 1, 1, 1 } });*/
+  hittables.emplace_back(
+      constant_medium { smoke_sphere, 1, color { 1, 1, 1 } });
 
   // SYCL queue
   sycl::queue myQueue;
