@@ -1,14 +1,15 @@
 # Path tracer
 
 This is an experimental path tracer using C++20 and SYCL for
-acceleration.
+acceleration on devices like FPGA or GPU by using a direct
+implementation.
 
 ![img](doc/SmokeSphere.jpg)
 
 This is using triSYCL for now but it might work even better on some
 other SYCL implementations. Contributions and optimizations welcome!
 
-The main focus here is to replace classic features like pointers or
+The main focus here is to study how to replace classic features like pointers or
 dynamic polymorphism that does not work (well) on heterogeneous with
 more modern constructs such as `std::variant` and `std::visit`.
 
@@ -35,7 +36,8 @@ In addition to triSYCL, this project requires the following dependancies:
 
  - the [stb](https://github.com/nothings/stb) image manipulation library;
 
-On Linux, there's a good chance it can be installed with your package manager :
+On Linux, there is a good chance it can be installed with your package
+manager :
 
 On Ubuntu/Debian :
 
@@ -91,9 +93,9 @@ This creates the executable.
 
 Now you can run the path tracer with:
 ```sh
-time RT_SYCL/sycl-rt >! result.ppm
+time ./sycl-rt
 ```
-This results in the image ``result.ppm`` produced by the path tracer.
+This results in the image `out.png` produced by the path tracer.
 
 
 ## Bibliography
