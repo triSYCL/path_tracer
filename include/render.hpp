@@ -80,13 +80,16 @@ inline auto render_pixel(int width, int height, int depth, int samples,
     // If not returned within max_depth return black
     return color { 0.0f, 0.0f, 0.0f };
   };
-  uint32_t seed = std::hash<int> {}((x_coord << 16) | (y_coord & 0xFFFF));
-  LocalPseudoRNG rng(seed);
+  
   color final_color(0.0f, 0.0f, 0.0f);
+
+  uint32_t seed = ~(x_coord << 16 | (y_coord & 0xFFFF));
+  LocalPseudoRNG rng { seed };
   for (auto i = 0; i < samples; i++) {
     const auto u = (x_coord + rng.real()) / width;
     const auto v = (y_coord + rng.real()) / height;
     // u and v are points on the viewport
+    
     ray r = cam.get_ray(u, v, rng);
     final_color += get_color(r);
   }
