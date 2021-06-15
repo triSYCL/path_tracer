@@ -38,14 +38,13 @@ inline real_t degrees_to_radians(real_t degrees) {
   return degrees * pi / 180.0f;
 }
 
-uint32_t toseed(vec const& val) {
-  uint32_t x, y, z;
-  std::memcpy(&x, &val.x(), sizeof(uint32_t));
-  std::memcpy(&y, &val.y(), sizeof(uint32_t));
-  std::memcpy(&z, &val.z(), sizeof(uint32_t));
-  return x * x * y * y * z * z;
-}
+/**
+  @brief hash two vector using coordinates low bits
 
+  @param val1 first vector
+  @param val2 second vector
+  @return uint32_t 
+ */
 uint32_t toseed(vec const& val1, vec const& val2) {
   uint32_t x1, y1, z1, x2, y2, z2;
   std::memcpy(&x1, &val1.x(), sizeof(uint32_t));
@@ -55,12 +54,12 @@ uint32_t toseed(vec const& val1, vec const& val2) {
   std::memcpy(&y2, &val2.y(), sizeof(uint32_t));
   std::memcpy(&z2, &val2.z(), sizeof(uint32_t));
   uint32_t shifted1 = x1 << 26;
-  uint32_t shifted2 = (x2 & 63) << 21;
+  uint32_t shifted2 = (x2 & 31) << 21;
   uint32_t shifted3 = (y1 & 63) << 15;
-  uint32_t shifted4 = (y2 & 63) << 10;
-  uint32_t shifted5 = (z1 & 63) << 5;
-  uint32_t shifted6 = (z2 & 63);
-  return shifted1 ^ shifted2 ^ shifted3 ^ shifted4 ^ shifted5 ^ shifted6;
+  uint32_t shifted4 = (y2 & 31) << 10;
+  uint32_t shifted5 = (z1 & 31) << 5;
+  uint32_t shifted6 = (z2 & 31);
+  return shifted1 | shifted2 | shifted3 | shifted4 | shifted5 | shifted6;
 }
 
 class LocalPseudoRNG {

@@ -1,4 +1,5 @@
 #include "sycl.hpp"
+#include "xorshift.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -6,6 +7,7 @@
 #include <iostream>
 #include <iterator>
 #include <math.h>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -59,8 +61,9 @@ void save_image_png(int width, int height, sycl::buffer<color, 2>& fb) {
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 5) {
-    std::cerr << "Usage: sycl-rt OUT_WIDTH OUT_HEIGHT DEPTH SAMPLES"
+  if (argc < 5 || argc > 7) {
+    std::cerr << "Usage: sycl-rt OUT_WIDTH OUT_HEIGHT DEPTH SAMPLES "
+                 "[SPHERE_INC [RAND_SEED]]"
               << std::endl;
     return -1;
   }
@@ -69,6 +72,14 @@ int main(int argc, char* argv[]) {
   auto height = std::stoi({ argv[2] });
   auto depth = std::stoi({ argv[3] });
   auto samples = std::stoi({ argv[4] });
+  int sphere_inc = 1;
+  if (argc >= 6)
+    sphere_inc = std::stoi({ argv[5] });
+
+  auto rand_seed = xorshift<>::initial_state;
+
+  if (argc >= 7)
+    rand_seed = std::stoi({ argv[6] });
 
   /// Graphical objects
   std::vector<hittable_t> hittables;
@@ -80,10 +91,10 @@ int main(int argc, char* argv[]) {
   hittables.emplace_back(sphere(point { 0, -1000, 0 }, 1000, m));
   t = checker_texture(color { 0.9f, 0.9f, 0.9f }, color { 0.4f, 0.2f, 0.1f });
 
-  LocalPseudoRNG rng{static_cast<uint32_t>(std::time(nullptr))};
+  LocalPseudoRNG rng{rand_seed};
 
-  for (int a = -11; a < 11; a++) {
-    for (int b = -11; b < 11; b++) {
+  for (int a = -11; a < 11; a += sphere_inc) {
+    for (int b = -11; b < 11; b += sphere_inc) {
       auto choose_mat = rng.real();
       // Spheres are placed at a point randomly displaced from a,b
       point center(a + 0.9f * rng.real(), 0.2f, b + 0.9f * rng.real());
