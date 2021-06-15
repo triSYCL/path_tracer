@@ -147,11 +147,13 @@ int main(int argc, char* argv[]) {
   hittables.emplace_back(
       sphere(point { 4, 1, 0 }, 0.2f, lightsource_material(color(10, 0, 10))));
 
-  // Four large spheres of metal, dielectric and Lambertian material types
-  // t = image_texture::image_texture_factory("../images/Xilinx.jpg");
-  // hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
+  // Xilinx logo rectangle and sphere
+  t = image_texture::image_texture_factory("../images/Xilinx.jpg");
+  hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
   hittables.emplace_back(
       sphere(point { 4, 1, 2.25f }, 1, lambertian_material(t)));
+
+  // Four large spheres of metal, dielectric and Lambertian material types
   hittables.emplace_back(
       sphere(point { 0, 1, 0 }, 1,
              dielectric_material(1.5f, color { 1.0f, 0.5f, 0.5f })));
@@ -160,6 +162,8 @@ int main(int argc, char* argv[]) {
   hittables.emplace_back(sphere(point { 0, 1, -2.25f }, 1,
                                 metal_material(color(0.7f, 0.6f, 0.5f), 0.0f)));
 
+  //Add a sphere with a SYCL logo in the background
+  t = image_texture::image_texture_factory("../images/SYCL.png", 5);
   hittables.emplace_back(
       sphere { point { -60, 3, 5 }, 4, lambertian_material { t } });
 

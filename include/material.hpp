@@ -15,17 +15,17 @@ struct lambertian_material {
   lambertian_material(const texture_t& a)
       : albedo { a } {}
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
+  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec, color& attenuation,
                ray& scattered) const {
     LocalPseudoRNG rng {  toseed(r_in.direction(), r_in.origin()) };
     vec scatter_direction = rec.normal + rng.unit_vec();
     scattered = ray(rec.p, scatter_direction, r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
-    attenuation *= dev_visit([&](auto&& t) { return t.value(rec); }, albedo);
+    attenuation *= dev_visit([&](auto&& t) { return t.value(ctx, rec); }, albedo);
     return true;
   }
-  color emitted(const hit_record& rec) { return color(0.f, 0.f, 0.f); }
+  color emitted(auto&, const hit_record& rec) { return color(0.f, 0.f, 0.f); }
   texture_t albedo;
 };
 
@@ -35,7 +35,7 @@ struct metal_material {
       : albedo { a }
       , fuzz { std::clamp(f, 0.0f, 1.0f) } {}
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
+  bool scatter(auto&, const ray& r_in, const hit_record& rec, color& attenuation,
                ray& scattered) const {
     LocalPseudoRNG rng {  toseed(r_in.direction(), r_in.origin()) };
     vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
@@ -46,7 +46,7 @@ struct metal_material {
     return (dot(scattered.direction(), rec.normal) > 0);
   }
 
-  color emitted(const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
   color albedo;
   real_t fuzz;
 };
@@ -64,7 +64,7 @@ struct dielectric_material {
     return r0 + (1 - r0) * sycl::pow((1 - cosine), 5.0f);
   }
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
+  bool scatter(auto&, const ray& r_in, const hit_record& rec, color& attenuation,
                ray& scattered) const {
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
@@ -85,7 +85,7 @@ struct dielectric_material {
     return true;
   }
 
-  color emitted(const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
   // Refractive index of the glass
   real_t ref_idx;
   // Color of the glass
@@ -101,8 +101,8 @@ struct lightsource_material {
 
   template <typename... T> bool scatter(T&...) const { return false; }
 
-  color emitted(const hit_record& rec) {
-    return dev_visit([&](auto&& t) { return t.value(rec); }, emit);
+  color emitted(auto& ctx, const hit_record& rec) {
+    return dev_visit([&](auto&& t) { return t.value(ctx, rec); }, emit);
   }
 
   texture_t emit;
@@ -114,15 +114,15 @@ struct isotropic_material {
   isotropic_material(texture_t& a)
       : albedo { a } {}
 
-  bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
+  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec, color& attenuation,
                ray& scattered) const {
     LocalPseudoRNG rng {  toseed(r_in.direction(), r_in.origin()) };
     scattered = ray(rec.p, rng.in_unit_ball(), r_in.time());
-    attenuation *= dev_visit([&](auto&& t) { return t.value(rec); }, albedo);
+    attenuation *= dev_visit([&](auto&& t) { return t.value(ctx, rec); }, albedo);
     return true;
   }
 
-  color emitted(const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
 
   texture_t albedo;
 };

@@ -7,5 +7,5 @@
 #include "sphere.hpp"
 #include "triangle.hpp"
 
-using hittable_t = std::variant<sphere, triangle, constant_medium, box>;
+using hittable_t = std::variant<sphere, triangle, constant_medium, box, xy_rect>;
 #endif
