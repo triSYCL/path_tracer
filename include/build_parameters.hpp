@@ -14,8 +14,10 @@ constexpr bool use_sycl_compiler = USE_SYCL_COMPILER;
 constexpr bool use_sycl_compiler = false;
 #endif
 
-constexpr int output_width = OUTPUT_WIDTH;
+/*constexpr int output_width = OUTPUT_WIDTH;
 constexpr int output_height = OUTPUT_HEIGHT;
+constexpr int samples = SAMPLES;
+constexpr int depth = DEPTH;//*/
 } // namespace buildparams
 
 #endif // BUILD_PARAMETERS_HPP

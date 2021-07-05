@@ -93,9 +93,16 @@ This creates the executable.
 
 Now you can run the path tracer with:
 ```sh
-time ./sycl-rt
+time ./sycl-rt 800 480 50 100
 ```
-This results in the image `out.png` produced by the path tracer.
+This results in the image ``out.png`` produced by the path tracer.
+
+Parameters to the executable are 
+
++ The output image width (here 800)
++ The output image height (here 480)
++ The maximum bouncing depth of the ray (here 50)
++ The number of samples per pixel (here 100)
 
 
 ## Bibliography

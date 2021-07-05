@@ -1,10 +1,13 @@
 #include "sycl.hpp"
+#include "xorshift.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <ctime>
 #include <iostream>
 #include <iterator>
 #include <math.h>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -30,7 +33,7 @@ void dump_image_ppm(int width, int height, auto& fb_data) {
   }
 }
 
-void save_image_png(int width, int height, sycl::buffer<color, 2> &fb) {
+void save_image_png(int width, int height, sycl::buffer<color, 2>& fb) {
   constexpr unsigned num_channels = 3;
   auto fb_data = fb.get_access<sycl::access::mode::read>();
 
@@ -40,7 +43,6 @@ void save_image_png(int width, int height, sycl::buffer<color, 2> &fb) {
   int index = 0;
   for (int j = height - 1; j >= 0; --j) {
     for (int i = 0; i < width; ++i) {
-      auto input_index = j * width + i;
       int r = static_cast<int>(
           256 * std::clamp(sycl::sqrt(fb_data[j][i].x()), 0.0f, 0.999f));
       int g = static_cast<int>(
@@ -58,10 +60,26 @@ void save_image_png(int width, int height, sycl::buffer<color, 2> &fb) {
                  width * num_channels);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+  if (argc < 5 || argc > 7) {
+    std::cerr << "Usage: sycl-rt OUT_WIDTH OUT_HEIGHT DEPTH SAMPLES "
+                 "[SPHERE_INC [RAND_SEED]]"
+              << std::endl;
+    return -1;
+  }
   // Frame buffer dimensions
-  constexpr auto width = buildparams::output_width;
-  constexpr auto height = buildparams::output_height;
+  auto width = std::stoi({ argv[1] });
+  auto height = std::stoi({ argv[2] });
+  auto depth = std::stoi({ argv[3] });
+  auto samples = std::stoi({ argv[4] });
+  int sphere_inc = 1;
+  if (argc >= 6)
+    sphere_inc = std::stoi({ argv[5] });
+
+  auto rand_seed = xorshift<>::initial_state;
+
+  if (argc >= 7)
+    rand_seed = std::stoi({ argv[6] });
 
   /// Graphical objects
   std::vector<hittable_t> hittables;
@@ -73,14 +91,14 @@ int main() {
   hittables.emplace_back(sphere(point { 0, -1000, 0 }, 1000, m));
   t = checker_texture(color { 0.9f, 0.9f, 0.9f }, color { 0.4f, 0.2f, 0.1f });
 
-  LocalPseudoRNG rng;
+  LocalPseudoRNG rng { rand_seed };
 
-  for (int a = -11; a < 11; a++) {
-    for (int b = -11; b < 11; b++) {
+  for (int a = -11; a < 11; a += sphere_inc) {
+    for (int b = -11; b < 11; b += sphere_inc) {
       // Based on a random variable , the material type is chosen
-      auto choose_mat = rng.float_t();
+      auto choose_mat = rng.real();
       // Spheres are placed at a point randomly displaced from a,b
-      point center(a + 0.9f * rng.float_t(), 0.2f, b + 0.9f * rng.float_t());
+      point center(a + 0.9f * rng.real(), 0.2f, b + 0.9f * rng.real());
       if (sycl::length((center - point(4, 0.2f, 0))) > 0.9f) {
         if (choose_mat < 0.4f) {
           // Lambertian
@@ -90,13 +108,13 @@ int main() {
         } else if (choose_mat < 0.8f) {
           // Lambertian movig spheres
           auto albedo = rng.vec_t() * rng.vec_t();
-          auto center2 = center + point { 0, rng.float_t(0, 0.25f), 0 };
+          auto center2 = center + point { 0, rng.real(0, 0.25f), 0 };
           hittables.emplace_back(sphere(center, center2, 0.0f, 1.0f, 0.2f,
                                         lambertian_material(albedo)));
         } else if (choose_mat < 0.95f) {
           // metal
           auto albedo = rng.vec_t(0.5f, 1);
-          auto fuzz = rng.float_t(0, 0.5f);
+          auto fuzz = rng.real(0, 0.5f);
           hittables.emplace_back(
               sphere(center, 0.2f, metal_material(albedo, fuzz)));
         } else {
@@ -129,11 +147,13 @@ int main() {
   hittables.emplace_back(
       sphere(point { 4, 1, 0 }, 0.2f, lightsource_material(color(10, 0, 10))));
 
-  // Four large spheres of metal, dielectric and Lambertian material types
+  // Xilinx logo rectangle and sphere
   t = image_texture::image_texture_factory("../images/Xilinx.jpg");
   hittables.emplace_back(xy_rect(2, 4, 0, 1, -1, lambertian_material(t)));
   hittables.emplace_back(
       sphere(point { 4, 1, 2.25f }, 1, lambertian_material(t)));
+
+  // Four large spheres of metal, dielectric and Lambertian material types
   hittables.emplace_back(
       sphere(point { 0, 1, 0 }, 1,
              dielectric_material(1.5f, color { 1.0f, 0.5f, 0.5f })));
@@ -142,9 +162,8 @@ int main() {
   hittables.emplace_back(sphere(point { 0, 1, -2.25f }, 1,
                                 metal_material(color(0.7f, 0.6f, 0.5f), 0.0f)));
 
+  //Add a sphere with a SYCL logo in the background
   t = image_texture::image_texture_factory("../images/SYCL.png", 5);
-
-  // // Add a sphere with a SYCL logo in the background
   hittables.emplace_back(
       sphere { point { -60, 3, 5 }, 4, lambertian_material { t } });
 
@@ -182,13 +201,10 @@ int main() {
     aperture,  focus_dist, 0.0f, 1.0f
   };
 
-  // Sample per pixel
-  constexpr auto samples = 100;
-
   // SYCL render kernel
 
   sycl::buffer<color, 2> fb(sycl::range<2>(height, width));
-  render<width, height, samples>(myQueue, fb, hittables, cam);
+  render(width, height, depth, samples, myQueue, fb, hittables, cam);
 
   // Save image to file
   save_image_png(width, height, fb);

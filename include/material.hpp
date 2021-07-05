@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "hitable.hpp"
+#include "hit_record.hpp"
 #include "texture.hpp"
 #include "vec.hpp"
 #include "visit.hpp"
@@ -15,30 +15,29 @@ struct lambertian_material {
   lambertian_material(const texture_t& a)
       : albedo { a } {}
 
-  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
-               color& attenuation, ray& scattered) const {
-    auto& rng = ctx.rng;
+  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec, color& attenuation,
+               ray& scattered) const {
+    LocalPseudoRNG rng {  toseed(r_in.direction(), r_in.origin()) };
     vec scatter_direction = rec.normal + rng.unit_vec();
     scattered = ray(rec.p, scatter_direction, r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
-    attenuation *=
-        dev_visit([&](auto&& arg) { return arg.value(ctx, rec); }, albedo);
+    attenuation *= dev_visit([&](auto&& t) { return t.value(ctx, rec); }, albedo);
     return true;
   }
-  color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
+  color emitted(auto&, const hit_record& rec) { return color(0.f, 0.f, 0.f); }
   texture_t albedo;
 };
 
 struct metal_material {
   metal_material() = default;
-  metal_material(const color& a, float f)
+  metal_material(const color& a, real_t f)
       : albedo { a }
       , fuzz { std::clamp(f, 0.0f, 1.0f) } {}
 
-  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
-               color& attenuation, ray& scattered) const {
-    auto& rng = ctx.rng;
+  bool scatter(auto&, const ray& r_in, const hit_record& rec, color& attenuation,
+               ray& scattered) const {
+    LocalPseudoRNG rng {  toseed(r_in.direction(), r_in.origin()) };
     vec reflected = reflect(unit_vector(r_in.direction()), rec.normal);
     scattered = ray(rec.p, reflected + fuzz * rng.in_unit_ball(), r_in.time());
     // Attenuation of the ray hitting the object is modified based on the color
@@ -49,7 +48,7 @@ struct metal_material {
 
   color emitted(auto&, const hit_record& rec) { return color(0, 0, 0); }
   color albedo;
-  float fuzz;
+  real_t fuzz;
 };
 
 struct dielectric_material {
@@ -65,20 +64,19 @@ struct dielectric_material {
     return r0 + (1 - r0) * sycl::pow((1 - cosine), 5.0f);
   }
 
-  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
-               color& attenuation, ray& scattered) const {
+  bool scatter(auto&, const ray& r_in, const hit_record& rec, color& attenuation,
+               ray& scattered) const {
     // Attenuation of the ray hitting the object is modified based on the color
     // at hit point
-    auto& rng = ctx.rng;
+    LocalPseudoRNG rng {  toseed(r_in.direction(), r_in.origin()) };
     attenuation *= albedo;
-    float refraction_ratio = rec.front_face ? (1.0f / ref_idx) : ref_idx;
+    real_t refraction_ratio = rec.front_face ? (1.0f / ref_idx) : ref_idx;
     vec unit_direction = unit_vector(r_in.direction());
-    float cos_theta = sycl::fmin(-sycl::dot(unit_direction, rec.normal), 1.0f);
-    float sin_theta = sycl::sqrt(1.0f - cos_theta * cos_theta);
+    real_t cos_theta = sycl::fmin(-sycl::dot(unit_direction, rec.normal), 1.0f);
+    real_t sin_theta = sycl::sqrt(1.0f - cos_theta * cos_theta);
     bool cannot_refract = refraction_ratio * sin_theta > 1.0f;
     vec direction;
-    if (cannot_refract ||
-        reflectance(cos_theta, refraction_ratio) > rng.float_t())
+    if (cannot_refract || reflectance(cos_theta, refraction_ratio) > rng.real())
       direction = reflect(unit_direction, rec.normal);
     else
       direction = refract(unit_direction, rec.normal, refraction_ratio);
@@ -104,7 +102,7 @@ struct lightsource_material {
   template <typename... T> bool scatter(T&...) const { return false; }
 
   color emitted(auto& ctx, const hit_record& rec) {
-    return dev_visit([&](auto&& arg) { return arg.value(ctx, rec); }, emit);
+    return dev_visit([&](auto&& t) { return t.value(ctx, rec); }, emit);
   }
 
   texture_t emit;
@@ -116,12 +114,11 @@ struct isotropic_material {
   isotropic_material(texture_t& a)
       : albedo { a } {}
 
-  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec,
-               color& attenuation, ray& scattered) const {
-    auto& rng = ctx.rng;
+  bool scatter(auto& ctx, const ray& r_in, const hit_record& rec, color& attenuation,
+               ray& scattered) const {
+    LocalPseudoRNG rng {  toseed(r_in.direction(), r_in.origin()) };
     scattered = ray(rec.p, rng.in_unit_ball(), r_in.time());
-    attenuation *=
-        dev_visit([&](auto&& arg) { return arg.value(ctx, rec); }, albedo);
+    attenuation *= dev_visit([&](auto&& t) { return t.value(ctx, rec); }, albedo);
     return true;
   }
 
@@ -133,5 +130,4 @@ struct isotropic_material {
 using material_t =
     std::variant<lambertian_material, metal_material, dielectric_material,
                  lightsource_material, isotropic_material>;
-
 #endif

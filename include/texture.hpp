@@ -1,6 +1,6 @@
 #ifndef RT_SYCL_TEXTURE_HPP
 #define RT_SYCL_TEXTURE_HPP
-#include "hitable.hpp"
+#include "hit_record.hpp"
 #include "rtweekend.hpp"
 #include "vec.hpp"
 #include <array>
@@ -19,7 +19,7 @@ struct solid_texture {
   solid_texture() = default;
   solid_texture(const color& c)
       : color_value { c } {}
-  solid_texture(float red, float green, float blue)
+  solid_texture(real_t red, real_t green, real_t blue)
       : solid_texture { color { red, green, blue } } {}
   // For solid texture, the color is same throughout the sphere
   color value(auto&, const hit_record&) const { return color_value; }
@@ -53,16 +53,12 @@ struct checker_texture {
 
 /**
   @brief A texture based on an image
-
   In order to be able to get the bitmap on the device without embedding it in
   the object, all image_texture textures are serialized in one vector.
-
   The offset of the texture in the vector is stored in the image_texture
   instance.
-
   When all the textures have been loaded, the freeze() method can be called to
   get a sycl::buffer that store this data.
-
  */
 struct image_texture {
  private:
@@ -88,9 +84,7 @@ struct image_texture {
 
  public:
   /** Create a texture from an image file
-
          \param[in] file_name is the path name to the image file
-
          \param[in] cyclic_frequency is an optional repetition rate of
          the image in the texture
  */
@@ -118,9 +112,7 @@ struct image_texture {
 
   /**
     @brief Get a sycl::buffer containing texture data.
-
     image_texture_factory should not be called after having called freeze
-
     @return sycl::buffer<uint8_t, 2>
    */
   static sycl::buffer<uint8_t, 2> freeze() {

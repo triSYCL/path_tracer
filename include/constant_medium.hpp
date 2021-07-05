@@ -3,6 +3,7 @@
 
 #include "box.hpp"
 #include "material.hpp"
+#include "rtweekend.hpp"
 #include "sphere.hpp"
 #include "texture.hpp"
 #include "visit.hpp"
@@ -25,24 +26,21 @@ class constant_medium {
       , neg_inv_density { -1 / d }
       , phase_function { isotropic_material { a } } {}
 
-  bool hit(auto& ctx, const ray& r, real_t min, real_t max, hit_record& rec,
+  bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
            material_t& hit_material_type) const {
-    auto& rng = ctx.rng;
     hit_material_type = phase_function;
     material_t temp_material_type;
     hit_record rec1, rec2;
     if (!dev_visit(
             [&](auto&& arg) {
-              return arg.hit(ctx, r, -infinity, infinity, rec1,
-                             temp_material_type);
+              return arg.hit(r, -infinity, infinity, rec1, temp_material_type);
             },
             boundary)) {
       return false;
     }
-
     if (!dev_visit(
             [&](auto&& arg) {
-              return arg.hit(ctx, r, rec1.t + 0.0001f, infinity, rec2,
+              return arg.hit(r, rec1.t + 0.0001f, infinity, rec2,
                              temp_material_type);
             },
             boundary)) {
@@ -62,7 +60,8 @@ class constant_medium {
     /// Distance between the two hitpoints affect of probability
     /// of the ray hitting a smoke particle
     const auto distance_inside_boundary = (rec2.t - rec1.t) * ray_length;
-    const auto hit_distance = neg_inv_density * sycl::log(rng.float_t());
+    auto rng = LocalPseudoRNG { toseed(r.direction(), r.origin()) };
+    const auto hit_distance = neg_inv_density * sycl::log(rng.real());
 
     /// With lower density, hit_distance has higher probabilty
     /// of being greater than distance_inside_boundary

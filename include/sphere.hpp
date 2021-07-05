@@ -10,7 +10,7 @@
 /* Computes normalised values of theta and phi. The input vector p
 corresponds to a vector passing through the centre of the a sphere
 and the hipoint on the surface of the sphere */
-std::pair<float, float> mercator_coordinates(const vec& p) {
+std::pair<real_t, real_t> mercator_coordinates(const vec& p) {
   // phi is the angle around the axis
   auto phi = sycl::atan2(p.z(), p.x());
   // theta is the angle down from the pole
@@ -56,7 +56,7 @@ class sphere {
   }
 
   /// Compute ray interaction with sphere
-  bool hit(auto&, const ray& r, real_t min, real_t max, hit_record& rec,
+  bool hit(const ray& r, real_t min, real_t max, hit_record& rec,
            material_t& hit_material_type) const {
     hit_material_type = material_type;
 

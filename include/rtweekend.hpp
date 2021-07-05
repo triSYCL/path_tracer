@@ -3,7 +3,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <random>
@@ -16,19 +18,49 @@
 #include <build_parameters.hpp>
 #include <xorshift.hpp>
 
+using real_t = float;
+
 // Constants
 
-constexpr float infinity = std::numeric_limits<float>::infinity();
-constexpr float pi = 3.1415926535897932385f;
+constexpr real_t infinity = std::numeric_limits<real_t>::infinity();
+constexpr real_t pi = 3.1415926535897932385f;
 
 // type aliases for float3 - vec, point and color
-using point = sycl::float3;
-using color = sycl::float3;
-using vec = sycl::float3;
+using real_vec = sycl::float3;
+
+using point = real_vec;
+using color = real_vec;
+using vec = real_vec;
 
 // Utility Functions
 
-inline float degrees_to_radians(float degrees) { return degrees * pi / 180.0f; }
+inline real_t degrees_to_radians(real_t degrees) {
+  return degrees * pi / 180.0f;
+}
+
+/**
+  @brief hash two vector using coordinates low bits
+
+  @param val1 first vector
+  @param val2 second vector
+  @return uint32_t 
+ */
+uint32_t toseed(vec const& val1, vec const& val2) {
+  uint32_t x1, y1, z1, x2, y2, z2;
+  std::memcpy(&x1, &val1.x(), sizeof(uint32_t));
+  std::memcpy(&y1, &val1.y(), sizeof(uint32_t));
+  std::memcpy(&z1, &val1.z(), sizeof(uint32_t));
+  std::memcpy(&x2, &val2.x(), sizeof(uint32_t));
+  std::memcpy(&y2, &val2.y(), sizeof(uint32_t));
+  std::memcpy(&z2, &val2.z(), sizeof(uint32_t));
+  uint32_t shifted1 = x1 << 26;
+  uint32_t shifted2 = (x2 & 31) << 21;
+  uint32_t shifted3 = (y1 & 63) << 15;
+  uint32_t shifted4 = (y2 & 31) << 10;
+  uint32_t shifted5 = (z1 & 31) << 5;
+  uint32_t shifted6 = (z2 & 31);
+  return shifted1 | shifted2 | shifted3 | shifted4 | shifted5 | shifted6;
+}
 
 class LocalPseudoRNG {
  public:
@@ -36,42 +68,42 @@ class LocalPseudoRNG {
       : generator { init_state } {}
 
   // Returns a random float in 0.f 1.
-  inline float float_t() {
-    constexpr float scale = 1.f / (uint64_t { 1 } << 32);
+  inline real_t real() {
+    constexpr real_t scale = 1.f / (uint64_t { 1 } << 32);
     return generator() * scale;
   }
 
   // Returns a random float in min, max
-  inline float float_t(float min, float max) {
+  inline real_t real(real_t min, real_t max) {
     // TODO use FMA ?
-    return min + (max - min) * float_t();
+    return min + (max - min) * real();
   }
 
   // Returns a random vector with coordinates in 0.f 1.
-  inline vec vec_t() { return { float_t(), float_t(), float_t() }; }
+  inline vec vec_t() { return { real(), real(), real() }; }
 
   // Returns a random vec with coordinates in min, max
-  inline vec vec_t(float min, float max) {
+  inline vec vec_t(real_t min, real_t max) {
     auto scale = max - min;
     return vec_t() * scale + min;
   }
 
   // Returns a random unit vector
   inline vec unit_vec() {
-    auto x = float_t(-1.f, 1.f);
+    auto x = real(-1.f, 1.f);
     auto maxy = sycl::sqrt(1 - x * x);
-    auto y = float_t(-maxy, maxy);
+    auto y = real(-maxy, maxy);
     auto absz = sycl::sqrt(maxy * maxy - y * y);
-    auto z = (float_t() > 0.5) ? absz : -absz;
+    auto z = (real() > 0.5) ? absz : -absz;
     return vec(x, y, z);
   }
 
   // Returns a random vector in the unit ball of usual norm
   inline vec in_unit_ball() {
     // Polar coordinates r, theta, phi
-    auto r = float_t();
-    auto theta = float_t(0, 2 * pi);
-    auto phi = float_t(0, pi);
+    auto r = real();
+    auto theta = real(0, 2 * pi);
+    auto phi = real(0, pi);
 
     auto plan_seed = r * sycl::sin(phi);
     auto z = r * sycl::cos(phi);
@@ -81,9 +113,9 @@ class LocalPseudoRNG {
 
   // Return a random vector in the unit disk of usual norm in plane x, y
   inline vec in_unit_disk() {
-    auto x = float_t(-1.f, 1.f);
+    auto x = real(-1.f, 1.f);
     auto maxy = sycl::sqrt(1 - x * x);
-    auto y = float_t(-maxy, maxy);
+    auto y = real(-maxy, maxy);
     return { x, y, 0.f };
   }
 
@@ -97,7 +129,6 @@ class LocalPseudoRNG {
         kernel callees
  */
 struct task_context {
-  LocalPseudoRNG rng;
   // See image_texture in texture.hpp for more details
   sycl::global_ptr<uint8_t> texture_data;
 };
